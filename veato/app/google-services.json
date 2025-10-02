@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "977712872549",
+    "project_id": "veatoauth-6ad6c",
+    "storage_bucket": "veatoauth-6ad6c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:977712872549:android:f3c13a18be965597405a8c",
+        "android_client_info": {
+          "package_name": "com.example.veato"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsE9cRyKg8WH9a1RH4p8nJloGCMJmYqhA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
