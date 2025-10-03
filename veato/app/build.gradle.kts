@@ -57,4 +57,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
+    // Google & Kakao Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    // implementation("com.kakao.sdk:v2-user:2.20.6")
 }
