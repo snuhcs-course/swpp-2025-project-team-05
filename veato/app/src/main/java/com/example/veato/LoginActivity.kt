@@ -22,6 +22,7 @@ class LoginActivity : AppCompatActivity() {
         binding.tvGotoSignup.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
+        binding.tvForgot.setOnClickListener { sendReset() }
     }
 
     override fun onStart() {
@@ -59,4 +60,22 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+
+    private fun sendReset() {
+        val email = binding.etEmail.text?.toString()?.trim().orEmpty()
+        if (email.isEmpty() || !email.contains("@")) {
+            toast("Enter a valid email to receive a reset link")
+            return
+        }
+        binding.progress.visibility = View.VISIBLE
+        binding.btnLogin.isEnabled = false
+
+        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+            .addOnCompleteListener {
+                binding.progress.visibility = View.GONE
+                binding.btnLogin.isEnabled = true
+                // Always show a generic message (prevents user enumeration)
+                toast("Reset link has been sent if registered")
+            }
+    }
 }
