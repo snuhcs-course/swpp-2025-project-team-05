@@ -1,28 +1,36 @@
-# SNU-SWPP-Template
+Environment
+Android Studio: Narwhal Feature Drop | 2025.1.2
+Gradle: auto-managed by Android Studio
+JDK Version: 17 
+Android Min SDK: as in build.gradle (Module)
+Firebase Service: Authentication (Email/Password enabled)
 
-You can use the README file to showcase and promote your mobile app. The template provided below is just a starting point. Feel free to craft your README as you see fit. 
+1. User Authentication Demo (Firebase + Android)
+- This demo showcases a Firebase-based user authentication system implemented in an Android app using Kotlin.
+- It allows users to create an account, log in, and reset their password securely through Firebase Authentication.
 
-Please note that the README doesn't affect your grade and is not included in documentation(Wiki).
 
-# [Your Application Name]
+2.Features Demonstrated
+a. Create New User
+Users can register by entering:
+- Full Name
+- Username
+- Email Address
+- Password and Confirm Password
+The account is created in Firebase Authentication.
 
-[Short application description here]
+b. Login
+Registered users can log in using their email and password.
+On successful login, users are directed to the main screen.
 
-![Application Screenshot](path_to_screenshot.png)
+c. Forgot Password
+Users enter their email address and tap Forgot Password.
+A message appears “Reset link has been sent if registered.”
+If the email is registered, a password reset link is sent automatically.
 
-## Features
 
-- Feature 1: Brief description
-- Feature 2: Brief description
-- ...
-
-## Getting Started
-
-### Prerequisites
-
-- Android Studio [version, e.g., 4.2.1]
-- Minimum Android SDK Version [e.g., 21]
-
-### Installation
-
-[Installation link here]
+3. What This Demo Demonstrates:
+- Integration of Firebase Authentication with Android Studio.
+- Basic user registration, login, and password reset functionality.
+- Real-time Firebase verification for secure user access.
+- Use of Toast messages for user feedback and error handling.
