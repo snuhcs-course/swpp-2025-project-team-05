@@ -1,5 +1,11 @@
 name: Android Lint + ktlint
- on: pull_request
+ on: 
+    pull_request: 
+       branches: 
+          - '**' 
+    push: 
+       branches:  
+          - '**'
  jobs:
   lint_and_ktlint:
     name: Run Android Lint and ktlint
