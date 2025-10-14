@@ -1,9 +1,18 @@
 from flask import Flask, request, jsonify
 import firebase_admin
 from firebase_admin import credentials, auth
+import json
+import os
 
 app = Flask(__name__)
-cred = credentials.Certificate("serviceAccountKey.json")
+cred_json = os.environ.get("FIREBASE_CREDENTIALS")
+
+if not cred_json:
+    raise ValueError("FIREBASE_CREDENTIALS environment variable not set")
+
+cred_dict = json.loads(cred_json)
+cred = credentials.Certificate(cred_dict)
+
 firebase_admin.initialize_app(cred)
 
 @app.route("/check-email", methods=["POST"])
@@ -21,4 +30,5 @@ def check_email():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
