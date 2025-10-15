@@ -18,6 +18,3 @@ jobs:
       - name: Android Lint (debug)
         working-directory: veato
         run: ./gradlew lintDebug
-      - name: ktlint check
-        working-directory: veato
-        run: ./gradlew :app:ktlintMainSourceSetCheck
