@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         val btnMyTeams = findViewById<Button>(R.id.btnMyTeams)
 
         val user = auth.currentUser
-        tvWelcome.text = "Welcome to Veato, ${user?.email ?: "User"}"
+        tvWelcome.text = "Welcome to Veato, \n${user?.email ?: "User"}"
 
         btnLogout.setOnClickListener {
             auth.signOut()
