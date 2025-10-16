@@ -5,13 +5,20 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import com.example.veato.databinding.ActivityLoginBinding
 import com.example.veato.ui.main.MainActivity
+import com.example.veato.OnboardingActivity
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private val auth by lazy { FirebaseAuth.getInstance() }
+    private val db by lazy { Firebase.firestore }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,9 +34,30 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        // If already logged in, go straight to main
-        auth.currentUser?.let {
-            startActivity(Intent(this, MainActivity::class.java))
+        // If already logged in, check if onboarding is complete
+        auth.currentUser?.let { user ->
+            lifecycleScope.launch {
+                navigateBasedOnOnboardingStatus(user.uid)
+            }
+        }
+    }
+
+    private suspend fun navigateBasedOnOnboardingStatus(userId: String) {
+        try {
+            val userDoc = db.collection("users").document(userId).get().await()
+            val hasCompletedOnboarding = userDoc.getBoolean("onboardingCompleted") ?: false
+
+            if (hasCompletedOnboarding) {
+                // Go to main app if onboarding already completed
+                startActivity(Intent(this, MainActivity::class.java))
+            } else {
+                // Go to onboarding if not completed
+                startActivity(Intent(this, OnboardingActivity::class.java))
+            }
+            finish()
+        } catch (e: Exception) {
+            // If error checking status, default to onboarding
+            startActivity(Intent(this, OnboardingActivity::class.java))
             finish()
         }
     }
@@ -51,8 +79,13 @@ class LoginActivity : AppCompatActivity() {
                 binding.progress.visibility = View.GONE
                 binding.btnLogin.isEnabled = true
                 if (task.isSuccessful) {
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
+                    // Check onboarding status after successful login
+                    val userId = auth.currentUser?.uid
+                    if (userId != null) {
+                        lifecycleScope.launch {
+                            navigateBasedOnOnboardingStatus(userId)
+                        }
+                    }
                 } else {
                     toast(task.exception?.localizedMessage ?: "Login failed")
                 }

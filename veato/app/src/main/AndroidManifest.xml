@@ -16,6 +16,11 @@
             android:exported="false" />
 
         <activity
+            android:name=".OnboardingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Veato" />
+
+        <activity
             android:name=".ui.auth.RegisterActivity"
             android:exported="false" />
 
