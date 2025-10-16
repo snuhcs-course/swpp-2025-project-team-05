@@ -2,9 +2,6 @@
 
 This repository contains **Iteration 2 of Veato**. 
 
-
-# [Veto Demo]
-
 ## Demo Video
 
 ### Food Profile Setup
