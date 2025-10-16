@@ -60,18 +60,18 @@ class ViewMembersActivity : AppCompatActivity() {
                     return@addOnSuccessListener
                 }
 
-                // 🔹 Get leaderId
+                // Get leaderId
                 val leaderId = doc.getString("leaderId") ?: ""
 
                 if (leaderId.isNotEmpty()) {
-                    // 🔹 Fetch leader email first
+                    // Fetch leader email first
                     db.collection("users").document(leaderId).get()
                         .addOnSuccessListener { leaderDoc ->
                             leaderEmail = leaderDoc.getString("email") ?: ""
 
                             val tempList = mutableListOf<String>()
 
-                            // 🔹 Fetch member emails
+                            // Fetch member emails
                             for (uid in memberUids) {
                                 db.collection("users").document(uid).get()
                                     .addOnSuccessListener { userDoc ->
@@ -88,7 +88,7 @@ class ViewMembersActivity : AppCompatActivity() {
                                             memberList.clear()
                                             memberList.addAll(sortedList)
 
-                                            // 🟣 Reinitialize adapter now that leaderEmail is known
+                                            // Reinitialize adapter now that leaderEmail is known
                                             val recycler = findViewById<RecyclerView>(R.id.recyclerMembers)
                                             adapter = MembersAdapter(memberList, leaderEmail) { email ->
                                                 removeMemberByEmail(email)
@@ -113,8 +113,6 @@ class ViewMembersActivity : AppCompatActivity() {
             }
     }
 
-
-
     private fun addMemberByEmail(email: String) {
         val teamRef = db.collection("teams").document(teamId)
 
@@ -123,13 +121,13 @@ class ViewMembersActivity : AppCompatActivity() {
             return
         }
 
-        // 🔍 Check if member already in the list (by email)
+        // Check if member already in the list (by email)
         if (memberList.contains(email)) {
             Toast.makeText(this, "This member is already in the team", Toast.LENGTH_SHORT).show()
             return
         }
 
-        Log.d("DEBUG_AUTH", "Current UID: ${FirebaseAuth.getInstance().currentUser?.uid}")
+        // Log.d("DEBUG_AUTH", "Current UID: ${FirebaseAuth.getInstance().currentUser?.uid}")
 
         db.collection("users").whereEqualTo("email", email.trim()).get()
             .addOnSuccessListener { result ->
@@ -177,5 +175,4 @@ class ViewMembersActivity : AppCompatActivity() {
                 }
             }
     }
-
 }
