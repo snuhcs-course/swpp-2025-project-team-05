@@ -1,38 +1,32 @@
-# SNU-SWPP-Template
+# Veato Iteration 2
 
-You can use the README file to showcase and promote your mobile app. The template provided below is just a starting point. Feel free to craft your README as you see fit. 
+This repository contains **Iteration 2 of Veato**. 
 
-Please note that the README doesn't affect your grade and is not included in documentation(Wiki).
 
-# [Your Application Name]
+# [Veto Demo]
 
-## Demo
+## Demo Video
 
-Food Profile Setup
+### Food Profile Setup
+In this step, users personalize their food preferences, dietary restrictions, and disliked ingredients to help the recommendation system generate better meal suggestions.
 <video src="https://github.com/user-attachments/assets/4e66b7c3-5215-4d27-8258-9e5e903868fb" controls width="600"></video>
 
-Team Creation
+### Team Creation
+Users can create or join a team with friends to vote on restaurant choices together. The app syncs all members’ preferences and provides real-time collaborative decisions.
 <video src="https://github.com/user-attachments/assets/2a3d8cf3-e54f-4a71-a2da-6140f5a68c3e" controls width="600"></video>
 
+## Key Features
+
+- **Food Profile Setup:**  
+  Customize your food preferences, cuisines, and dislikes to build a personal taste profile.
+
+- **Team Creation:**  
+  Form teams with friends to collaboratively vote and decide where to eat.
+
+- **Smart Recommendations (coming soon):**  
+  The app uses team data and individual preferences to suggest optimal dining options.
+
+- **User-Friendly Interface:**  
+  Clean UI designed for quick setup and efficient decision-making.
 
 
-[Short application description here]
-
-![Application Screenshot](path_to_screenshot.png)
-
-## Features
-
-- Feature 1: Brief description
-- Feature 2: Brief description
-- ...
-
-## Getting Started
-
-### Prerequisites
-
-- Android Studio [version, e.g., 4.2.1]
-- Minimum Android SDK Version [e.g., 21]
-
-### Installation
-
-[Installation link here]
