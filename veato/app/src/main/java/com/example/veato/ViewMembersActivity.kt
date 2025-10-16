@@ -20,6 +20,7 @@ class ViewMembersActivity : AppCompatActivity() {
     private lateinit var teamId: String
     private lateinit var adapter: MembersAdapter
     private val memberList = mutableListOf<String>()
+    private var leaderEmail: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,9 +31,8 @@ class ViewMembersActivity : AppCompatActivity() {
         val recycler = findViewById<RecyclerView>(R.id.recyclerMembers)
         val inputEmail = findViewById<EditText>(R.id.editEmail)
         val btnAdd = findViewById<Button>(R.id.btnAddMember)
-
         recycler.layoutManager = LinearLayoutManager(this)
-        adapter = MembersAdapter(memberList) { email ->
+        adapter = MembersAdapter(memberList, leaderEmail = leaderEmail) { email ->
             removeMemberByEmail(email)
         }
         recycler.adapter = adapter
@@ -53,30 +53,79 @@ class ViewMembersActivity : AppCompatActivity() {
         db.collection("teams").document(teamId).get()
             .addOnSuccessListener { doc ->
                 val memberUids = doc.get("members") as? List<String> ?: listOf()
-                memberList.clear()
 
                 if (memberUids.isEmpty()) {
+                    memberList.clear()
                     adapter.notifyDataSetChanged()
                     return@addOnSuccessListener
                 }
 
-                // Fetch each user's email
-                for (uid in memberUids) {
-                    db.collection("users").document(uid).get()
-                        .addOnSuccessListener { userDoc ->
-                            val email = userDoc.getString("email") ?: uid // fallback if missing
-                            memberList.add(email)
-                            adapter.notifyDataSetChanged()
+                // 🔹 Get leaderId
+                val leaderId = doc.getString("leaderId") ?: ""
+
+                if (leaderId.isNotEmpty()) {
+                    // 🔹 Fetch leader email first
+                    db.collection("users").document(leaderId).get()
+                        .addOnSuccessListener { leaderDoc ->
+                            leaderEmail = leaderDoc.getString("email") ?: ""
+
+                            val tempList = mutableListOf<String>()
+
+                            // 🔹 Fetch member emails
+                            for (uid in memberUids) {
+                                db.collection("users").document(uid).get()
+                                    .addOnSuccessListener { userDoc ->
+                                        val email = userDoc.getString("email") ?: uid
+                                        tempList.add(email)
+
+                                        // Wait until all loaded
+                                        if (tempList.size == memberUids.size) {
+                                            // Sort → leader first
+                                            val sortedList = tempList.sortedWith(
+                                                compareByDescending { it == leaderEmail }
+                                            )
+
+                                            memberList.clear()
+                                            memberList.addAll(sortedList)
+
+                                            // 🟣 Reinitialize adapter now that leaderEmail is known
+                                            val recycler = findViewById<RecyclerView>(R.id.recyclerMembers)
+                                            adapter = MembersAdapter(memberList, leaderEmail) { email ->
+                                                removeMemberByEmail(email)
+                                            }
+                                            recycler.adapter = adapter
+                                        }
+                                    }
+                            }
                         }
+                } else {
+                    // Fallback (no leader)
+                    memberList.clear()
+                    for (uid in memberUids) {
+                        db.collection("users").document(uid).get()
+                            .addOnSuccessListener { userDoc ->
+                                val email = userDoc.getString("email") ?: uid
+                                memberList.add(email)
+                                adapter.notifyDataSetChanged()
+                            }
+                    }
                 }
             }
     }
+
+
 
     private fun addMemberByEmail(email: String) {
         val teamRef = db.collection("teams").document(teamId)
 
         if (email.isBlank()) {
             Toast.makeText(this, "Please enter an email", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // 🔍 Check if member already in the list (by email)
+        if (memberList.contains(email)) {
+            Toast.makeText(this, "This member is already in the team", Toast.LENGTH_SHORT).show()
             return
         }
 
