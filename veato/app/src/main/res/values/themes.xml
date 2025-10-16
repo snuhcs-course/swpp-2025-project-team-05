@@ -3,6 +3,25 @@
     <style name="Base.Theme.Veato" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/green_primary</item>
+        <item name="colorPrimaryContainer">@color/green_primary</item>
+        <item name="colorSecondary">@color/green_light</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorOnSecondary">@color/black</item>
+
+        <!-- Disable Material default button tint -->
+        <item name="colorButtonNormal">@color/green_primary</item>
+        <item name="android:colorButtonNormal">@color/green_primary</item>
+
+        <!-- Force MaterialButton to use your custom green style -->
+        <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>
+
+        <!-- Optional: Prevent unwanted default elevation/shadow tint -->
+        <item name="android:buttonStyle">@style/Widget.AppCompat.Button.Borderless</item>
+
+        <!-- Status bar and navigation bar colors (optional) -->
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:navigationBarColor">@color/white</item>
     </style>
 
     <style name="Theme.Veato" parent="Base.Theme.Veato" />
