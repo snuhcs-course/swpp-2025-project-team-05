@@ -12,7 +12,7 @@ In this step, users personalize their food preferences, dietary restrictions, an
 <video src="https://github.com/user-attachments/assets/4e66b7c3-5215-4d27-8258-9e5e903868fb" controls width="600"></video>
 
 ### Team Creation
-Users can create or join a team with friends to vote on restaurant choices together. The app syncs all members’ preferences and provides real-time collaborative decisions.
+Users can create or join a team with friends to vote on restaurant choices together. Team Leader can invite/remove members to ensure easy switch between teams, review team activities, and manage their collaborative sessions.
 <video src="https://github.com/user-attachments/assets/2a3d8cf3-e54f-4a71-a2da-6140f5a68c3e" controls width="600"></video>
 
 ## Key Features
