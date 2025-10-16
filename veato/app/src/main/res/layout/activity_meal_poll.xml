@@ -7,23 +7,17 @@
     android:padding="24dp">
 
     <TextView
-        android:id="@+id/tvWelcome"
+        android:id="@+id/tvPollTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome to Veato"
+        android:text="Meal Poll Page"
         android:textSize="20sp"
-        android:layout_marginBottom="24dp" />
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp" />
 
     <Button
-        android:id="@+id/btnMyTeams"
-        android:layout_width="match_parent"
+        android:id="@+id/btnBack"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Go to My Teams"
-        android:layout_marginBottom="16dp" />
-
-    <Button
-        android:id="@+id/btnLogout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Log out" />
+        android:text="Back to My Teams" />
 </LinearLayout>

@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">veato</string>
     <string name="default_web_client_id">YOUR_CLIENT_ID_FROM_JSON</string>
+    <string name="create_new_team">Create New Team</string>
+    <string name="enter_team_name">Enter team name</string>
+    <string name="create_team">Create Team</string>
+
 </resources>
