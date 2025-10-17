@@ -14,7 +14,8 @@ fun <T> MultiSelectChipGroup(
     onSelectionChange: (List<T>) -> Unit,
     modifier: Modifier = Modifier,
     itemLabel: (T) -> String,
-    itemsPerRow: Int = 2
+    itemsPerRow: Int = 2,
+    enabled: Boolean = true
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -30,12 +31,14 @@ fun <T> MultiSelectChipGroup(
                     FilterChip(
                         selected = isSelected,
                         onClick = {
-                            val newSelection = if (isSelected) {
-                                selectedItems - item
-                            } else {
-                                selectedItems + item
+                            if (enabled) {
+                                val newSelection = if (isSelected) {
+                                    selectedItems - item
+                                } else {
+                                    selectedItems + item
+                                }
+                                onSelectionChange(newSelection)
                             }
-                            onSelectionChange(newSelection)
                         },
                         label = {
                             Text(
