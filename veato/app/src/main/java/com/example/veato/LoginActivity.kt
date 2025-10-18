@@ -55,12 +55,13 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        // If already logged in, go straight to main
-        auth.currentUser?.let {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            // already logged in → go to MainActivity
             startActivity(Intent(this, MainActivity::class.java))
             finish()
-            }
         }
+    }
 
     private fun login() {
         val email = binding.etEmail.text?.toString()?.trim().orEmpty()

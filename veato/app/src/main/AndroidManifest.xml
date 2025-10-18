@@ -27,8 +27,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
+
+        <activity android:name=".CreateTeamActivity" />
+        <activity android:name=".MyTeamsActivity" />
+        <activity android:name=".ViewMembersActivity" />
+        <activity android:name=".MealPollActivity" />
 
     </application>
 
