@@ -6,7 +6,9 @@ import kotlinx.serialization.json.Json
 
 @Serializable
 data class UserProfile(
-    val userId: String,
+    val userId: String = "",
+    val userName: String = "",
+    val fullName: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val hardConstraints: HardConstraints = HardConstraints.EMPTY,

@@ -18,7 +18,8 @@ fun PreferenceSlider(
     label: String? = null,
     valueLabel: String? = null,
     startLabel: String? = null,
-    endLabel: String? = null
+    endLabel: String? = null,
+    enabled: Boolean = true
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
@@ -58,7 +59,8 @@ fun PreferenceSlider(
                 thumbColor = MaterialTheme.colorScheme.primary,
                 activeTrackColor = MaterialTheme.colorScheme.primary,
                 inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            ),
+            enabled = enabled
         )
 
         // Start and end labels

@@ -16,4 +16,10 @@
         android:text="Log out"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnProfile"
+        android:text="View Profile"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/btnLogout" app:layout_constraintEnd_toEndOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
