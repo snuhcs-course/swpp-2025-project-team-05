@@ -6,7 +6,6 @@ import com.example.veato.data.model.Allergen
 import com.example.veato.data.model.CuisineType
 import com.example.veato.data.model.DietaryType
 import com.example.veato.data.model.SpiceLevel
-import com.example.veato.data.model.UserProfile
 import com.example.veato.data.repository.UserProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

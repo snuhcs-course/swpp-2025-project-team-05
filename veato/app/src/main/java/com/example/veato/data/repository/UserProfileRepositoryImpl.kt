@@ -2,13 +2,15 @@ package com.example.veato.data.repository
 
 import com.example.veato.data.local.ProfileLocalDataSource
 import com.example.veato.data.model.UserProfile
+import com.example.veato.data.remote.ProfileRemoteDataSource
 import kotlinx.coroutines.flow.Flow
 
 /**
  * Implementation of UserProfileRepository
  */
 class UserProfileRepositoryImpl(
-    private val localDataSource: ProfileLocalDataSource
+    private val localDataSource: ProfileLocalDataSource,
+    private val remoteDataSource: ProfileRemoteDataSource
 ) : UserProfileRepository {
 
     override suspend fun saveProfile(profile: UserProfile): Result<Unit> {
@@ -26,7 +28,9 @@ class UserProfileRepositoryImpl(
 
     override suspend fun getProfile(userId: String): UserProfile? {
         return try {
-            localDataSource.get(userId)
+            val profile = remoteDataSource.download(userId)
+            if(profile != null )localDataSource.update(profile)
+            profile
         } catch (e: Exception) {
             null
         }
@@ -41,6 +45,7 @@ class UserProfileRepositoryImpl(
             if (!profile.validate()) {
                 Result.failure(IllegalArgumentException("Invalid profile data"))
             } else {
+                remoteDataSource.upload(profile)
                 localDataSource.update(profile)
                 Result.success(Unit)
             }

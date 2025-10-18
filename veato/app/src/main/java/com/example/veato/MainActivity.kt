@@ -3,6 +3,7 @@ package com.example.veato.ui.main
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.example.veato.ProfileActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.example.veato.databinding.ActivityMainBinding
 import com.example.veato.ui.auth.LoginActivity
@@ -22,6 +23,13 @@ class MainActivity : AppCompatActivity() {
             i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(i)
             finish()
+        }
+
+        binding.btnProfile.setOnClickListener {
+            val i = Intent(this, ProfileActivity::class.java)
+            startActivity(i)
+
+
         }
     }
 }

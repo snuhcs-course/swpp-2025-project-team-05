@@ -35,6 +35,7 @@ import com.example.veato.data.model.CuisineType
 import com.example.veato.data.model.DietaryType
 import com.example.veato.data.model.SpiceLevel
 import com.example.veato.data.model.UserProfile
+import com.example.veato.data.remote.ProfileApiDataSource
 import com.example.veato.data.repository.UserProfileRepositoryImpl
 import com.example.veato.ui.components.MultiSelectChipGroup
 import com.example.veato.ui.components.PreferenceSlider
@@ -42,11 +43,6 @@ import com.example.veato.ui.profile.ProfileViewModel
 import com.example.veato.ui.profile.ProfileViewModelFactory
 import com.example.veato.ui.theme.VeatoTheme
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-
-
-private val db by lazy { Firebase.firestore }
 
 
 class ProfileActivity : ComponentActivity() {
@@ -76,26 +72,23 @@ fun ProfileScreen() {
     val viewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModelFactory(
             repository = UserProfileRepositoryImpl(
-                ProfileDataStoreImpl(context)
+                ProfileDataStoreImpl(context),
+                ProfileApiDataSource()
             ),
             userId = userId
         )
     )
     val state by viewModel.state.collectAsState()
 
-    // picture and name
     Column(Modifier
         .fillMaxSize()
         .padding(16.dp)) {
         Spacer(Modifier.height(24.dp))
 
-
-        NameIdPictureBox("TODO NAME", state.userProfile?.userId, state.userProfile != null)
         // name id picture
-
+        NameIdPictureBox(state.userProfile?.fullName, state.userProfile?.userName, state.userProfile != null)
 
         Spacer(Modifier.height(24.dp))
-
 
         // tab select button
         TabRow(selectedTabIndex = state.tab) {
@@ -125,7 +118,7 @@ fun ProfileScreen() {
 }
 
 @Composable
-private fun NameIdPictureBox(name: String? = "", userId: String? = "", available:Boolean = true) {
+private fun NameIdPictureBox(fullName: String? = "", userName: String? = "", available:Boolean = true) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -140,9 +133,9 @@ private fun NameIdPictureBox(name: String? = "", userId: String? = "", available
                 .background(Color.LightGray)
         )
         Column {
-            Text( if (available) name ?: "USER_NAME" else "NOT AVAILABLE", style = MaterialTheme.typography.titleLarge)
+            Text( if (available) fullName ?: "FULL_NAME" else "NOT AVAILABLE", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
-            Text(if (available) "@${userId ?: "USER_ID"}" else userId ?: "NOT AVAILABLE", color = Color.Gray)
+            Text(if (available) "@${userName ?: "USER_NAME"}" else "NOT AVAILABLE", color = Color.Gray)
         }
     }
 }

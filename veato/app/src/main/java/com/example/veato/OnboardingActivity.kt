@@ -22,6 +22,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import com.example.veato.data.remote.ProfileApiDataSource
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -101,7 +102,8 @@ fun OnboardingApp(onComplete: (com.example.veato.data.model.UserProfile) -> Unit
     val viewModel: OnboardingViewModel = viewModel(
         factory = OnboardingViewModelFactory(
             repository = UserProfileRepositoryImpl(
-                ProfileDataStoreImpl(context)
+                ProfileDataStoreImpl(context),
+                ProfileApiDataSource()
             ),
             userId = userId
         )
