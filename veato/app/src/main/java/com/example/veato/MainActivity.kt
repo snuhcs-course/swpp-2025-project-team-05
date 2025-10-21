@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.example.veato.ProfileActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.example.veato.databinding.ActivityMainBinding
 import com.example.veato.ui.auth.LoginActivity
@@ -39,6 +40,10 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, MyTeamsActivity::class.java)
             startActivity(intent)
         }
+
+        binding.btnProfile.setOnClickListener {
+            val i = Intent(this, ProfileActivity::class.java)
+            startActivity(i)
+        }
     }
 }
-
