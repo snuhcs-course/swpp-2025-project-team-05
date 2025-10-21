@@ -15,14 +15,17 @@ import com.example.veato.R
 class MainActivity : AppCompatActivity() {
 
     private val auth = FirebaseAuth.getInstance()
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(R.layout.activity_main)
 
         val tvWelcome = findViewById<TextView>(R.id.tvWelcome)
         val btnLogout = findViewById<Button>(R.id.btnLogout)
         val btnMyTeams = findViewById<Button>(R.id.btnMyTeams)
+        val btnProfile = findViewById<Button>(R.id.btnMyProfile)
 
         val user = auth.currentUser
         tvWelcome.text = "Welcome to Veato, \n${user?.email ?: "User"}"
@@ -41,9 +44,9 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        binding.btnProfile.setOnClickListener {
-            val i = Intent(this, ProfileActivity::class.java)
-            startActivity(i)
+        btnProfile.setOnClickListener {
+            val intent = Intent(this, ProfileActivity::class.java)
+            startActivity(intent)
         }
     }
 }
