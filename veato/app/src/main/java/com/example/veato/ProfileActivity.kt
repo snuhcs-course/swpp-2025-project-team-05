@@ -68,7 +68,6 @@ fun ProfileScreen() {
     val context = LocalContext.current
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "demo_user"
 
-
     val viewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModelFactory(
             repository = UserProfileRepositoryImpl(

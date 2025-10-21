@@ -14,6 +14,7 @@ import com.example.veato.ui.main.MainActivity
 import com.example.veato.OnboardingActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import android.util.Log
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -32,15 +33,33 @@ class LoginActivity : AppCompatActivity() {
         binding.tvForgot.setOnClickListener { sendReset() }
     }
 
+//    override fun onStart() {
+//        super.onStart()
+//        // If already logged in, check if onboarding is complete
+//        auth.currentUser?.let { user ->
+//            lifecycleScope.launch {
+//                navigateBasedOnOnboardingStatus(user.uid)
+//            }
+//        }
+//    }
+
     override fun onStart() {
         super.onStart()
-        // If already logged in, check if onboarding is complete
-        auth.currentUser?.let { user ->
-            lifecycleScope.launch {
-                navigateBasedOnOnboardingStatus(user.uid)
-            }
+
+        val currentUser = auth.currentUser
+
+        if (currentUser == null) {
+            Log.d("AuthDebug", "No logged-in user → stay on LoginActivity")
+            return
+        }
+
+        Log.d("AuthDebug", "Logged-in user detected: ${currentUser.uid}")
+
+        lifecycleScope.launch {
+            navigateBasedOnOnboardingStatus(currentUser.uid)
         }
     }
+
 
     private suspend fun navigateBasedOnOnboardingStatus(userId: String) {
         try {
