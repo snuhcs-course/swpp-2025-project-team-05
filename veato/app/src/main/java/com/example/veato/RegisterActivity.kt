@@ -11,6 +11,7 @@ import com.google.firebase.ktx.Firebase
 import com.example.veato.databinding.ActivityRegisterBinding
 import com.example.veato.model.User
 import com.example.veato.ui.main.MainActivity
+import com.example.veato.OnboardingActivity
 import com.google.firebase.firestore.FieldValue
 
 class RegisterActivity : AppCompatActivity() {
@@ -76,7 +77,7 @@ class RegisterActivity : AppCompatActivity() {
 
                     null
                 }.addOnSuccessListener {
-                    startActivity(Intent(this, MainActivity::class.java))
+                    startActivity(Intent(this, OnboardingActivity::class.java))
                     finish()
                 }.addOnFailureListener { e ->
                     // Rollback auth account if username collision happens
