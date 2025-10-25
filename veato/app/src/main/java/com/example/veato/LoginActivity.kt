@@ -1,36 +1,25 @@
 package com.example.veato.ui.auth
-import com.example.veato.R
 
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.veato.databinding.ActivityLoginBinding
-import com.example.veato.ui.main.MainActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-
-import com.android.volley.Request
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
-import org.json.JSONObject
-
-// Google Sign in
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.firebase.auth.GoogleAuthProvider
+import com.example.veato.databinding.ActivityLoginBinding
+import com.example.veato.ui.main.MainActivity
+import com.example.veato.OnboardingActivity
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import android.util.Log
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private val auth by lazy { FirebaseAuth.getInstance() }
-    private lateinit var googleSignInClient: GoogleSignInClient
-    private val RC_GOOGLE_SIGN_IN = 1001
+    private val db by lazy { Firebase.firestore }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,25 +29,54 @@ class LoginActivity : AppCompatActivity() {
         binding.btnLogin.setOnClickListener { login() }
         binding.tvGotoSignup.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
-            }
+        }
         binding.tvForgot.setOnClickListener { sendReset() }
-
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id)) // from google-services.json
-            .requestEmail()
-            .build()
-
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
-
-        binding.btnGoogle.setOnClickListener { signInWithGoogle() }
     }
+
+//    override fun onStart() {
+//        super.onStart()
+//        // If already logged in, check if onboarding is complete
+//        auth.currentUser?.let { user ->
+//            lifecycleScope.launch {
+//                navigateBasedOnOnboardingStatus(user.uid)
+//            }
+//        }
+//    }
 
     override fun onStart() {
         super.onStart()
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null) {
-            // already logged in → go to MainActivity
-            startActivity(Intent(this, MainActivity::class.java))
+
+        val currentUser = auth.currentUser
+
+        if (currentUser == null) {
+            Log.d("AuthDebug", "No logged-in user → stay on LoginActivity")
+            return
+        }
+
+        Log.d("AuthDebug", "Logged-in user detected: ${currentUser.uid}")
+
+        lifecycleScope.launch {
+            navigateBasedOnOnboardingStatus(currentUser.uid)
+        }
+    }
+
+
+    private suspend fun navigateBasedOnOnboardingStatus(userId: String) {
+        try {
+            val userDoc = db.collection("users").document(userId).get().await()
+            val hasCompletedOnboarding = userDoc.getBoolean("onboardingCompleted") ?: false
+
+            if (hasCompletedOnboarding) {
+                // Go to main app if onboarding already completed
+                startActivity(Intent(this, MainActivity::class.java))
+            } else {
+                // Go to onboarding if not completed
+                startActivity(Intent(this, OnboardingActivity::class.java))
+            }
+            finish()
+        } catch (e: Exception) {
+            // If error checking status, default to onboarding
+            startActivity(Intent(this, OnboardingActivity::class.java))
             finish()
         }
     }
@@ -80,119 +98,36 @@ class LoginActivity : AppCompatActivity() {
                 binding.progress.visibility = View.GONE
                 binding.btnLogin.isEnabled = true
                 if (task.isSuccessful) {
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
+                    // Check onboarding status after successful login
+                    val userId = auth.currentUser?.uid
+                    if (userId != null) {
+                        lifecycleScope.launch {
+                            navigateBasedOnOnboardingStatus(userId)
+                        }
+                    }
                 } else {
                     toast(task.exception?.localizedMessage ?: "Login failed")
                 }
             }
     }
 
+    private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+
     private fun sendReset() {
         val email = binding.etEmail.text?.toString()?.trim().orEmpty()
-
-        if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (email.isEmpty() || !email.contains("@")) {
             toast("Enter a valid email to receive a reset link")
             return
         }
-
         binding.progress.visibility = View.VISIBLE
         binding.btnLogin.isEnabled = false
 
-        // Change this to backend URL (Render)
-        val url = "https://veato-1.onrender.com/check-email"
-        val json = JSONObject().apply { put("email", email) }
-
-        val request = JsonObjectRequest(
-            Request.Method.POST, url, json,
-            { response ->
-                val exists = response.optBoolean("exists", false)
+        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+            .addOnCompleteListener {
                 binding.progress.visibility = View.GONE
                 binding.btnLogin.isEnabled = true
-
-                if (!exists) {
-                    toast("Email not registered")
-                } else {
-                    FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                toast("Reset link sent to your email")
-                            } else {
-                                toast("Failed: ${task.exception?.localizedMessage}")
-                            }
-                    }
-                }
-            },
-            { error ->
-                binding.progress.visibility = View.GONE
-                binding.btnLogin.isEnabled = true
-                toast("Server error: ${error.localizedMessage}")
-            }
-        )
-        Volley.newRequestQueue(this).add(request)
-    }
-
-    private fun signInWithGoogle() {
-        googleSignInClient.signOut().addOnCompleteListener {
-            val signInIntent = googleSignInClient.signInIntent
-            startActivityForResult(signInIntent, RC_GOOGLE_SIGN_IN)
-        }
-    }
-
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == RC_GOOGLE_SIGN_IN) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                firebaseAuthWithGoogle(account.idToken!!)
-            } catch (e: ApiException) {
-                toast("Google sign-in failed: ${e.message}")
-            }
-        }
-    }
-
-    private fun firebaseAuthWithGoogle(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        binding.progress.visibility = View.VISIBLE
-
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener(this) { task ->
-                binding.progress.visibility = View.GONE
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    // Save to Firestore if first login
-                    checkAndSaveUser(user)
-                } else {
-                    toast("Authentication Failed: ${task.exception?.message}")
-                }
+                // Always show a generic message (prevents user enumeration)
+                toast("Reset link has been sent if registered")
             }
     }
-
-    private fun checkAndSaveUser(user: FirebaseUser?) {
-        if (user == null) return
-
-        val db = Firebase.firestore
-        val usersRef = db.collection("users").document(user.uid)
-
-        usersRef.get().addOnSuccessListener { doc ->
-            if (!doc.exists()) {
-                val profile = mapOf(
-                    "uid" to user.uid,
-                    "fullName" to (user.displayName ?: ""),
-                    "username" to (user.email?.substringBefore("@") ?: ""),
-                    "email" to (user.email ?: ""),
-                    "createdAt" to FieldValue.serverTimestamp()
-                )
-                usersRef.set(profile)
-            }
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
-        }
-    }
-
-    private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 }
