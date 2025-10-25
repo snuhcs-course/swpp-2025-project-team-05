@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Veato" >
         <activity
+            android:name=".VoteSettingActivity"
+            android:exported="false" />
+        <activity
             android:name=".ProfileActivity"
             android:exported="false" />
         <activity
