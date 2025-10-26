@@ -64,15 +64,9 @@ class OnboardingActivity : ComponentActivity() {
                 "dietaryRestrictions" to profile.hardConstraints.dietaryRestrictions.map { it.name },
                 "allergies" to profile.hardConstraints.allergies.map { it.name },
                 "avoidIngredients" to profile.hardConstraints.avoidIngredients.toList(),
-                "budgetCap" to profile.hardConstraints.budgetCap,
                 // Soft Preferences - convert enums to strings
                 "favoriteCuisines" to profile.softPreferences.favoriteCuisines.map { it.name },
                 "spiceTolerance" to profile.softPreferences.spiceTolerance.name,
-                "heavinessPreference" to profile.softPreferences.heavinessPreference.name,
-                "typicalBudgetRange" to hashMapOf(
-                    "minPrice" to profile.softPreferences.typicalBudgetRange.minPrice,
-                    "maxPrice" to profile.softPreferences.typicalBudgetRange.maxPrice
-                ),
                 "mealTypePreferences" to profile.softPreferences.mealTypePreferences.map { it.name },
                 "portionPreference" to (profile.softPreferences.portionPreference?.name ?: "MEDIUM")
             )
@@ -160,17 +154,6 @@ fun OnboardingApp(onComplete: (com.example.veato.data.model.UserProfile) -> Unit
             )
         }
 
-        is com.example.veato.ui.onboarding.OnboardingScreen.BudgetCap -> {
-            BudgetCapScreen(
-                budgetCap = profile.hardConstraints.budgetCap,
-                onUpdate = { viewModel.updateBudgetCap(it) },
-                currentStep = state.currentStepNumber,
-                totalSteps = state.totalSteps,
-                onNext = { viewModel.nextScreen() },
-                onPrevious = { viewModel.previousScreen() }
-            )
-        }
-
         is com.example.veato.ui.onboarding.OnboardingScreen.FavoriteCuisines -> {
             FavoriteCuisinesScreen(
                 selectedCuisines = profile.softPreferences.favoriteCuisines,
@@ -186,28 +169,6 @@ fun OnboardingApp(onComplete: (com.example.veato.data.model.UserProfile) -> Unit
             SpiceToleranceScreen(
                 spiceLevel = profile.softPreferences.spiceTolerance,
                 onUpdate = { viewModel.updateSpiceTolerance(it) },
-                currentStep = state.currentStepNumber,
-                totalSteps = state.totalSteps,
-                onNext = { viewModel.nextScreen() },
-                onPrevious = { viewModel.previousScreen() }
-            )
-        }
-
-        is com.example.veato.ui.onboarding.OnboardingScreen.HeavinessPreference -> {
-            HeavinessPreferenceScreen(
-                heavinessLevel = profile.softPreferences.heavinessPreference,
-                onUpdate = { viewModel.updateHeavinessPreference(it) },
-                currentStep = state.currentStepNumber,
-                totalSteps = state.totalSteps,
-                onNext = { viewModel.nextScreen() },
-                onPrevious = { viewModel.previousScreen() }
-            )
-        }
-
-        is com.example.veato.ui.onboarding.OnboardingScreen.BudgetPreference -> {
-            BudgetPreferenceScreen(
-                budgetRange = profile.softPreferences.typicalBudgetRange,
-                onUpdate = { viewModel.updateBudgetRange(it) },
                 currentStep = state.currentStepNumber,
                 totalSteps = state.totalSteps,
                 onNext = { viewModel.nextScreen() },

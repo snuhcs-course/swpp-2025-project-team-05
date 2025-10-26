@@ -83,15 +83,9 @@ class ProfileApiDataSource(
                 "dietaryRestrictions" to profile.hardConstraints.dietaryRestrictions.map { it.name },
                 "allergies" to profile.hardConstraints.allergies.map { it.name },
                 "avoidIngredients" to profile.hardConstraints.avoidIngredients.toList(),
-                "budgetCap" to profile.hardConstraints.budgetCap,
                 // Soft Preferences - convert enums to strings
                 "favoriteCuisines" to profile.softPreferences.favoriteCuisines.map { it.name },
                 "spiceTolerance" to profile.softPreferences.spiceTolerance.name,
-                "heavinessPreference" to profile.softPreferences.heavinessPreference.name,
-                "typicalBudgetRange" to hashMapOf(
-                    "minPrice" to profile.softPreferences.typicalBudgetRange.minPrice,
-                    "maxPrice" to profile.softPreferences.typicalBudgetRange.maxPrice
-                ),
                 "mealTypePreferences" to profile.softPreferences.mealTypePreferences.map { it.name },
                 "portionPreference" to (profile.softPreferences.portionPreference?.name ?: "MEDIUM")
             )
