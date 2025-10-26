@@ -8,5 +8,6 @@ data class Poll (
     val teamId: String = "",
     val teamName: String = "",
     val isOpen: Boolean = false,
-    val candidates: List<Candidate> = listOf()
+    val candidates: List<Candidate> = listOf(),
+    val results: List<Candidate> = listOf()
 )

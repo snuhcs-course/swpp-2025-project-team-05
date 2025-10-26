@@ -12,8 +12,9 @@ class PollRepositoryDemo : PollRepository{
             duration = 180,
             teamId = "dummy_team_abc",
             teamName = "The A-Team",
-            isOpen = true,
-            candidates = listOf(Candidate("Pizza"),Candidate("Sushi"),Candidate("Burger"),Candidate("Spaghetti"),Candidate("Bibimbap"))
+            isOpen = false,
+            candidates = listOf(Candidate("Pizza"),Candidate("Sushi"),Candidate("Burger"),Candidate("Spaghetti"),Candidate("Bibimbap")),
+            results = listOf(Candidate("Pizza"),Candidate("Sushi"),Candidate("Burger"),Candidate("Spaghetti"),Candidate("Bibimbap"))
         )
     }
 
