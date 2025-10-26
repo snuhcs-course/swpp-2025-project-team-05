@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun PollResultScreen(
     state: PollScreenState,
-    onBackToMain: () -> Unit = {}
+    onBackToMain: () -> Unit
 ) {
     val poll = state.poll ?: return
 

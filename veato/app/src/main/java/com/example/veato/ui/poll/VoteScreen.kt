@@ -1,5 +1,6 @@
 package com.example.veato.ui.poll
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,11 +21,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -32,9 +39,26 @@ fun VoteScreen(
     state: PollScreenState,
     onSelect: (Int) -> Unit,
     onVote: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onTimeOver: () -> Unit
 ) {
     val poll = state.poll ?: return
+
+    //for demonstration only.
+    var timeLeft by remember { mutableIntStateOf(60) }
+    LaunchedEffect(Unit) {
+        while (timeLeft > 0) {
+            delay(1000)
+            timeLeft--
+        }
+        // 시간 종료 시
+        onTimeOver()
+    }
+    val minutes = timeLeft / 60
+    val seconds = timeLeft % 60
+    val formattedTime = String.format("%d:%02d", minutes, seconds)
+
+
 
     Column(
         modifier = Modifier
@@ -57,7 +81,7 @@ fun VoteScreen(
                     .background(Color(0xFF3DD1A0), RoundedCornerShape(8.dp))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Text("0:00", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(formattedTime, color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -76,6 +100,15 @@ fun VoteScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                Text(
+                    text = "Vote from these 5 recommended menus.",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+
+
                 poll.candidates.forEachIndexed { index, candidate ->
                     CandidateButton(
                         name = candidate.name,
