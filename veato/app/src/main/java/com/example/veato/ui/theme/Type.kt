@@ -7,36 +7,38 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Typography set inspired by Figma design
+// Typography set - Clean and professional
 val VeatoTypography = Typography(
     // Display - For large branding text like "Veato" logo
     displayLarge = TextStyle(
-        fontFamily = FontFamily.Cursive, // Italic/cursive style for "Veato"
-        fontWeight = FontWeight.Normal,
-        fontStyle = FontStyle.Italic,
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 57.sp,
         lineHeight = 64.sp,
-        letterSpacing = (-0.25).sp
+        letterSpacing = (-0.5).sp  // Tighter letter spacing for elegance
     ),
 
     // Headlines - For screen titles
     headlineLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.SemiBold,  // Less heavy than Bold
         fontSize = 32.sp,
-        lineHeight = 40.sp
+        lineHeight = 40.sp,
+        letterSpacing = (-0.25).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 28.sp,
-        lineHeight = 36.sp
+        lineHeight = 36.sp,
+        letterSpacing = 0.sp
     ),
     headlineSmall = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.Medium,  // Even lighter for subtlety
         fontSize = 24.sp,
-        lineHeight = 32.sp
+        lineHeight = 32.sp,
+        letterSpacing = 0.sp
     ),
 
     // Titles - For section headers
