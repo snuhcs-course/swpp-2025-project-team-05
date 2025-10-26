@@ -1,6 +1,7 @@
 package com.example.veato
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -38,8 +39,13 @@ class VoteSettingActivity : ComponentActivity() {
                     VoteSettingScreen(
                         teamName = teamName,
                         onStartVoting = { title, duration ->
-                            // 나중에 백엔드 API 호출 예정
+                            // TODO: 나중에 백엔드 API 호출해서 실제 pollId를 받아와야 함
                             println("Start voting: team=$teamName, title=$title, duration=$duration")
+                            val pollId = "temp_poll_id" // 임시 pollId
+                            val intent = Intent(this, VoteSessionActivity::class.java)
+                            intent.putExtra("pollId", pollId)
+                            startActivity(intent)
+                            finish()
                         }
                     )
                 }

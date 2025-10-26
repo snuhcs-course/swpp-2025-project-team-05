@@ -70,4 +70,12 @@ class PollViewModel(
         }
     }
 
+    //for demonstration only
+    fun closePoll() {
+        _state.update { current ->
+            val closedPoll = current.poll?.copy(isOpen = false)
+            current.copy(poll = closedPoll)
+        }
+    }
+
 }

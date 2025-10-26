@@ -1,6 +1,7 @@
 package com.example.veato
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.veato.data.repository.PollRepositoryDemo
+import com.example.veato.ui.main.MainActivity
 import com.example.veato.ui.poll.PollResultScreen
 import com.example.veato.ui.poll.PollViewModel
 import com.example.veato.ui.poll.PollViewModelFactory
@@ -72,7 +74,15 @@ fun PollSessionScreen(
         }
     } else {
         if (state.poll?.isOpen == false) {
-            PollResultScreen(state = state)
+            PollResultScreen(
+                state = state,
+                onBackToMain = {
+                    val intent = Intent(context, MainActivity::class.java)
+                    context.startActivity(intent)
+                    (context as? VoteSessionActivity)?.finish()
+                }
+
+            )
         } else if (state.poll?.isOpen == true) {
             VoteScreen(
                 state = state,
@@ -80,7 +90,8 @@ fun PollSessionScreen(
                     if (!state.voted) viewModel.modifySelectedIndices(index)
                 },
                 onVote = viewModel::sendBallot,
-                onCancel = viewModel::revokeBallot
+                onCancel = viewModel::revokeBallot,
+                onTimeOver = viewModel::closePoll
             )
         }
     }

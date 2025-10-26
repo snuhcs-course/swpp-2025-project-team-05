@@ -11,8 +11,8 @@ class PollRepositoryDemo : PollRepository{
             startTime = com.google.firebase.Timestamp.now(),
             duration = 180,
             teamId = "dummy_team_abc",
-            teamName = "The A-Team",
-            isOpen = false,
+            teamName = "swpp team",
+            isOpen = true,
             candidates = listOf(Candidate("Pizza"),Candidate("Sushi"),Candidate("Burger"),Candidate("Spaghetti"),Candidate("Bibimbap")),
             results = listOf(Candidate("Pizza"),Candidate("Sushi"),Candidate("Burger"),Candidate("Spaghetti"),Candidate("Bibimbap"))
         )
