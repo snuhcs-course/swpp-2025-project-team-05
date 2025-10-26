@@ -6,8 +6,6 @@ import kotlinx.serialization.Serializable
 data class SoftPreferences(
     val favoriteCuisines: List<CuisineType> = emptyList(),
     val spiceTolerance: SpiceLevel = SpiceLevel.MEDIUM,
-    val heavinessPreference: HeavinessLevel = HeavinessLevel.MEDIUM,
-    val typicalBudgetRange: BudgetRange = BudgetRange.MODERATE,
     val mealTypePreferences: List<MealType> = emptyList(),
     val portionPreference: PortionSize? = null // Nullable - no preference if null
 ) {
@@ -17,7 +15,6 @@ data class SoftPreferences(
     fun hasPreferences(): Boolean {
         return favoriteCuisines.isNotEmpty() ||
                 spiceTolerance != SpiceLevel.MEDIUM ||
-                heavinessPreference != HeavinessLevel.MEDIUM ||
                 mealTypePreferences.isNotEmpty() ||
                 portionPreference != null
     }

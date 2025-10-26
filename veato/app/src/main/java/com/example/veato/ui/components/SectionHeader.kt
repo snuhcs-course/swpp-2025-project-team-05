@@ -52,27 +52,19 @@ fun ConstraintWarningBadge(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.errorContainer,
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f),
         shape = MaterialTheme.shapes.small
     ) {
-        Row(
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
             modifier = Modifier.padding(
                 horizontal = Dimensions.paddingMedium,
                 vertical = Dimensions.paddingSmall
-            ),
-            horizontalArrangement = Arrangement.spacedBy(Dimensions.paddingSmall)
-        ) {
-            Text(
-                text = "🚫",
-                style = MaterialTheme.typography.labelMedium
             )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-        }
+        )
     }
 }
 
@@ -82,26 +74,18 @@ fun PreferenceInfoCard(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.primaryContainer,
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
         shape = MaterialTheme.shapes.small
     ) {
-        Row(
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.padding(
                 horizontal = Dimensions.paddingMedium,
                 vertical = Dimensions.paddingSmall
-            ),
-            horizontalArrangement = Arrangement.spacedBy(Dimensions.paddingSmall)
-        ) {
-            Text(
-                text = "💚",
-                style = MaterialTheme.typography.labelMedium
             )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
+        )
     }
 }

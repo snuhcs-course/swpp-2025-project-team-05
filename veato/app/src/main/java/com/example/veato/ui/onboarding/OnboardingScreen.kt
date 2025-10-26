@@ -42,17 +42,9 @@ sealed class OnboardingScreen(
         isSkippable = true
     )
 
-    data object BudgetCap : OnboardingScreen(
-        route = "budget_cap",
-        stepNumber = 4,
-        title = "Budget Cap",
-        description = "Maximum amount per meal - we won't suggest anything above this",
-        isSkippable = true
-    )
-
     data object FavoriteCuisines : OnboardingScreen(
         route = "favorite_cuisines",
-        stepNumber = 5,
+        stepNumber = 4,
         title = "Favorite Cuisines",
         description = "What do you usually enjoy?",
         isSkippable = true
@@ -60,31 +52,15 @@ sealed class OnboardingScreen(
 
     data object SpiceTolerance : OnboardingScreen(
         route = "spice_tolerance",
-        stepNumber = 6,
+        stepNumber = 5,
         title = "Spice Preference",
         description = "How spicy do you like your food?",
         isSkippable = true
     )
 
-    data object HeavinessPreference : OnboardingScreen(
-        route = "heaviness_preference",
-        stepNumber = 7,
-        title = "Meal Heaviness",
-        description = "Do you prefer light or filling meals?",
-        isSkippable = true
-    )
-
-    data object BudgetPreference : OnboardingScreen(
-        route = "budget_preference",
-        stepNumber = 8,
-        title = "Typical Budget",
-        description = "What's your usual budget range?",
-        isSkippable = true
-    )
-
     data object AdvancedPreferences : OnboardingScreen(
         route = "advanced_preferences",
-        stepNumber = 9,
+        stepNumber = 6,
         title = "Advanced Preferences",
         description = "Optional: Meal type, portion size, and more",
         isSkippable = true
@@ -92,7 +68,7 @@ sealed class OnboardingScreen(
 
     data object Summary : OnboardingScreen(
         route = "summary",
-        stepNumber = 10,
+        stepNumber = 7,
         title = "Review & Finish",
         description = "Review your preferences and start using Veato!",
         isSkippable = false
@@ -104,11 +80,8 @@ sealed class OnboardingScreen(
             DietaryRestrictions,
             Allergies,
             AvoidIngredients,
-            BudgetCap,
             FavoriteCuisines,
             SpiceTolerance,
-            HeavinessPreference,
-            BudgetPreference,
             AdvancedPreferences,
             Summary
         )

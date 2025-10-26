@@ -51,8 +51,8 @@ fun SummaryScreen(
             // Hard Constraints Section
             if (profile.hardConstraints.hasConstraints()) {
                 SummaryCard(
-                    title = "🚫 Hard Constraints",
-                    subtitle = "These will NEVER appear in recommendations"
+                    title = "Hard Constraints",
+                    subtitle = "These will never appear in recommendations"
                 ) {
                     if (profile.hardConstraints.dietaryRestrictions.isNotEmpty()) {
                         SummaryItem(
@@ -72,19 +72,13 @@ fun SummaryScreen(
                             value = profile.hardConstraints.avoidIngredients.joinToString()
                         )
                     }
-                    if (profile.hardConstraints.budgetCap != null) {
-                        SummaryItem(
-                            label = "Budget Cap",
-                            value = "₩${profile.hardConstraints.budgetCap}"
-                        )
-                    }
                 }
                 Spacer(modifier = Modifier.height(Dimensions.paddingMedium))
             }
 
             // Soft Preferences Section
             SummaryCard(
-                title = "💚 Soft Preferences",
+                title = "Preferences",
                 subtitle = "Used to rank and prioritize recommendations"
             ) {
                 if (profile.softPreferences.favoriteCuisines.isNotEmpty()) {
@@ -96,14 +90,6 @@ fun SummaryScreen(
                 SummaryItem(
                     label = "Spice",
                     value = profile.softPreferences.spiceTolerance.displayName
-                )
-                SummaryItem(
-                    label = "Heaviness",
-                    value = profile.softPreferences.heavinessPreference.displayName
-                )
-                SummaryItem(
-                    label = "Budget Range",
-                    value = "₩${profile.softPreferences.typicalBudgetRange.minPrice / 1000}k - ₩${profile.softPreferences.typicalBudgetRange.maxPrice / 1000}k"
                 )
                 if (profile.softPreferences.mealTypePreferences.isNotEmpty()) {
                     SummaryItem(
