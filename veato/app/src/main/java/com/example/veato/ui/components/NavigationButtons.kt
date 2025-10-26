@@ -30,7 +30,9 @@ fun NavigationButtons(
         if (showPrevious) {
             OutlinedButton(
                 onClick = onPrevious,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(Dimensions.buttonHeightMedium),
                 contentPadding = PaddingValues(Dimensions.paddingMedium)
             ) {
                 Icon(
@@ -58,7 +60,9 @@ fun NavigationButtons(
             Button(
                 onClick = onNext,
                 enabled = nextEnabled,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(Dimensions.buttonHeightMedium),
                 contentPadding = PaddingValues(Dimensions.paddingMedium)
             ) {
                 Text(nextLabel)

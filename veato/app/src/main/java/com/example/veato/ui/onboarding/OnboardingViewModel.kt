@@ -54,17 +54,6 @@ class OnboardingViewModel(
         }
     }
 
-    fun updateBudgetCap(cap: Int?) {
-        _state.update { currentState ->
-            val updatedConstraints = currentState.profileDraft.hardConstraints.copy(
-                budgetCap = cap
-            )
-            currentState.copy(
-                profileDraft = currentState.profileDraft.copy(hardConstraints = updatedConstraints)
-            )
-        }
-    }
-
     // Update soft preferences
     fun updateFavoriteCuisines(cuisines: List<CuisineType>) {
         _state.update { currentState ->
@@ -81,28 +70,6 @@ class OnboardingViewModel(
         _state.update { currentState ->
             val updatedPreferences = currentState.profileDraft.softPreferences.copy(
                 spiceTolerance = level
-            )
-            currentState.copy(
-                profileDraft = currentState.profileDraft.copy(softPreferences = updatedPreferences)
-            )
-        }
-    }
-
-    fun updateHeavinessPreference(level: HeavinessLevel) {
-        _state.update { currentState ->
-            val updatedPreferences = currentState.profileDraft.softPreferences.copy(
-                heavinessPreference = level
-            )
-            currentState.copy(
-                profileDraft = currentState.profileDraft.copy(softPreferences = updatedPreferences)
-            )
-        }
-    }
-
-    fun updateBudgetRange(range: BudgetRange) {
-        _state.update { currentState ->
-            val updatedPreferences = currentState.profileDraft.softPreferences.copy(
-                typicalBudgetRange = range
             )
             currentState.copy(
                 profileDraft = currentState.profileDraft.copy(softPreferences = updatedPreferences)
@@ -207,17 +174,7 @@ class OnboardingViewModel(
         val currentState = _state.value
         val errors = mutableListOf<String>()
 
-        when (currentState.currentScreen) {
-            OnboardingScreen.BudgetCap -> {
-                val cap = currentState.profileDraft.hardConstraints.budgetCap
-                if (cap != null && cap <= 0) {
-                    errors.add("Budget cap must be positive")
-                }
-            }
-            else -> {
-                // Other screens don't have specific validation for now
-            }
-        }
+        // No specific validation needed for current screens
 
         _state.update { it.copy(validationErrors = errors) }
         return errors.isEmpty()
