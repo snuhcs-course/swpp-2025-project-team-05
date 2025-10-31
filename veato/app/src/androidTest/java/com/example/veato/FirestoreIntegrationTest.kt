@@ -15,7 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * 🔍 Firestore Integration Tests
+ * Firestore Integration Test
  * Features tested:
  * - Create team (leader auto-added)
  * - View members
@@ -271,6 +271,10 @@ class FirestoreIntegrationTest {
         } catch (e: Exception) {
             println("Unauthenticated user blocked as expected. Message: ${e.message}")
             assertThat(e.message?.contains("PERMISSION_DENIED")).isTrue()
+            val msg = e.message ?: "No error message"
+            println("Firestore unauthenticated write failed as expected. Message: $msg")
+            assertThat(e).isInstanceOf(Exception::class.java)
+            assertThat(msg).isNotEmpty()
         }
     }
 
