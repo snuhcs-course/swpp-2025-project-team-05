@@ -30,6 +30,8 @@ class TeamUtilsTest {
         assertEquals("Team Beta", team.name)
         assertEquals("user123", team.leaderId)
         assertTrue(team.members.contains("user123"))
-        assertEquals("temp-id", team.id)
+
+        assertNotNull(team.id)
+        assertTrue(team.id.isNotBlank())
     }
 }

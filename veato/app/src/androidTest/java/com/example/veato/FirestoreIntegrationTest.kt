@@ -2,6 +2,7 @@ package com.example.veato
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.filters.MediumTest
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -21,7 +22,9 @@ import org.junit.runner.RunWith
  * - Leader/member can add/remove members
  * - Leader can start meal poll
  * - Query teams list
+ * - Block unauthenticated or unauthorized actions
  */
+@MediumTest
 @RunWith(AndroidJUnit4::class)
 class FirestoreIntegrationTest {
 
