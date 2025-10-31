@@ -2,6 +2,7 @@ package com.example.veato
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.filters.MediumTest
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.common.truth.Truth.assertThat
@@ -11,7 +12,11 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-
+/**
+ * Login Integration Tests
+ * - Verifies FirebaseAuth login, signup, and error-handling behaviors
+ */
+@MediumTest
 @RunWith(AndroidJUnit4::class)
 class LoginIntegrationTest {
 
@@ -19,7 +24,6 @@ class LoginIntegrationTest {
 
     @Before
     fun setup() {
-        // Initialize Firebase
         FirebaseApp.initializeApp(ApplicationProvider.getApplicationContext())
         auth = FirebaseAuth.getInstance()
     }

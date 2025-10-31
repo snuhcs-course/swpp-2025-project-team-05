@@ -2,6 +2,7 @@ package com.example.veato
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.LargeTest
 import com.google.common.truth.Truth.assertThat
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
@@ -22,6 +23,7 @@ import org.junit.runner.RunWith
  *    - The second member can directly add a new member (third user) by email/UID
  *  - Leader Leaving: Simulates the leader leaving the team, marking their departure without reassigning a new leader
  */
+@LargeTest
 @RunWith(AndroidJUnit4::class)
 class TeamEndToEndIntegrationTest {
     private lateinit var firestore: FirebaseFirestore

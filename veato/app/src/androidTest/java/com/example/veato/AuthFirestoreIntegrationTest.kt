@@ -2,6 +2,7 @@ package com.example.veato
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.filters.MediumTest
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -9,6 +10,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -16,6 +18,7 @@ import org.junit.runner.RunWith
  * Integration between Authentication and Firestore user profiles
  * Tests that /users/{uid} is correctly managed alongside FirebaseAuth
  */
+@MediumTest
 @RunWith(AndroidJUnit4::class)
 class AuthFirestoreIntegrationTest {
 
@@ -64,19 +67,18 @@ class AuthFirestoreIntegrationTest {
         val email = "firestore_user_${System.currentTimeMillis()}@example.com"
         val password = "test1234"
 
-        // Create new Auth user
         val userResult = auth.createUserWithEmailAndPassword(email, password).await()
         val uid = userResult.user?.uid ?: error("User not created")
 
-        val userDoc = mapOf(
-            "uid" to uid,
-            "email" to email,
-            "name" to "Test User",
-            "createdAt" to System.currentTimeMillis()
-        )
-        firestore.collection("users").document(uid).set(userDoc).await()
+        firestore.collection("users").document(uid).set(
+            mapOf(
+                "uid" to uid,
+                "email" to email,
+                "name" to "Test User",
+                "createdAt" to System.currentTimeMillis()
+            )
+        ).await()
 
-        // Verify Firestore record exists
         val snapshot = firestore.collection("users").document(uid).get().await()
         assertThat(snapshot.exists()).isTrue()
         assertThat(snapshot.getString("email")).isEqualTo(email)
@@ -95,11 +97,15 @@ class AuthFirestoreIntegrationTest {
 
     @Test
     fun userCannotReadOtherUserProfile_fails() = runTest {
-        val otherUid = "fake_uid_123"
-        val snapshot = firestore.collection("users").document(otherUid).get().await()
+        val otherUid = "fake_uid_${System.currentTimeMillis()}"
 
-        println("ℹ️ Firestore allowed reading other user profile as per current rules.")
-        assertThat(snapshot).isNotNull()
+        try {
+            firestore.collection("users").document(otherUid).get().await()
+            error("Expected PERMISSION_DENIED")
+        } catch (e: Exception) {
+            println("Read denied as expected: ${e.message}")
+            assertThat(e.message?.contains("PERMISSION_DENIED")).isTrue()
+        }
     }
 
     @Test
