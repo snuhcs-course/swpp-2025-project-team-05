@@ -28,6 +28,9 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            isTestCoverageEnabled = true
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
