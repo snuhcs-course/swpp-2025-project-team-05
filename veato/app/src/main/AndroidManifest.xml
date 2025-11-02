@@ -20,6 +20,12 @@
             android:name=".VoteSessionActivity"
             android:exported="false" />
         <activity
+            android:name=".VoteSettingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".VoteSessionActivity"
+            android:exported="false" />
+        <activity
             android:name=".ProfileActivity"
             android:exported="false" />
         <activity
