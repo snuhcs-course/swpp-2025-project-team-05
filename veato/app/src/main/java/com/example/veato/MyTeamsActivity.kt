@@ -67,8 +67,9 @@ class MyTeamsActivity : AppCompatActivity() {
     }
 
     private fun startMealPoll(team: Team) {
-        val intent = Intent(this, MealPollActivity::class.java)
+        val intent = Intent(this, VoteSettingActivity::class.java)
         intent.putExtra("teamId", team.id)
+        intent.putExtra("teamName", team.name)
         startActivity(intent)
     }
 
