@@ -49,10 +49,13 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -131,4 +134,17 @@ dependencies {
     // Truth assertions
     testImplementation("com.google.truth:truth:1.4.2")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.9.24")
+
+    // Android Instrumented Test Core
+    androidTestImplementation("androidx.test:core:1.5.0")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+
+    // JUnit for Android (Instrumented)
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+
+    // Espresso UI Testing (core + contrib)
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.5.1")
 }
