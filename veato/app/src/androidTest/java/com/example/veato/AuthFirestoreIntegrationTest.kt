@@ -10,13 +10,12 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
-import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
  * Integration between Authentication and Firestore user profiles
- * Tests that /users/{uid} is correctly managed alongside FirebaseAuth
+ * - Tests that /users/{uid} is correctly managed alongside FirebaseAuth
  */
 @MediumTest
 @RunWith(AndroidJUnit4::class)

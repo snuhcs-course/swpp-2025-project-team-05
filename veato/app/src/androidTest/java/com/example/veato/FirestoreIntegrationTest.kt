@@ -1,18 +1,19 @@
 package com.example.veato
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.MediumTest
+import androidx.test.core.app.ApplicationProvider
+import com.google.common.truth.Truth
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+
 
 /**
  * Firestore Integration Test
@@ -70,9 +71,9 @@ class FirestoreIntegrationTest {
         delay(1000)
 
         val snapshot = teams.document(teamId).get().await()
-        assertThat(snapshot.exists()).isTrue()
-        assertThat(snapshot.getString("leaderId")).isEqualTo(userId)
-        assertThat((snapshot.get("members") as List<*>)).contains(userId)
+        Truth.assertThat(snapshot.exists()).isTrue()
+        Truth.assertThat(snapshot.getString("leaderId")).isEqualTo(userId)
+        Truth.assertThat((snapshot.get("members") as List<*>)).contains(userId)
         println("Team created successfully — leader & member verified.")
     }
 
@@ -93,8 +94,8 @@ class FirestoreIntegrationTest {
         val snapshot = teams.document(teamId).get().await()
         val members = snapshot.get("members") as List<*>
 
-        assertThat(snapshot.exists()).isTrue()
-        assertThat(members).containsExactly(userId, "memberX")
+        Truth.assertThat(snapshot.exists()).isTrue()
+        Truth.assertThat(members).containsExactly(userId, "memberX")
         println("Members can view member list successfully.")
     }
 
@@ -115,7 +116,8 @@ class FirestoreIntegrationTest {
         // Leader adds a new member
         val newMember = "newMemberUid123"
         val snapshot = teams.document(teamId).get().await()
-        val members = (snapshot.get("members") as? MutableList<String>)?.toMutableList() ?: mutableListOf()
+        val members =
+            (snapshot.get("members") as? MutableList<String>)?.toMutableList() ?: mutableListOf()
         members.add(newMember)
 
         teams.document(teamId).update("members", members).await()
@@ -123,7 +125,7 @@ class FirestoreIntegrationTest {
 
         val updated = teams.document(teamId).get().await()
         val membersAfter = updated.get("members") as List<*>
-        assertThat(membersAfter).contains(newMember)
+        Truth.assertThat(membersAfter).contains(newMember)
         println("Leader successfully added a new member.")
     }
 
@@ -179,7 +181,7 @@ class FirestoreIntegrationTest {
 
         val updated = firestore.collection("teams").document(teamId).get().await()
         val membersAfter = updated.get("members") as List<*>
-        assertThat(membersAfter).contains("newMemberUid123")
+        Truth.assertThat(membersAfter).contains("newMemberUid123")
         println("Member successfully added another member (no rule change).")
     }
 
@@ -223,9 +225,9 @@ class FirestoreIntegrationTest {
         val updated = firestore.collection("teams").document(teamId).get().await()
         val membersAfter = updated.get("members") as List<*>
 
-        assertThat(updated.exists()).isTrue()
-        assertThat(membersAfter).doesNotContain("targetMember123")
-        assertThat(membersAfter).contains(userId)
+        Truth.assertThat(updated.exists()).isTrue()
+        Truth.assertThat(membersAfter).doesNotContain("targetMember123")
+        Truth.assertThat(membersAfter).contains(userId)
         println("Member successfully removed another member.")
     }
 
@@ -248,7 +250,7 @@ class FirestoreIntegrationTest {
         teams.document(teamId).update("pollActive", true).await()
 
         val snapshot = teams.document(teamId).get().await()
-        assertThat(snapshot.getBoolean("pollActive")).isTrue()
+        Truth.assertThat(snapshot.getBoolean("pollActive")).isTrue()
         println("Leader successfully started the meal poll.")
     }
 
@@ -270,11 +272,11 @@ class FirestoreIntegrationTest {
             assert(false) { "Expected failure for unauthenticated user." }
         } catch (e: Exception) {
             println("Unauthenticated user blocked as expected. Message: ${e.message}")
-            assertThat(e.message?.contains("PERMISSION_DENIED")).isTrue()
+            Truth.assertThat(e.message?.contains("PERMISSION_DENIED")).isTrue()
             val msg = e.message ?: "No error message"
             println("Firestore unauthenticated write failed as expected. Message: $msg")
-            assertThat(e).isInstanceOf(Exception::class.java)
-            assertThat(msg).isNotEmpty()
+            Truth.assertThat(e).isInstanceOf(Exception::class.java)
+            Truth.assertThat(msg).isNotEmpty()
         }
     }
 
@@ -294,7 +296,7 @@ class FirestoreIntegrationTest {
         }
 
         val result = teams.whereArrayContains("members", userId).get().await()
-        assertThat(result.documents.size).isAtLeast(3)
+        Truth.assertThat(result.documents.size).isAtLeast(3)
         println("Retrieved ${result.documents.size} teams for user.")
     }
 }
