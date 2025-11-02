@@ -44,15 +44,18 @@ fun VoteScreen(
 ) {
     val poll = state.poll ?: return
 
-    //for demonstration only.
-    var timeLeft by remember { mutableIntStateOf(60) }
-    LaunchedEffect(Unit) {
-        while (timeLeft > 0) {
+    // Use backend remaining time when available; fall back to 60s if not provided
+    var timeLeft by remember { mutableIntStateOf(state.poll?.duration ?: 60) }
+    LaunchedEffect(state.poll?.duration) {
+        timeLeft = state.poll?.duration ?: 60
+    }
+    LaunchedEffect(timeLeft) {
+        if (timeLeft > 0 && (state.poll?.isOpen == true)) {
             delay(1000)
             timeLeft--
+        } else if (timeLeft <= 0) {
+            onTimeOver()
         }
-        // 시간 종료 시
-        onTimeOver()
     }
     val minutes = timeLeft / 60
     val seconds = timeLeft % 60

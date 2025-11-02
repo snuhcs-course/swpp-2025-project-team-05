@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 class PollViewModel(
     private val repository: PollRepository,
@@ -21,18 +22,37 @@ class PollViewModel(
     val state: StateFlow<PollScreenState> = _state.asStateFlow()
 
     init {
-        loadPoll()
+        observePoll()
     }
 
-    fun loadPoll() {
+    private fun loadOnce() {
         viewModelScope.launch {
             _state.update { it.copy(isBusy = true) }
-
             try {
                 val poll = repository.getPoll(pollId)
-                _state.update { it.copy(poll= poll, isBusy = false) }
+                _state.update { it.copy(poll = poll, isBusy = false) }
             } catch (e: Exception) {
                 _state.update { it.copy(isBusy = false) }
+            }
+        }
+    }
+
+    fun observePoll() {
+        viewModelScope.launch {
+            // initial fetch
+            loadOnce()
+            while (true) {
+                try {
+                    val poll = repository.getPoll(pollId)
+                    _state.update { it.copy(poll = poll, isBusy = false) }
+                    if (poll.isOpen) {
+                        delay(2000)
+                    } else {
+                        break
+                    }
+                } catch (e: Exception) {
+                    delay(3000)
+                }
             }
         }
     }
@@ -60,6 +80,8 @@ class PollViewModel(
         viewModelScope.launch {
             setVoted(true)
             repository.sendBallot(pollId, userId, _state.value.selectedIndices.toList())
+            // refresh poll after voting
+            loadOnce()
         }
     }
     fun revokeBallot() {
@@ -67,15 +89,10 @@ class PollViewModel(
             repository.revokeBallot(pollId, userId)
             clearSelectedIndices()
             setVoted(false)
+            loadOnce()
         }
     }
 
-    //for demonstration only
-    fun closePoll() {
-        _state.update { current ->
-            val closedPoll = current.poll?.copy(isOpen = false)
-            current.copy(poll = closedPoll)
-        }
-    }
+    // remove demo close; backend auto-closes when time is up
 
 }

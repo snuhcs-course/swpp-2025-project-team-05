@@ -46,25 +46,6 @@ fun SpiceToleranceScreen(
             Spacer(modifier = Modifier.height(Dimensions.paddingLarge))
 
             PreferenceCard(title = "Your Spice Tolerance") {
-                // Emoji representation
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = when (spiceLevel) {
-                            SpiceLevel.NONE -> "😌"
-                            SpiceLevel.LOW -> "🌶️"
-                            SpiceLevel.MEDIUM -> "🌶️🌶️"
-                            SpiceLevel.HIGH -> "🌶️🌶️🌶️"
-                            SpiceLevel.EXTRA -> "🔥🔥🔥"
-                        },
-                        style = MaterialTheme.typography.displayMedium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Dimensions.paddingMedium))
-
                 PreferenceSlider(
                     value = spiceLevel.level.toFloat(),
                     onValueChange = { newValue ->
@@ -85,8 +66,8 @@ fun SpiceToleranceScreen(
                         SpiceLevel.NONE -> "I prefer meals with no spice at all"
                         SpiceLevel.LOW -> "A little kick is okay, but keep it mild"
                         SpiceLevel.MEDIUM -> "I enjoy moderately spicy food"
-                        SpiceLevel.HIGH -> "I love spicy food!"
-                        SpiceLevel.EXTRA -> "The spicier the better! 🔥"
+                        SpiceLevel.HIGH -> "I love spicy food"
+                        SpiceLevel.EXTRA -> "The spicier the better"
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

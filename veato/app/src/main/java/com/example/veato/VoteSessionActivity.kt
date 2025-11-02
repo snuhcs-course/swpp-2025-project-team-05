@@ -13,7 +13,7 @@ import com.example.veato.ui.theme.VeatoTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.veato.data.repository.PollRepositoryDemo
+import com.example.veato.data.repository.PollRepositoryImpl
 import com.example.veato.ui.main.MainActivity
 import com.example.veato.ui.poll.PollResultScreen
 import com.example.veato.ui.poll.PollViewModel
@@ -58,7 +58,7 @@ fun PollSessionScreen(
 
     val viewModel: PollViewModel = viewModel(
         factory = PollViewModelFactory(
-            repository = PollRepositoryDemo(),
+            repository = PollRepositoryImpl(),
             userId = userId,
             pollId = pollId
         )
@@ -91,7 +91,7 @@ fun PollSessionScreen(
                 },
                 onVote = viewModel::sendBallot,
                 onCancel = viewModel::revokeBallot,
-                onTimeOver = viewModel::closePoll
+                onTimeOver = { /* no-op: backend auto-closes; ViewModel observes status */ }
             )
         }
     }

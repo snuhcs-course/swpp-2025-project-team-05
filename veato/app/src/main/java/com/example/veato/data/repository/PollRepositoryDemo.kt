@@ -2,8 +2,20 @@ package com.example.veato.data.repository
 
 import com.example.veato.data.model.Candidate
 import com.example.veato.data.model.Poll
+import com.example.veato.data.remote.StartSessionResponse
 
 class PollRepositoryDemo : PollRepository{
+    override suspend fun startVotingSession(teamId: String, pollTitle: String, durationMinutes: Int): StartSessionResponse {
+        return StartSessionResponse(
+            pollId = "demo_poll_123",
+            pollTitle = pollTitle,
+            teamName = "Demo Team",
+            duration = durationMinutes,
+            startedTime = "2025-10-26T12:00:00Z",
+            candidates = listOf("Pizza", "Sushi", "Burger", "Spaghetti", "Bibimbap")
+        )
+    }
+
     override suspend fun getPoll(pollId: String): Poll {
         return Poll(
             pollId = pollId,

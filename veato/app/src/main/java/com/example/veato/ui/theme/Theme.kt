@@ -2,7 +2,9 @@ package com.example.veato.ui.theme
 
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -71,6 +73,15 @@ private val DarkColorScheme = darkColorScheme(
     outlineVariant = Gray700
 )
 
+// Refined shapes with elegant corner radius
+private val VeatoShapes = Shapes(
+    extraSmall = RoundedCornerShape(Dimensions.cornerRadiusSmall),
+    small = RoundedCornerShape(Dimensions.cornerRadiusMedium),
+    medium = RoundedCornerShape(Dimensions.cornerRadiusLarge),
+    large = RoundedCornerShape(Dimensions.cornerRadiusExtraLarge),
+    extraLarge = RoundedCornerShape(Dimensions.cornerRadiusExtraLarge)
+)
+
 @Composable
 fun VeatoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -93,6 +104,7 @@ fun VeatoTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = VeatoTypography,
+        shapes = VeatoShapes,
         content = content
     )
 }

@@ -53,8 +53,7 @@ data class OnboardingState(
         return currentScreen in listOf(
             OnboardingScreen.DietaryRestrictions,
             OnboardingScreen.Allergies,
-            OnboardingScreen.AvoidIngredients,
-            OnboardingScreen.BudgetCap
+            OnboardingScreen.AvoidIngredients
         )
     }
 
@@ -65,8 +64,6 @@ data class OnboardingState(
         return currentScreen in listOf(
             OnboardingScreen.FavoriteCuisines,
             OnboardingScreen.SpiceTolerance,
-            OnboardingScreen.HeavinessPreference,
-            OnboardingScreen.BudgetPreference,
             OnboardingScreen.AdvancedPreferences
         )
     }

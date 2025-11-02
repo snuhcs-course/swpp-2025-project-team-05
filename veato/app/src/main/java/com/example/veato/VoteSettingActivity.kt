@@ -20,6 +20,12 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.veato.data.repository.PollRepositoryImpl
+import com.example.veato.ui.poll.PollViewModel
+import com.example.veato.ui.poll.PollViewModelFactory
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 
 class VoteSettingActivity : ComponentActivity() {
@@ -38,14 +44,9 @@ class VoteSettingActivity : ComponentActivity() {
                 ) {
                     VoteSettingScreen(
                         teamName = teamName,
+                        teamId = teamId,
                         onStartVoting = { title, duration ->
-                            // TODO: 나중에 백엔드 API 호출해서 실제 pollId를 받아와야 함
-                            println("Start voting: team=$teamName, title=$title, duration=$duration")
-                            val pollId = "temp_poll_id" // 임시 pollId
-                            val intent = Intent(this, VoteSessionActivity::class.java)
-                            intent.putExtra("pollId", pollId)
-                            startActivity(intent)
-                            finish()
+                            // This will be handled by the ViewModel
                         }
                     )
                 }
@@ -58,11 +59,16 @@ class VoteSettingActivity : ComponentActivity() {
 @Composable
 fun VoteSettingScreen(
     teamName: String,
+    teamId: String,
     onStartVoting: (String, Int) -> Unit
 ) {
     var sessionTitle by remember { mutableStateOf("") }
     var durationText by remember { mutableStateOf("3") }
+    var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // Avoid recreating repository on every recomposition (causes typing lag)
+    val repository = remember { PollRepositoryImpl() }
 
     Column(
         modifier = Modifier
@@ -109,7 +115,8 @@ fun VoteSettingScreen(
                     onValueChange = { sessionTitle = it },
                     placeholder = { Text("e.g. 10/25 team dinner", color = Color.LightGray) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    enabled = !isLoading
                 )
 
                 // Duration
@@ -121,7 +128,8 @@ fun VoteSettingScreen(
                 SimpleDropdown(
                     options = listOf("1", "3", "5"),
                     selected = durationText,
-                    onSelect = { durationText = it }
+                    onSelect = { durationText = it },
+                    enabled = !isLoading
                 )
 
             }
@@ -136,7 +144,21 @@ fun VoteSettingScreen(
                 if (sessionTitle.isBlank()) {
                     Toast.makeText(context, "Poll Title cannot be empty", Toast.LENGTH_SHORT).show()
                 } else {
-                    onStartVoting(sessionTitle, duration)
+                    isLoading = true
+                    scope.launch {
+                        try {
+                            val response = repository.startVotingSession(teamId, sessionTitle, duration)
+                            
+                            // Navigate to VoteSessionActivity with the pollId
+                            val intent = Intent(context, VoteSessionActivity::class.java)
+                            intent.putExtra("pollId", response.pollId)
+                            context.startActivity(intent)
+                            (context as? VoteSettingActivity)?.finish()
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Failed to start poll: ${e.message}", Toast.LENGTH_LONG).show()
+                            isLoading = false
+                        }
+                    }
                 }
             },
             colors = ButtonDefaults.buttonColors(
@@ -144,9 +166,17 @@ fun VoteSettingScreen(
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(48.dp),
+            enabled = !isLoading
         ) {
-            Text("Start New Poll")
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = Color.White
+                )
+            } else {
+                Text("Start New Poll")
+            }
         }
     }
 }
@@ -156,14 +186,16 @@ fun VoteSettingScreen(
 fun SimpleDropdown(
     options: List<String>,
     selected: String,
-    onSelect: (String) -> Unit
+    onSelect: (String) -> Unit,
+    enabled: Boolean = true
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     Box {
         OutlinedButton(
-            onClick = { expanded = true },
-            modifier = Modifier.width(160.dp)
+            onClick = { if (enabled) expanded = true },
+            modifier = Modifier.width(160.dp),
+            enabled = enabled
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("$selected minutes")
