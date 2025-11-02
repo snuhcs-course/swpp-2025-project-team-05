@@ -28,6 +28,9 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            isTestCoverageEnabled = true
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -46,10 +49,13 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -69,9 +75,8 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
 
-    // Google & Kakao Sign-In
+    // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:21.2.0")
-    // implementation("com.kakao.sdk:v2-user:2.20.6")
 
     // Jetpack Compose - Updated for Kotlin 2.0 compatibility
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
@@ -115,6 +120,43 @@ dependencies {
     // Compose Testing
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.01.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation ("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation ("androidx.test.espresso:espresso-core:3.5.1")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Mockito + Kotlin coroutine testing
+    androidTestImplementation("org.mockito:mockito-core:5.11.0")
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+
+    // Truth assertions
+    androidTestImplementation("com.google.truth:truth:1.4.2")
+
+    // Unit testing
+    testImplementation("junit:junit:4.13.2")
+
+    // Mockito (core + Kotlin extensions)
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
+
+    // Coroutines test
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+
+    // Truth assertions
+    testImplementation("com.google.truth:truth:1.4.2")
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.9.24")
+
+    // Android Instrumented Test Core
+    androidTestImplementation("androidx.test:core:1.5.0")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+
+    // JUnit for Android (Instrumented)
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+
+    // Espresso UI Testing (core + contrib)
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.5.1")
 }
