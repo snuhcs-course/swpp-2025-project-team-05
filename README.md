@@ -23,21 +23,14 @@ Troubleshooting
 - Without `OPENAI_API_KEY`, the backend uses a safe dummy candidate list.
 
 ## Demo Video
-
-### Food Profile Setup
-In this step, users personalize their food preferences, dietary restrictions, and disliked ingredients to help the recommendation system generate better meal suggestions.
-<video src="https://github.com/user-attachments/assets/4e66b7c3-5215-4d27-8258-9e5e903868fb" controls width="600"></video>
-
-### Team Creation
-Users can create or join a team with friends to vote on restaurant choices together. Team Leader can invite/remove members to ensure easy switch between teams, review team activities, and manage their collaborative sessions.
-<video src="https://github.com/user-attachments/assets/2a3d8cf3-e54f-4a71-a2da-6140f5a68c3e" controls width="600"></video>
-
-### Meal Poll Voting System
-Complete voting system where team leaders can create polls, members vote on meal options, and results are automatically ranked and displayed.
-<video src="docs/iteration-1-demo-video(signin_signout).mp4" controls width="600"></video>
+The demo video presents the full flow:
+User Registration → Profile Setup → Team Creation → Poll Generation → Recommendation Results
+<video src="https://github.com/user-attachments/assets/6b71145d-cb58-44aa-a728-7f8c1d33f97d" controls width="600"></video>
 
 ## Key Features
-
+- **User Registration**
+  Create a new account using Firebase Authentication.
+  
 - **Food Profile Setup:**  
   Customize your food preferences, cuisines, and dislikes to build a personal taste profile.
 
@@ -92,40 +85,23 @@ HTTP Client: Retrofit 2.11.0 + OkHttp 4.12.0
 - This demo showcases a Firebase-based user authentication system implemented in an Android app using Kotlin.
 - It allows users to create an account, log in, and reset their password securely through Firebase Authentication.
 
-## Features Demonstrated
 
-### a. Create New User
-Users can register by entering:
-- Full Name
-- Username
-- Email Address
-- Password and Confirm Password
-The account is created in Firebase Authentication.
-
-### b. Login
-Registered users can log in using their email and password.
-On successful login, users are directed to the main screen.
-
-### c. Forgot Password
-Users enter their email address and tap Forgot Password.
-A message appears "Reset link has been sent if registered."
-If the email is registered, a password reset link is sent automatically.
-
-### d. Meal Poll Creation
+### Meal Poll Flow
+### a. Meal Poll Creation
 Team leaders can create polls by:
 - Entering poll title (e.g., "10/25 team dinner")
 - Selecting duration (1, 3, or 5 minutes)
 - Backend generates 5 meal candidates based on team constraints
 - Poll becomes active with countdown timer
 
-### e. Voting System
+### b. Voting System
 Team members can:
 - View poll candidates and remaining time
 - Select multiple meal options
 - Submit votes or cancel selections
 - See real-time poll updates
 
-### f. Results & Ranking
+### c. Results & Ranking
 When polls close:
 - Automatic ranking by vote count
 - Winner displayed as "Last: [meal name]"
