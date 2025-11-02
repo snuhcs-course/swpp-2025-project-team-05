@@ -33,7 +33,10 @@ fun NavigationButtons(
                 modifier = Modifier
                     .weight(1f)
                     .height(Dimensions.buttonHeightMedium),
-                contentPadding = PaddingValues(Dimensions.paddingMedium)
+                contentPadding = PaddingValues(
+                    horizontal = Dimensions.paddingMedium,
+                    vertical = Dimensions.paddingSmall
+                )
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -63,7 +66,10 @@ fun NavigationButtons(
                 modifier = Modifier
                     .weight(1f)
                     .height(Dimensions.buttonHeightMedium),
-                contentPadding = PaddingValues(Dimensions.paddingMedium)
+                contentPadding = PaddingValues(
+                    horizontal = Dimensions.paddingMedium,
+                    vertical = Dimensions.paddingSmall
+                )
             ) {
                 Text(nextLabel)
                 Spacer(modifier = Modifier.width(Dimensions.paddingSmall))
