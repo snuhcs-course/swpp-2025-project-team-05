@@ -4,7 +4,6 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class AuthValidatorTest {
-
     @Test
     fun `valid email and password returns true`() {
         assertTrue(AuthValidator.isLoginInputValid("user@gmail.com", "123456"))
