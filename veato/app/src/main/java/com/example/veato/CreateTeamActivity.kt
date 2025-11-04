@@ -1,9 +1,7 @@
 package com.example.veato
 
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -12,6 +10,8 @@ class CreateTeamActivity : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private lateinit var occasionSpinner: Spinner
+    private lateinit var selectedOccasion: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,6 +19,37 @@ class CreateTeamActivity : AppCompatActivity() {
 
         val teamNameInput = findViewById<EditText>(R.id.editTeamName)
         val btnCreate = findViewById<Button>(R.id.btnCreateTeam)
+        occasionSpinner = findViewById(R.id.spinnerOccasionType)
+
+        // Occasion options
+        val occasionOptions = listOf(
+            "Family Gathering",
+            "Formal Dinner with Clients",
+            "Team Meeting",
+            "Friends Gathering",
+            "Birthday Celebration",
+            "Romantic Date",
+            "Other"
+        )
+
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            occasionOptions
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        occasionSpinner.adapter = adapter
+
+        // Spinner listener
+        occasionSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                selectedOccasion = occasionOptions[position]
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                selectedOccasion = "Other"
+            }
+        }
 
         btnCreate.setOnClickListener {
             val name = teamNameInput.text.toString().trim()
@@ -39,13 +70,14 @@ class CreateTeamActivity : AppCompatActivity() {
                 id = teamRef.id,
                 name = name,
                 leaderId = uid,
-                members = listOf(uid)
+                members = listOf(uid),
+                occasionType = selectedOccasion   // 👈 new field added here
             )
 
             teamRef.set(team)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Team '$name' created successfully!", Toast.LENGTH_SHORT).show()
-                    finish()  // go back to MyTeamsActivity
+                    finish()
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(this, "Failed to create team: ${e.message}", Toast.LENGTH_LONG).show()
