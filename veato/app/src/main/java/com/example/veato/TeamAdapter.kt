@@ -18,6 +18,7 @@ class TeamAdapter(
     inner class TeamViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvTeamName: TextView = view.findViewById(R.id.tvTeamName)
         val tvTeamInfo: TextView = view.findViewById(R.id.tvTeamInfo)
+        val tvOccasionType: TextView = view.findViewById(R.id.textOccasionType)
         val btnViewMembers: Button = view.findViewById(R.id.btnViewMembers)
         val btnStartPoll: Button = view.findViewById(R.id.btnStartPoll)
         val btnLeave: Button = view.findViewById(R.id.btnLeave)
@@ -39,7 +40,8 @@ class TeamAdapter(
         holder.tvTeamName.text = team.name
         val memberCount = team.members.size
         val lastMeal = team.lastMealPoll ?: "No record yet"
-        holder.tvTeamInfo.text = "$memberCount members     • Last: $lastMeal"
+        holder.tvTeamInfo.text = "$memberCount members           • Last: $lastMeal"
+        holder.tvOccasionType.text = team.occasionType
 
         // Button actions
         holder.btnViewMembers.setOnClickListener { onViewMembers(team) }
@@ -55,5 +57,4 @@ class TeamAdapter(
             holder.btnLeave.visibility = View.VISIBLE
         }
     }
-
 }
