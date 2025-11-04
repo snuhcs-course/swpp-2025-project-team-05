@@ -22,6 +22,17 @@
         android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp"/>
 
+    <TextView
+        android:id="@+id/tvOccasionType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Team Meeting"
+        android:textColor="@color/green_primary"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <EditText
         android:id="@+id/editEmail"
         android:layout_width="0dp"

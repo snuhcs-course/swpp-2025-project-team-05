@@ -5,5 +5,7 @@ data class User(
     val fullName: String = "",
     val username: String = "", // stored without '@'
     val email: String = "",
-    val createdAt: Long = 0
+    val createdAt: Long = 0,
+    val position: String? = null,
+    val ageGroup: String? = null
 )
