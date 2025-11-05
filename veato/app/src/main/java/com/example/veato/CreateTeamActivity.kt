@@ -83,7 +83,7 @@ class CreateTeamActivity : AppCompatActivity() {
                 name = name,
                 leaderId = uid,
                 members = listOf(uid),
-                occasionType = selectedOccasion   // 👈 new field added here
+                occasionType = selectedOccasion
             )
 
             teamRef.set(team)

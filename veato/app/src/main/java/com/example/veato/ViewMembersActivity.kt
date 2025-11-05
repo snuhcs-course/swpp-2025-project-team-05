@@ -33,6 +33,11 @@ class ViewMembersActivity : AppCompatActivity() {
         currentTeamId = teamId
 
         val tvOccasionType = findViewById<TextView>(R.id.tvOccasionType)
+        val recycler = findViewById<RecyclerView>(R.id.recyclerMembers)
+        val inputEmail = findViewById<EditText>(R.id.editEmail)
+        val btnAdd = findViewById<Button>(R.id.btnAddMember)
+
+        recycler.layoutManager = LinearLayoutManager(this)
 
         db.collection("teams").document(teamId).get()
             .addOnSuccessListener { doc ->
@@ -42,20 +47,6 @@ class ViewMembersActivity : AppCompatActivity() {
             .addOnFailureListener {
                 tvOccasionType.text = "Unknown"
             }
-
-        val recycler = findViewById<RecyclerView>(R.id.recyclerMembers)
-        val inputEmail = findViewById<EditText>(R.id.editEmail)
-        val btnAdd = findViewById<Button>(R.id.btnAddMember)
-        recycler.layoutManager = LinearLayoutManager(this)
-
-        // Initialize adapter with placeholder leaderEmail (will refresh after loading)
-        adapter = MembersAdapter(
-            members = memberList,
-            leaderEmail = leaderEmail,
-            onRemove = { email -> removeMemberByEmail(email) },
-            onEdit = { email -> showEditMemberDialog(email) }
-        )
-        recycler.adapter = adapter
 
         btnAdd.setOnClickListener {
             val email = inputEmail.text.toString().trim()
@@ -86,6 +77,8 @@ class ViewMembersActivity : AppCompatActivity() {
                     db.collection("users").document(leaderId).get()
                         .addOnSuccessListener { leaderDoc ->
                             leaderEmail = leaderDoc.getString("email") ?: ""
+                            val currentUserEmail = auth.currentUser?.email
+                            val isLeader = (currentUserEmail == leaderEmail)
 
                             val tempList = mutableListOf<String>()
 
@@ -108,6 +101,7 @@ class ViewMembersActivity : AppCompatActivity() {
                                             adapter = MembersAdapter(
                                                 members = memberList,
                                                 leaderEmail = leaderEmail,
+                                                isLeader = isLeader,
                                                 onRemove = { email -> removeMemberByEmail(email) },
                                                 onEdit = { email -> showEditMemberDialog(email) }
                                             )
