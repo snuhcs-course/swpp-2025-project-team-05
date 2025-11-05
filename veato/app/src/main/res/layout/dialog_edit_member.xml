@@ -17,7 +17,13 @@
     <Spinner
         android:id="@+id/spinnerPosition"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="48dp"
+        android:background="@drawable/spinner_with_arrow"
+        android:popupBackground="@drawable/spinner_dropdown_bg"
+        android:spinnerMode="dropdown"
+        android:paddingStart="2dp"
+        android:paddingEnd="36dp"
+        android:layout_marginBottom="16dp" />
 
     <!-- Age Group Spinner -->
     <TextView
@@ -32,6 +38,11 @@
     <Spinner
         android:id="@+id/spinnerAgeGroup"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="48dp"
+        android:background="@drawable/spinner_with_arrow"
+        android:popupBackground="@drawable/spinner_dropdown_bg"
+        android:spinnerMode="dropdown"
+        android:paddingStart="2dp"
+        android:paddingEnd="36dp" />
 
 </LinearLayout>

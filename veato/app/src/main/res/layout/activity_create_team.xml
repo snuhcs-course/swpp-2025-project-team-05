@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Create New Team"
-        android:textSize="20sp"
+        android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="@color/black"
         app:layout_constraintTop_toTopOf="parent"
@@ -49,12 +49,17 @@
     <Spinner
         android:id="@+id/spinnerOccasionType"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:layout_marginTop="8dp"
+        android:paddingStart="2dp"
+        android:paddingEnd="36dp"
+        android:paddingVertical="8dp"
+        android:background="@drawable/spinner_with_arrow"
+        android:popupBackground="@drawable/spinner_dropdown_bg"
+        android:spinnerMode="dropdown"
         app:layout_constraintTop_toBottomOf="@id/tvOccasionLabel"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:backgroundTint="@color/green_primary" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
         android:id="@+id/btnCreateTeam"

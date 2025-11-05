@@ -210,8 +210,13 @@ class ViewMembersActivity : AppCompatActivity() {
         val ageSpinner = dialogView.findViewById<Spinner>(R.id.spinnerAgeGroup)
 
         val ageOptions = listOf("Child", "Teen", "Adult", "Senior")
-        val ageAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, ageOptions)
-        ageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        val ageAdapter = ArrayAdapter(
+            this,
+            R.layout.spinner_item,
+            ageOptions
+        ).also {
+            it.setDropDownViewResource(R.layout.spinner_dropdown_item)
+        }
         ageSpinner.adapter = ageAdapter
 
         // Get the team’s occasion type to determine position list
@@ -220,8 +225,13 @@ class ViewMembersActivity : AppCompatActivity() {
                 val occasionType = teamDoc.getString("occasionType") ?: "Other"
                 val positionOptions = getPositionsForOccasion(occasionType)
 
-                val positionAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, positionOptions)
-                positionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                val positionAdapter = ArrayAdapter(
+                    this,
+                    R.layout.spinner_item,
+                    positionOptions
+                ).also {
+                    it.setDropDownViewResource(R.layout.spinner_dropdown_item)
+                }
                 positionSpinner.adapter = positionAdapter
             }
 
