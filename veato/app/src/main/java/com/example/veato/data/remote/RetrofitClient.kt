@@ -12,9 +12,8 @@ import com.google.firebase.auth.FirebaseAuth
  * Retrofit client configuration for API calls
  */
 object RetrofitClient {
-    
-    // Android emulator host mapping - 10.0.2.2 maps to host machine's localhost
-    private const val BASE_URL = "http://10.0.2.2:5001/"
+
+    private const val BASE_URL = "https://veato-1.onrender.com/"
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
