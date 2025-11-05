@@ -187,13 +187,13 @@ class ViewMembersActivity : AppCompatActivity() {
 
     private fun getPositionsForOccasion(occasionType: String): List<String> {
         return when (occasionType) {
-            "Family Gathering" -> listOf("Parent", "Child", "Grandparent", "Relative", "Sibling", "Cousin", "Guardian")
-            "Formal Dinner with Clients" -> listOf("Host", "Manager", "Executive", "Client", "Partner", "Assistant", "Colleague")
-            "Team meeting" -> listOf("Team Leader", "Manager", "Member", "Intern", "Supervisor", "Project Owner")
-            "Friends Gathering" -> listOf("Organizer", "Friend", "Best Friend", "Guest", "Classmate", "Roommate")
-            "Birthday Celebration" -> listOf("Birthday Person", "Guest", "Family Member", "Friend", "Organizer")
-            "Romantic Date" -> listOf("Partner", "Boyfriend", "Girlfriend", "Spouse", "Fiancé/Fiancée")
-            else -> listOf("Leader", "Manager", "Member", "Participant", "Guest", "Organizer")
+            "Family Gathering" -> listOf("Parent", "Child", "Relative")
+            "Formal Dinner with Clients" -> listOf("Host", "Manager", "Client")
+            "Team meeting" -> listOf("Team Leader", "Manager", "Member")
+            "Friends Gathering" -> listOf("Organizer", "Friend", "Guest")
+            "Birthday Celebration" -> listOf("Birthday Person", "Family Member", "Friend")
+            "Romantic Date" -> listOf("Partner", "Boyfriend/Girlfriend", "Spouse")
+            else -> listOf("Leader", "Member", "Guest")
         }
     }
 
