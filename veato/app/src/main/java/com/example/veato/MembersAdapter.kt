@@ -12,6 +12,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 class MembersAdapter(
     private val members: List<String>,
     private val leaderEmail: String,
+    private val isLeader: Boolean,
     private val onRemove: (String) -> Unit,
     private val onEdit: (String) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -49,14 +50,17 @@ class MembersAdapter(
             holder.email.text = email
             holder.btnRemove.setOnClickListener { onRemove(email) }
 
-            // Load dynamic member details (position + age)
-            loadMemberDetails(email, holder.tvDetails)
-
-            if (currentUserEmail == leaderEmail) {
+            // Show or hide Edit & Member Details depending on leader status
+            if (isLeader) {
                 holder.btnEdit.visibility = View.VISIBLE
+                holder.tvDetails.visibility = View.VISIBLE
                 holder.btnEdit.setOnClickListener { onEdit(email) }
+
+                // Load position + ageGroup only for leader view
+                loadMemberDetails(email, holder.tvDetails)
             } else {
                 holder.btnEdit.visibility = View.GONE
+                holder.tvDetails.visibility = View.GONE
             }
         }
     }
