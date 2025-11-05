@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 class MyTeamsActivity : AppCompatActivity() {
 
@@ -46,6 +47,7 @@ class MyTeamsActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
         db.collection("teams")
             .whereArrayContains("members", uid)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Toast.makeText(this, "Error loading teams", Toast.LENGTH_SHORT).show()
@@ -54,7 +56,8 @@ class MyTeamsActivity : AppCompatActivity() {
 
                 teamsList.clear()
                 snapshot?.forEach { doc ->
-                    teamsList.add(doc.toObject(Team::class.java))
+                    val team = doc.toObject(Team::class.java).copy(id = doc.id)
+                    teamsList.add(team)
                 }
                 adapter.notifyDataSetChanged()
             }
