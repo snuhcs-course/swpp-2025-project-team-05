@@ -23,6 +23,7 @@ class CreateTeamActivity : AppCompatActivity() {
 
         // Occasion options
         val occasionOptions = listOf(
+            "Select One...",
             "Family Gathering",
             "Formal Dinner with Clients",
             "Team Meeting",
@@ -34,16 +35,22 @@ class CreateTeamActivity : AppCompatActivity() {
 
         val adapter = ArrayAdapter(
             this,
-            android.R.layout.simple_spinner_item,
+            R.layout.spinner_item,
             occasionOptions
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        ).also {
+            it.setDropDownViewResource(R.layout.spinner_dropdown_item)
+        }
+
         occasionSpinner.adapter = adapter
 
         // Spinner listener
         occasionSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
-                selectedOccasion = occasionOptions[position]
+                if (position == 0) {
+                    selectedOccasion = ""    // no valid selection yet
+                } else {
+                    selectedOccasion = occasionOptions[position]
+                }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -57,6 +64,11 @@ class CreateTeamActivity : AppCompatActivity() {
 
             if (name.isEmpty()) {
                 Toast.makeText(this, "Please enter a team name", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (selectedOccasion.isEmpty()) {
+                Toast.makeText(this, "Please select an occasion type", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
