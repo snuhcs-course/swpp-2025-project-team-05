@@ -22,7 +22,11 @@ class MyTeamsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_my_teams)
-
+        val btnProfile = findViewById<Button>(R.id.btnMyProfile)
+        btnProfile.setOnClickListener {
+            val intent = Intent(this, ProfileActivity::class.java)
+            startActivity(intent)
+        }
         val recycler = findViewById<RecyclerView>(R.id.recyclerTeams)
         recycler.layoutManager = LinearLayoutManager(this)
 
@@ -87,4 +91,6 @@ class MyTeamsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Failed to leave team", Toast.LENGTH_SHORT).show()
             }
     }
+
+
 }
