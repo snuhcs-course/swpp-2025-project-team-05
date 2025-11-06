@@ -171,16 +171,21 @@ fun CandidateButton(
             disabledContentColor = Color.DarkGray
         )
     ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = when {
-                    isSelected -> FontWeight.SemiBold
-                    isDisabled -> FontWeight.Light
-                    else -> FontWeight.Normal
-                }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start // This aligns the content to the start (left)
+        ) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = when {
+                        isSelected -> FontWeight.SemiBold
+                        isDisabled -> FontWeight.Light
+                        else -> FontWeight.Normal
+                    }
+                )
             )
-        )
+        }
     }
 }
 
