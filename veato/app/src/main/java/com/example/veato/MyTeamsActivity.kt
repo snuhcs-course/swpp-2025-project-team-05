@@ -34,7 +34,8 @@ class MyTeamsActivity : AppCompatActivity() {
             teamsList,
             onViewMembers = { team -> viewMembers(team) },
             onStartPoll = { team -> startMealPoll(team) },
-            onLeave = { team -> leaveTeam(team) }
+            onLeave = { team -> leaveTeam(team) } ,
+            onJoinPoll = { team -> joinCurrentPoll(team) }
         )
 
         recycler.adapter = adapter
@@ -90,6 +91,18 @@ class MyTeamsActivity : AppCompatActivity() {
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to leave team", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun joinCurrentPoll(team: Team) {
+        val currentlyOpenPollId = team.currentlyOpenPoll
+
+        if(currentlyOpenPollId == null) {
+            Toast.makeText(this, "No current poll", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val intent = Intent(this, VoteSessionActivity::class.java)
+        intent.putExtra("pollId", currentlyOpenPollId)
+        startActivity(intent)
     }
 
 

@@ -12,7 +12,8 @@ class TeamAdapter(
     private val teams: List<Team>,
     private val onViewMembers: (Team) -> Unit,
     private val onStartPoll: (Team) -> Unit,
-    private val onLeave: (Team) -> Unit
+    private val onLeave: (Team) -> Unit,
+    private val onJoinPoll: (Team) -> Unit
 ) : RecyclerView.Adapter<TeamAdapter.TeamViewHolder>() {
 
     inner class TeamViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -22,6 +23,7 @@ class TeamAdapter(
         val btnViewMembers: Button = view.findViewById(R.id.btnViewMembers)
         val btnStartPoll: Button = view.findViewById(R.id.btnStartPoll)
         val btnLeave: Button = view.findViewById(R.id.btnLeave)
+        val btnJoinPoll: Button = view.findViewById(R.id.btnJoinPoll)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TeamViewHolder {
@@ -47,6 +49,8 @@ class TeamAdapter(
         holder.btnViewMembers.setOnClickListener { onViewMembers(team) }
         holder.btnStartPoll.setOnClickListener { onStartPoll(team) }
         holder.btnLeave.setOnClickListener { onLeave(team) }
+        holder.btnJoinPoll.setOnClickListener { onJoinPoll(team) }
+
 
         // Role-based visibility
         if (team.leaderId == currentUserId) {
@@ -55,6 +59,16 @@ class TeamAdapter(
         } else {
             holder.btnStartPoll.visibility = View.GONE
             holder.btnLeave.visibility = View.VISIBLE
+        }
+
+        // Changing Join Poll Button color based on current poll availability
+        if (team.currentlyOpenPoll == null) {
+            // disabling basic theme(hopefully)
+            holder.btnJoinPoll.backgroundTintList = null
+
+            holder.btnJoinPoll.setBackgroundResource(R.drawable.rounded_button_disabled)
+        } else {
+            holder.btnJoinPoll.setBackgroundResource(R.drawable.rounded_button_primary)
         }
     }
 }
