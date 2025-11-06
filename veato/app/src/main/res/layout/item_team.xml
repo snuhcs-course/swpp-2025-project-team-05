@@ -100,4 +100,18 @@
             android:paddingHorizontal="12dp"
             android:visibility="gone" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btnJoinPoll"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Join Poll"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="15sp"
+        android:backgroundTint="@null"
+        android:layout_marginTop="8dp"
+        android:elevation="0dp"
+        android:paddingHorizontal="12dp" />
+
 </LinearLayout>
