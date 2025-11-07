@@ -39,14 +39,30 @@ class ViewMembersActivity : AppCompatActivity() {
 
         recycler.layoutManager = LinearLayoutManager(this)
 
+        // Fetch and display current occasion type
         db.collection("teams").document(teamId).get()
             .addOnSuccessListener { doc ->
-                val occasionType = doc.getString("occasionType") ?: "Other"
-                tvOccasionType.text = occasionType
+                val currentOccasion = doc.getString("occasionType") ?: "Other"
+                tvOccasionType.text = currentOccasion
             }
-            .addOnFailureListener {
-                tvOccasionType.text = "Unknown"
-            }
+
+        // Allow leader to change occasion type by tapping
+        tvOccasionType.setOnClickListener {
+            val currentUserEmail = auth.currentUser?.email
+            db.collection("teams").document(teamId).get()
+                .addOnSuccessListener { doc ->
+                    val leaderId = doc.getString("leaderId") ?: ""
+                    db.collection("users").document(leaderId).get()
+                        .addOnSuccessListener { leaderDoc ->
+                            val leaderEmail = leaderDoc.getString("email")
+                            if (leaderEmail == currentUserEmail) {
+                                showOccasionChangeDialog(tvOccasionType)
+                            } else {
+                                Toast.makeText(this, "Only the leader can change the occasion type.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                }
+        }
 
         btnAdd.setOnClickListener {
             val email = inputEmail.text.toString().trim()
@@ -272,6 +288,105 @@ class ViewMembersActivity : AppCompatActivity() {
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Query failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun showOccasionChangeDialog(tvOccasionType: TextView) {
+        val occasionOptions = listOf(
+            "Family Gathering",
+            "Formal Dinner with Clients",
+            "Team Meeting",
+            "Friends Gathering",
+            "Birthday Celebration",
+            "Romantic Date",
+            "Other"
+        )
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, occasionOptions)
+
+        AlertDialog.Builder(this)
+            .setTitle("Change Occasion Type")
+            .setAdapter(adapter) { dialog, which ->
+                val selectedOccasion = occasionOptions[which]
+                updateOccasionType(selectedOccasion, tvOccasionType)
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun updateOccasionType(newOccasion: String, tvOccasionType: TextView) {
+        val teamRef = db.collection("teams").document(teamId)
+
+        // Step 1: Read current team details
+        teamRef.get().addOnSuccessListener { doc ->
+            val currentOccasion = doc.getString("occasionType") ?: "Other"
+            val teamName = doc.getString("name") ?: ""
+            val leaderId = doc.getString("leaderId") ?: ""
+
+            // If it's already that occasion → skip
+            if (currentOccasion == newOccasion) {
+                Toast.makeText(this, "Occasion type is already set to $newOccasion", Toast.LENGTH_SHORT).show()
+                return@addOnSuccessListener
+            }
+
+            // Step 2: Check for duplicates (same leader, same name, same occasion)
+            db.collection("teams")
+                .whereEqualTo("leaderId", leaderId)
+                .whereEqualTo("name", teamName)
+                .whereEqualTo("occasionType", newOccasion)
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    if (!snapshot.isEmpty) {
+                        // Duplicate team exists → block
+                        Toast.makeText(this, "You already have a team with the same name and occasion type.", Toast.LENGTH_LONG).show()
+                        return@addOnSuccessListener
+                    }
+
+                    // Step 3: Proceed to update Firestore and clear positions
+                    teamRef.update("occasionType", newOccasion)
+                        .addOnSuccessListener {
+                            tvOccasionType.text = newOccasion
+                            Toast.makeText(this, "Occasion updated to $newOccasion", Toast.LENGTH_SHORT).show()
+
+                            // Reset positions only if changed
+                            updatePositionsForNewOccasion(newOccasion)
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Failed to update: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(this, "Error checking duplicates: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+        }
+    }
+
+
+
+    private fun updatePositionsForNewOccasion(newOccasion: String) {
+        val teamRef = db.collection("teams").document(teamId)
+
+        teamRef.collection("members_info")
+            .get()
+            .addOnSuccessListener { result ->
+                for (doc in result.documents) {
+                    val userId = doc.id
+                    val ageGroup = doc.getString("ageGroup") ?: ""
+
+                    val updates = mapOf(
+                        "position" to "",
+                        "ageGroup" to ageGroup
+                    )
+
+                    teamRef.collection("members_info").document(userId)
+                        .set(updates, SetOptions.merge())
+                }
+
+                Toast.makeText(this, "All member positions cleared for new occasion.", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to reset positions: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
 }

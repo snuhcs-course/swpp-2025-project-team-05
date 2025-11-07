@@ -73,27 +73,53 @@ class CreateTeamActivity : AppCompatActivity() {
             }
 
             if (uid == null) {
-                Toast.makeText(this, "You must be logged in to create a team", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "You must be logged in to create a team", Toast.LENGTH_SHORT)
+                    .show()
                 return@setOnClickListener
             }
 
-            val teamRef = db.collection("teams").document()
-            val team = Team(
-                id = teamRef.id,
-                name = name,
-                leaderId = uid,
-                members = listOf(uid),
-                occasionType = selectedOccasion
-            )
+            db.collection("teams")
+                .whereEqualTo("leaderId", uid)
+                .whereEqualTo("name", name)
+                .whereEqualTo("occasionType", selectedOccasion)
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    if (!snapshot.isEmpty) {
+                        Toast.makeText(
+                            this,
+                            "You already have a team with this name and occasion type.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        return@addOnSuccessListener
+                    }
 
-            teamRef.set(team)
-                .addOnSuccessListener {
-                    Toast.makeText(this, "Team '$name' created successfully!", Toast.LENGTH_SHORT).show()
-                    finish()
+                    // Create new team
+                    val teamRef = db.collection("teams").document()
+                    val team = Team(
+                        id = teamRef.id,
+                        name = name,
+                        leaderId = uid,
+                        members = listOf(uid),
+                        occasionType = selectedOccasion
+                    )
+
+                    teamRef.set(team)
+                        .addOnSuccessListener {
+                            Toast.makeText(
+                                this,
+                                "Team '$name' created successfully!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            finish()
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(
+                                this,
+                                "Failed to create team: ${e.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                 }
-                .addOnFailureListener { e ->
-                    Toast.makeText(this, "Failed to create team: ${e.message}", Toast.LENGTH_LONG).show()
-                }
+            }
         }
-    }
 }
