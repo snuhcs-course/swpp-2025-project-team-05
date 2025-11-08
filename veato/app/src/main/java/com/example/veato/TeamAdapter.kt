@@ -12,15 +12,18 @@ class TeamAdapter(
     private val teams: List<Team>,
     private val onViewMembers: (Team) -> Unit,
     private val onStartPoll: (Team) -> Unit,
-    private val onLeave: (Team) -> Unit
+    private val onLeave: (Team) -> Unit,
+    private val onJoinPoll: (Team) -> Unit
 ) : RecyclerView.Adapter<TeamAdapter.TeamViewHolder>() {
 
     inner class TeamViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvTeamName: TextView = view.findViewById(R.id.tvTeamName)
         val tvTeamInfo: TextView = view.findViewById(R.id.tvTeamInfo)
+        val tvOccasionType: TextView = view.findViewById(R.id.textOccasionType)
         val btnViewMembers: Button = view.findViewById(R.id.btnViewMembers)
         val btnStartPoll: Button = view.findViewById(R.id.btnStartPoll)
         val btnLeave: Button = view.findViewById(R.id.btnLeave)
+        val btnJoinPoll: Button = view.findViewById(R.id.btnJoinPoll)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TeamViewHolder {
@@ -39,12 +42,15 @@ class TeamAdapter(
         holder.tvTeamName.text = team.name
         val memberCount = team.members.size
         val lastMeal = team.lastMealPoll ?: "No record yet"
-        holder.tvTeamInfo.text = "$memberCount members     • Last: $lastMeal"
+        holder.tvTeamInfo.text = "$memberCount members           • Last: $lastMeal"
+        holder.tvOccasionType.text = team.occasionType
 
         // Button actions
         holder.btnViewMembers.setOnClickListener { onViewMembers(team) }
         holder.btnStartPoll.setOnClickListener { onStartPoll(team) }
         holder.btnLeave.setOnClickListener { onLeave(team) }
+        holder.btnJoinPoll.setOnClickListener { onJoinPoll(team) }
+
 
         // Role-based visibility
         if (team.leaderId == currentUserId) {
@@ -54,6 +60,15 @@ class TeamAdapter(
             holder.btnStartPoll.visibility = View.GONE
             holder.btnLeave.visibility = View.VISIBLE
         }
-    }
 
+        // Changing Join Poll Button color based on current poll availability
+        if (team.currentlyOpenPoll == null) {
+            // disabling basic theme(hopefully)
+            holder.btnJoinPoll.backgroundTintList = null
+
+            holder.btnJoinPoll.setBackgroundResource(R.drawable.rounded_button_disabled)
+        } else {
+            holder.btnJoinPoll.setBackgroundResource(R.drawable.rounded_button_primary)
+        }
+    }
 }
