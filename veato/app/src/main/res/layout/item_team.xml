@@ -7,15 +7,38 @@
     android:padding="16dp"
     android:layout_marginBottom="8dp">
 
-    <TextView
-        android:id="@+id/tvTeamName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Team Name"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:layout_marginBottom="2dp"/>
+    <!-- Container for Team Name (left) and Occasion Type (right) -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvTeamName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Team Name"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"/>
+
+        <TextView
+            android:id="@+id/textOccasionType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Team Meeting"
+            android:textColor="@color/green_primary"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:background="@drawable/occasion_badge_bg"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="4dp" />
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/tvTeamInfo"
@@ -24,6 +47,7 @@
         android:text=""
         android:textColor="#666"
         android:textSize="14sp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="14dp"/>
 
     <LinearLayout
@@ -76,4 +100,18 @@
             android:paddingHorizontal="12dp"
             android:visibility="gone" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btnJoinPoll"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Join Poll"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="15sp"
+        android:backgroundTint="@null"
+        android:layout_marginTop="8dp"
+        android:elevation="0dp"
+        android:paddingHorizontal="12dp" />
+
 </LinearLayout>

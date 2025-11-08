@@ -2,15 +2,14 @@ package com.example.veato
 
 import android.os.Bundle
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-
-import android.util.Log
-import android.widget.Toast
+import com.google.firebase.firestore.SetOptions
 
 class ViewMembersActivity : AppCompatActivity() {
 
@@ -22,20 +21,32 @@ class ViewMembersActivity : AppCompatActivity() {
     private val memberList = mutableListOf<String>()
     private var leaderEmail: String = ""
 
+    companion object {
+        lateinit var currentTeamId: String
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_view_members)
 
         teamId = intent.getStringExtra("teamId") ?: return
+        currentTeamId = teamId
 
+        val tvOccasionType = findViewById<TextView>(R.id.tvOccasionType)
         val recycler = findViewById<RecyclerView>(R.id.recyclerMembers)
         val inputEmail = findViewById<EditText>(R.id.editEmail)
         val btnAdd = findViewById<Button>(R.id.btnAddMember)
+
         recycler.layoutManager = LinearLayoutManager(this)
-        adapter = MembersAdapter(memberList, leaderEmail = leaderEmail) { email ->
-            removeMemberByEmail(email)
-        }
-        recycler.adapter = adapter
+
+        db.collection("teams").document(teamId).get()
+            .addOnSuccessListener { doc ->
+                val occasionType = doc.getString("occasionType") ?: "Other"
+                tvOccasionType.text = occasionType
+            }
+            .addOnFailureListener {
+                tvOccasionType.text = "Unknown"
+            }
 
         btnAdd.setOnClickListener {
             val email = inputEmail.text.toString().trim()
@@ -53,6 +64,7 @@ class ViewMembersActivity : AppCompatActivity() {
         db.collection("teams").document(teamId).get()
             .addOnSuccessListener { doc ->
                 val memberUids = doc.get("members") as? List<String> ?: listOf()
+                val leaderId = doc.getString("leaderId") ?: ""
 
                 if (memberUids.isEmpty()) {
                     memberList.clear()
@@ -60,46 +72,46 @@ class ViewMembersActivity : AppCompatActivity() {
                     return@addOnSuccessListener
                 }
 
-                // Get leaderId
-                val leaderId = doc.getString("leaderId") ?: ""
-
                 if (leaderId.isNotEmpty()) {
-                    // Fetch leader email first
+                    // Fetch leader email
                     db.collection("users").document(leaderId).get()
                         .addOnSuccessListener { leaderDoc ->
                             leaderEmail = leaderDoc.getString("email") ?: ""
+                            val currentUserEmail = auth.currentUser?.email
+                            val isLeader = (currentUserEmail == leaderEmail)
 
                             val tempList = mutableListOf<String>()
 
-                            // Fetch member emails
+                            // Fetch all member emails
                             for (uid in memberUids) {
                                 db.collection("users").document(uid).get()
                                     .addOnSuccessListener { userDoc ->
                                         val email = userDoc.getString("email") ?: uid
                                         tempList.add(email)
 
-                                        // Wait until all loaded
                                         if (tempList.size == memberUids.size) {
-                                            // Sort → leader first
                                             val sortedList = tempList.sortedWith(
                                                 compareByDescending { it == leaderEmail }
                                             )
-
                                             memberList.clear()
                                             memberList.addAll(sortedList)
 
-                                            // Reinitialize adapter now that leaderEmail is known
+                                            // Refresh adapter with correct leader info
                                             val recycler = findViewById<RecyclerView>(R.id.recyclerMembers)
-                                            adapter = MembersAdapter(memberList, leaderEmail) { email ->
-                                                removeMemberByEmail(email)
-                                            }
+                                            adapter = MembersAdapter(
+                                                members = memberList,
+                                                leaderEmail = leaderEmail,
+                                                isLeader = isLeader,
+                                                onRemove = { email -> removeMemberByEmail(email) },
+                                                onEdit = { email -> showEditMemberDialog(email) }
+                                            )
                                             recycler.adapter = adapter
                                         }
                                     }
                             }
                         }
                 } else {
-                    // Fallback (no leader)
+                    // No leader ID fallback
                     memberList.clear()
                     for (uid in memberUids) {
                         db.collection("users").document(uid).get()
@@ -111,6 +123,9 @@ class ViewMembersActivity : AppCompatActivity() {
                     }
                 }
             }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to load team: ${e.message}", Toast.LENGTH_LONG).show()
+            }
     }
 
     private fun addMemberByEmail(email: String) {
@@ -121,13 +136,10 @@ class ViewMembersActivity : AppCompatActivity() {
             return
         }
 
-        // Check if member already in the list (by email)
         if (memberList.contains(email)) {
             Toast.makeText(this, "This member is already in the team", Toast.LENGTH_SHORT).show()
             return
         }
-
-        // Log.d("DEBUG_AUTH", "Current UID: ${FirebaseAuth.getInstance().currentUser?.uid}")
 
         db.collection("users").whereEqualTo("email", email.trim()).get()
             .addOnSuccessListener { result ->
@@ -138,11 +150,10 @@ class ViewMembersActivity : AppCompatActivity() {
                     teamRef.update("members", FieldValue.arrayUnion(userId))
                         .addOnSuccessListener {
                             Toast.makeText(this, "Member added successfully!", Toast.LENGTH_SHORT).show()
-                            loadMembers() // refresh list
+                            loadMembers()
                         }
                         .addOnFailureListener { e ->
                             Toast.makeText(this, "Failed to add member: ${e.message}", Toast.LENGTH_LONG).show()
-                            e.printStackTrace()
                         }
                 } else {
                     Toast.makeText(this, "No user found with this email", Toast.LENGTH_SHORT).show()
@@ -150,7 +161,6 @@ class ViewMembersActivity : AppCompatActivity() {
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Query failed: ${e.message}", Toast.LENGTH_LONG).show()
-                e.printStackTrace()
             }
     }
 
@@ -161,7 +171,6 @@ class ViewMembersActivity : AppCompatActivity() {
             .addOnSuccessListener { result ->
                 if (!result.isEmpty) {
                     val userId = result.documents[0].id
-
                     teamRef.update("members", FieldValue.arrayRemove(userId))
                         .addOnSuccessListener {
                             Toast.makeText(this, "Member removed successfully!", Toast.LENGTH_SHORT).show()
@@ -173,6 +182,96 @@ class ViewMembersActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this, "No user found with this email", Toast.LENGTH_SHORT).show()
                 }
+            }
+    }
+
+    private fun getPositionsForOccasion(occasionType: String): List<String> {
+        return when (occasionType) {
+            "Family Gathering" -> listOf("Parent", "Child", "Relative")
+            "Formal Dinner with Clients" -> listOf("Host", "Manager", "Client")
+            "Team meeting" -> listOf("Team Leader", "Manager", "Member")
+            "Friends Gathering" -> listOf("Organizer", "Friend", "Guest")
+            "Birthday Celebration" -> listOf("Birthday Person", "Family Member", "Friend")
+            "Romantic Date" -> listOf("Partner", "Boyfriend/Girlfriend", "Spouse")
+            else -> listOf("Leader", "Member", "Guest")
+        }
+    }
+
+    // Leader-only edit dialog for member position/age
+    private fun showEditMemberDialog(email: String) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_edit_member, null)
+        val positionSpinner = dialogView.findViewById<Spinner>(R.id.spinnerPosition)
+        val ageSpinner = dialogView.findViewById<Spinner>(R.id.spinnerAgeGroup)
+
+        val ageOptions = listOf("Child", "Teen", "Adult", "Senior")
+        val ageAdapter = ArrayAdapter(
+            this,
+            R.layout.spinner_item,
+            ageOptions
+        ).also {
+            it.setDropDownViewResource(R.layout.spinner_dropdown_item)
+        }
+        ageSpinner.adapter = ageAdapter
+
+        // Get the team’s occasion type to determine position list
+        db.collection("teams").document(teamId).get()
+            .addOnSuccessListener { teamDoc ->
+                val occasionType = teamDoc.getString("occasionType") ?: "Other"
+                val positionOptions = getPositionsForOccasion(occasionType)
+
+                val positionAdapter = ArrayAdapter(
+                    this,
+                    R.layout.spinner_item,
+                    positionOptions
+                ).also {
+                    it.setDropDownViewResource(R.layout.spinner_dropdown_item)
+                }
+                positionSpinner.adapter = positionAdapter
+            }
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Edit Member Info")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val selectedPosition = positionSpinner.selectedItem.toString()
+                val selectedAge = ageSpinner.selectedItem.toString()
+                updateMemberInfo(email, selectedPosition, selectedAge)
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+    }
+
+    // Update Firestore: teams/{teamId}/members_info/{userId}
+    private fun updateMemberInfo(email: String, position: String, ageGroup: String) {
+        db.collection("users").whereEqualTo("email", email).get()
+            .addOnSuccessListener { result ->
+                if (!result.isEmpty) {
+                    val userId = result.documents[0].id
+                    val memberInfoRef = db.collection("teams")
+                        .document(teamId)
+                        .collection("members_info")
+                        .document(userId)
+
+                    val updates = mapOf(
+                        "position" to position,
+                        "ageGroup" to ageGroup
+                    )
+
+                    memberInfoRef.set(updates, SetOptions.merge())
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Member info updated!", Toast.LENGTH_SHORT).show()
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    Toast.makeText(this, "User not found for $email", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Query failed: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
 }

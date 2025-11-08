@@ -5,7 +5,9 @@ data class Team(
     val name: String = "",
     val leaderId: String = "",
     val members: List<String> = listOf(),
+    val occasionType: String = "",
     val createdAt: com.google.firebase.Timestamp = com.google.firebase.Timestamp.now(),
-    val lastMealPoll: String? = null
+    val lastMealPoll: String? = null,
+    val currentlyOpenPoll: String? = null
 )
 
