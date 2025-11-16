@@ -58,17 +58,9 @@ sealed class OnboardingScreen(
         isSkippable = true
     )
 
-    data object AdvancedPreferences : OnboardingScreen(
-        route = "advanced_preferences",
-        stepNumber = 6,
-        title = "Advanced Preferences",
-        description = "Optional: Meal type, portion size, and more",
-        isSkippable = true
-    )
-
     data object Summary : OnboardingScreen(
         route = "summary",
-        stepNumber = 7,
+        stepNumber = 6,
         title = "Review & Finish",
         description = "Review your preferences and start using Veato!",
         isSkippable = false
@@ -82,7 +74,6 @@ sealed class OnboardingScreen(
             AvoidIngredients,
             FavoriteCuisines,
             SpiceTolerance,
-            AdvancedPreferences,
             Summary
         )
 

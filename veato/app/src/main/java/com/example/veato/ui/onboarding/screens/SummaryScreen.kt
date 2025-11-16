@@ -91,18 +91,6 @@ fun SummaryScreen(
                     label = "Spice",
                     value = profile.softPreferences.spiceTolerance.displayName
                 )
-                if (profile.softPreferences.mealTypePreferences.isNotEmpty()) {
-                    SummaryItem(
-                        label = "Meal Types",
-                        value = profile.softPreferences.mealTypePreferences.joinToString { it.displayName }
-                    )
-                }
-                if (profile.softPreferences.portionPreference != null) {
-                    SummaryItem(
-                        label = "Portion",
-                        value = profile.softPreferences.portionPreference.displayName
-                    )
-                }
             }
 
             if (saveError != null) {

@@ -63,8 +63,7 @@ data class OnboardingState(
     fun isSoftPreferenceScreen(): Boolean {
         return currentScreen in listOf(
             OnboardingScreen.FavoriteCuisines,
-            OnboardingScreen.SpiceTolerance,
-            OnboardingScreen.AdvancedPreferences
+            OnboardingScreen.SpiceTolerance
         )
     }
 }

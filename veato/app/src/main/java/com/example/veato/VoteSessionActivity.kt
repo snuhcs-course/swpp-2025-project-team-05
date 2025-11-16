@@ -15,6 +15,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.veato.data.repository.PollRepositoryImpl
 import com.example.veato.ui.main.MainActivity
+import com.example.veato.data.model.PollPhase
+import com.example.veato.ui.poll.Phase1VoteScreen
+import com.example.veato.ui.poll.Phase2VoteScreen
 import com.example.veato.ui.poll.PollResultScreen
 import com.example.veato.ui.poll.PollViewModel
 import com.example.veato.ui.poll.PollViewModelFactory
@@ -73,26 +76,62 @@ fun PollSessionScreen(
             Text("loading data...", style = MaterialTheme.typography.titleMedium)
         }
     } else {
-        if (state.poll?.isOpen == false) {
-            PollResultScreen(
-                state = state,
-                onBackToMain = {
-                    val intent = Intent(context, MainActivity::class.java)
-                    context.startActivity(intent)
-                    (context as? VoteSessionActivity)?.finish()
+        val poll = state.poll
+        when (poll?.phase) {
+            PollPhase.PHASE1 -> {
+                Phase1VoteScreen(
+                    state = state,
+                    onToggleApproval = { index ->
+                        if (!state.voted && !poll.hasCurrentUserLockedIn && state.rejectedCandidateIndex != index) {
+                            viewModel.modifySelectedIndices(index)
+                        }
+                    },
+                    onRejectCandidate = { index ->
+                        viewModel.setRejectedCandidate(index)
+                    },
+                    onLockInVote = {
+                        viewModel.submitPhase1Vote()
+                    },
+                    onTimeOver = { /* no-op: backend auto-closes; ViewModel observes status */ }
+                )
+            }
+            PollPhase.PHASE2 -> {
+                Phase2VoteScreen(
+                    state = state,
+                    onSelectCandidate = { index ->
+                        if (!state.voted && !poll.hasCurrentUserLockedIn) {
+                            // Clear previous selection and set new one (radio button behavior)
+                            viewModel.clearSelectedIndices()
+                            viewModel.modifySelectedIndices(index)
+                        }
+                    },
+                    onLockInVote = {
+                        viewModel.submitPhase2Vote()
+                    },
+                    onTimeOver = { /* no-op: backend auto-closes; ViewModel observes status */ }
+                )
+            }
+            PollPhase.CLOSED -> {
+                PollResultScreen(
+                    state = state,
+                    onBackToMain = {
+                        // Navigate back to TeamDetailActivity
+                        val intent = Intent(context, TeamDetailActivity::class.java)
+                        intent.putExtra("teamId", poll.teamId)
+                        intent.putExtra("teamName", poll.teamName)
+                        context.startActivity(intent)
+                        (context as? VoteSessionActivity)?.finish()
+                    }
+                )
+            }
+            null -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Error: Poll not found", style = MaterialTheme.typography.titleMedium)
                 }
-
-            )
-        } else if (state.poll?.isOpen == true) {
-            VoteScreen(
-                state = state,
-                onSelect = { index ->
-                    if (!state.voted) viewModel.modifySelectedIndices(index)
-                },
-                onVote = viewModel::sendBallot,
-                onCancel = viewModel::revokeBallot,
-                onTimeOver = { /* no-op: backend auto-closes; ViewModel observes status */ }
-            )
+            }
         }
     }
 

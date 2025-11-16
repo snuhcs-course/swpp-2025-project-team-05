@@ -77,28 +77,6 @@ class OnboardingViewModel(
         }
     }
 
-    fun updateMealTypePreferences(types: List<MealType>) {
-        _state.update { currentState ->
-            val updatedPreferences = currentState.profileDraft.softPreferences.copy(
-                mealTypePreferences = types
-            )
-            currentState.copy(
-                profileDraft = currentState.profileDraft.copy(softPreferences = updatedPreferences)
-            )
-        }
-    }
-
-    fun updatePortionPreference(size: PortionSize?) {
-        _state.update { currentState ->
-            val updatedPreferences = currentState.profileDraft.softPreferences.copy(
-                portionPreference = size
-            )
-            currentState.copy(
-                profileDraft = currentState.profileDraft.copy(softPreferences = updatedPreferences)
-            )
-        }
-    }
-
     // Navigation
     fun nextScreen() {
         _state.update { currentState ->

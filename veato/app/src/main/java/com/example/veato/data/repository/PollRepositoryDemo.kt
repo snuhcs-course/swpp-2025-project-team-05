@@ -5,7 +5,13 @@ import com.example.veato.data.model.Poll
 import com.example.veato.data.remote.StartSessionResponse
 
 class PollRepositoryDemo : PollRepository{
-    override suspend fun startVotingSession(teamId: String, pollTitle: String, durationMinutes: Int): StartSessionResponse {
+    override suspend fun startVotingSession(
+        teamId: String,
+        pollTitle: String,
+        durationMinutes: Int,
+        includedMemberIds: List<String>,
+        occasionNote: String
+    ): StartSessionResponse {
         return StartSessionResponse(
             pollId = "demo_poll_123",
             pollTitle = pollTitle,
@@ -36,5 +42,13 @@ class PollRepositoryDemo : PollRepository{
 
     override suspend fun revokeBallot(pollId: String, userId: String) {
         // not yet implemented
+    }
+
+    override suspend fun submitPhase1Vote(pollId: String, approvedIndices: List<Int>, rejectedIndex: Int?) {
+        // Demo implementation - no-op
+    }
+
+    override suspend fun submitPhase2Vote(pollId: String, selectedIndex: Int) {
+        // Demo implementation - no-op
     }
 }

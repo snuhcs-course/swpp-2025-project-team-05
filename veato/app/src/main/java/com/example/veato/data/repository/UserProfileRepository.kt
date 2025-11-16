@@ -1,5 +1,6 @@
 package com.example.veato.data.repository
 
+import android.net.Uri
 import com.example.veato.data.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 
@@ -36,4 +37,9 @@ interface UserProfileRepository {
      * Check if onboarding is complete for a user
      */
     suspend fun isOnboardingComplete(userId: String): Boolean
+
+    /**
+     * Upload profile image to Firebase Storage and return download URL
+     */
+    suspend fun uploadProfileImage(userId: String, imageUri: Uri): String
 }

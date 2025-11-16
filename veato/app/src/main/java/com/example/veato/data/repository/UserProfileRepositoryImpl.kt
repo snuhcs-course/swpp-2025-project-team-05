@@ -1,5 +1,6 @@
 package com.example.veato.data.repository
 
+import android.net.Uri
 import com.example.veato.data.local.ProfileLocalDataSource
 import com.example.veato.data.model.UserProfile
 import com.example.veato.data.remote.ProfileRemoteDataSource
@@ -70,5 +71,9 @@ class UserProfileRepositoryImpl(
         } catch (e: Exception) {
             false
         }
+    }
+
+    override suspend fun uploadProfileImage(userId: String, imageUri: Uri): String {
+        return remoteDataSource.uploadProfileImage(userId, imageUri)
     }
 }

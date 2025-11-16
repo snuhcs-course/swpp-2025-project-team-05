@@ -2,6 +2,7 @@ package com.example.veato.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -35,26 +36,65 @@ class RegisterActivity : AppCompatActivity() {
         val password = binding.etRegPassword.text?.toString().orEmpty()
         val confirm = binding.etRegConfirm.text?.toString().orEmpty()
 
+        Log.d("AuthDebug", "Register button clicked - validating input")
+        Log.d("AuthDebug", "Full name: $fullName, Username: $username, Email: $email")
+
         // Basic validation
         val usernameOk = username.matches(Regex("^[a-z0-9_]{3,20}$"))
         when {
-            fullName.isEmpty() -> err("Full name required")
-            !usernameOk -> err("Invalid username (use 3–20 letters/numbers/_)")
-            email.isEmpty() -> err("Email required")
-            password.length < 6 -> err("Password must be at least 6 chars")
-            password != confirm -> err("Passwords do not match")
-            else -> createAccount(fullName, username, email, password)
+            fullName.isEmpty() -> {
+                Log.d("AuthDebug", "Validation failed: Full name is empty")
+                err("Full name required")
+            }
+            !usernameOk -> {
+                Log.d("AuthDebug", "Validation failed: Invalid username format")
+                err("Invalid username (use 3–20 letters/numbers/_)")
+            }
+            email.isEmpty() -> {
+                Log.d("AuthDebug", "Validation failed: Email is empty")
+                err("Email required")
+            }
+            !email.contains("@") -> {
+                Log.d("AuthDebug", "Validation failed: Email doesn't contain @")
+                err("Email must be a valid email address (e.g., user@example.com)")
+            }
+            password.length < 6 -> {
+                Log.d("AuthDebug", "Validation failed: Password too short")
+                err("Password must be at least 6 chars")
+            }
+            password != confirm -> {
+                Log.d("AuthDebug", "Validation failed: Passwords don't match")
+                err("Passwords do not match")
+            }
+            else -> {
+                Log.d("AuthDebug", "Validation passed - proceeding to create account")
+                createAccount(fullName, username, email, password)
+            }
         }
     }
 
     private fun createAccount(fullName: String, username: String, email: String, password: String) {
         busy(true)
+        Log.d("AuthDebug", "Attempting to create account with email: $email, username: $username")
+
+        // Add a timeout check to see if request is hanging
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            Log.e("AuthDebug", "⏰ 10 second timeout reached - Firebase Auth callback never fired!")
+        }, 10000)
+
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
-                val uid = authResult.user?.uid ?: return@addOnSuccessListener err("No UID")
+                Log.d("AuthDebug", "Account creation successful! AuthResult: $authResult")
+                val uid = authResult.user?.uid
+                Log.d("AuthDebug", "User UID: $uid")
+                if (uid == null) {
+                    Log.e("AuthDebug", "UID is null after successful account creation")
+                    return@addOnSuccessListener err("No UID")
+                }
                 // Transaction: ensure username is unique and create both docs atomically
                 val usernamesRef = db.collection("usernames").document(username)
                 val usersRef = db.collection("users").document(uid)
+                Log.d("AuthDebug", "Starting Firestore transaction for username: $username")
 
                 db.runTransaction { tr ->
                     // ensure username is still free
@@ -77,18 +117,27 @@ class RegisterActivity : AppCompatActivity() {
 
                     null
                 }.addOnSuccessListener {
+                    Log.d("AuthDebug", "Firestore transaction successful - navigating to Onboarding")
                     startActivity(Intent(this, OnboardingActivity::class.java))
                     finish()
                 }.addOnFailureListener { e ->
+                    Log.e("AuthDebug", "Firestore transaction failed: ${e.localizedMessage}", e)
                     // Rollback auth account if username collision happens
                     auth.currentUser?.delete()
                     err(e.localizedMessage ?: "Sign up failed")
-                }.addOnCompleteListener { busy(false) }
+                }.addOnCompleteListener { task ->
+                    Log.d("AuthDebug", "Transaction completed. Success: ${task.isSuccessful}, Exception: ${task.exception}")
+                    busy(false)
+                }
 
             }
             .addOnFailureListener { e ->
+                Log.e("AuthDebug", "Account creation failed: ${e.localizedMessage}", e)
                 busy(false)
                 err(e.localizedMessage ?: "Sign up failed")
+            }
+            .addOnCompleteListener { task ->
+                Log.d("AuthDebug", "createUserWithEmailAndPassword completed. Success: ${task.isSuccessful}, Exception: ${task.exception}")
             }
     }
 
