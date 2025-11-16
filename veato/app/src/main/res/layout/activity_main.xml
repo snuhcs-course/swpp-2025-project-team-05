@@ -8,16 +8,17 @@
     android:background="@color/white">
 
     <TextView
-        android:id="@+id/tvWelcome"
+        android:id="@+id/tvHomeTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome to Veato, user@example.com"
-        android:textSize="22sp"
+        android:text="Home"
+        android:textSize="32sp"
+        android:textStyle="bold"
         android:textColor="@color/black"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="32dp"
-        android:layout_marginStart="16dp"/>
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="32dp" />
 
     <Button
         android:id="@+id/btnLogout"
@@ -26,54 +27,78 @@
         android:text="Log out"
         android:textAllCaps="false"
         android:textColor="@color/white"
-        android:textSize="14sp"
         android:background="@drawable/rounded_button_primary"
         android:backgroundTint="@null"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="6dp"
-        app:layout_constraintTop_toTopOf="parent"
+        app:backgroundTint="@null"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="8dp"
+        app:layout_constraintTop_toTopOf="@id/tvHomeTitle"
+        app:layout_constraintBottom_toBottomOf="@id/tvHomeTitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="24dp"/>
+
+    <TextView
+        android:id="@+id/tvWelcome"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Welcome to Veato, user@example.com"
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@id/tvHomeTitle"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="24dp"
-        android:layout_marginEnd="16dp"/>
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"/>
 
     <LinearLayout
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="64dp"
         android:background="@color/green_light"
         android:orientation="horizontal"
         android:gravity="center"
+        android:paddingHorizontal="8dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <Button
             android:id="@+id/btnMenuLogging"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="64dp"
             android:layout_weight="1"
-            android:text="Menu Logging"
+            android:text="My Preferences"
+            android:textSize="14sp"
             android:textAllCaps="false"
             android:background="@android:color/transparent"
-            android:textColor="@color/black"/>
+            android:textColor="@color/black"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"/>
 
         <Button
             android:id="@+id/btnMyTeams"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="64dp"
             android:layout_weight="1"
             android:text="My Teams"
+            android:textSize="14sp"
             android:textAllCaps="false"
             android:background="@android:color/transparent"
-            android:textColor="@color/black"/>
+            android:textColor="@color/black"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"/>
 
         <Button
             android:id="@+id/btnMyProfile"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="64dp"
             android:layout_weight="1"
             android:text="My Profile"
+            android:textSize="14sp"
             android:textAllCaps="false"
             android:background="@android:color/transparent"
-            android:textColor="@color/black"/>
+            android:textColor="@color/black"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

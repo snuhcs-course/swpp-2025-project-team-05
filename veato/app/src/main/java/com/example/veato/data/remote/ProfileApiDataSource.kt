@@ -1,5 +1,6 @@
 package com.example.veato.data.remote
 
+import android.net.Uri
 import android.util.Log
 import com.example.veato.data.model.Allergen
 import com.example.veato.data.model.CuisineType
@@ -9,6 +10,7 @@ import com.example.veato.data.model.SoftPreferences
 import com.example.veato.data.model.SpiceLevel
 import com.example.veato.data.model.UserProfile
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 
 
@@ -16,10 +18,12 @@ import kotlinx.coroutines.tasks.await
 
 
 class ProfileApiDataSource(
-    firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) : ProfileRemoteDataSource {
 
     private val collection = firestore.collection("users")
+    private val storageRef = storage.reference
 
 
     override suspend fun download(userId: String): UserProfile? {
@@ -35,7 +39,9 @@ class ProfileApiDataSource(
 
                     allergies = (data["allergies"] as? List<String>)?.mapNotNull {
                         runCatching { Allergen.valueOf(it) }.getOrNull()
-                    } ?: emptyList()
+                    } ?: emptyList(),
+
+                    avoidIngredients = (data["avoidIngredients"] as? List<String>) ?: emptyList()
                 )
 
                 val softPreferences = SoftPreferences(
@@ -52,6 +58,7 @@ class ProfileApiDataSource(
                 val onboarding = data["onboardingCompleted"] as? Boolean ?: false
                 val fullName = data["fullName"] as? String ?: "full_name"
                 val username = data["username"] as? String ?: "user_name"
+                val profilePictureUrl = data["profilePictureUrl"] as? String ?: ""
 
                 UserProfile(
                     userId = userId,
@@ -60,6 +67,7 @@ class ProfileApiDataSource(
                     isOnboardingComplete = onboarding,
                     userName = username,
                     fullName = fullName,
+                    profilePictureUrl = profilePictureUrl
                 )
             } else {
                 Log.d("ProfileApiDataSource", "No such document")
@@ -79,15 +87,17 @@ class ProfileApiDataSource(
             val profileData = hashMapOf(
                 "onboardingCompleted" to true,
                 "lastUpdated" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                // User Info
+                "fullName" to profile.fullName,
+                "username" to profile.userName,
+                "profilePictureUrl" to profile.profilePictureUrl,
                 // Hard Constraints - convert sets to lists of strings
                 "dietaryRestrictions" to profile.hardConstraints.dietaryRestrictions.map { it.name },
                 "allergies" to profile.hardConstraints.allergies.map { it.name },
                 "avoidIngredients" to profile.hardConstraints.avoidIngredients.toList(),
                 // Soft Preferences - convert enums to strings
                 "favoriteCuisines" to profile.softPreferences.favoriteCuisines.map { it.name },
-                "spiceTolerance" to profile.softPreferences.spiceTolerance.name,
-                "mealTypePreferences" to profile.softPreferences.mealTypePreferences.map { it.name },
-                "portionPreference" to (profile.softPreferences.portionPreference?.name ?: "MEDIUM")
+                "spiceTolerance" to profile.softPreferences.spiceTolerance.name
             )
 
             collection.document(profile.userId)
@@ -95,6 +105,25 @@ class ProfileApiDataSource(
                 .await()
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    override suspend fun uploadProfileImage(userId: String, imageUri: Uri): String {
+        return try {
+            // Create a unique filename with timestamp
+            val timestamp = System.currentTimeMillis()
+            val filename = "profile_images/${userId}_${timestamp}.jpg"
+            val imageRef = storageRef.child(filename)
+
+            // Upload the image
+            imageRef.putFile(imageUri).await()
+
+            // Get the download URL
+            val downloadUrl = imageRef.downloadUrl.await()
+            downloadUrl.toString()
+        } catch (e: Exception) {
+            Log.e("ProfileApiDataSource", "Error uploading profile image", e)
+            throw e
         }
     }
 

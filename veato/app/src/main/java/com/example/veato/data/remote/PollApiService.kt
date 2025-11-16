@@ -7,15 +7,21 @@ import retrofit2.http.*
  * Retrofit service interface for poll-related API calls
  */
 interface PollApiService {
-    
+
     @POST("polls/start")
     suspend fun startPoll(@Body request: StartPollRequest): Response<StartSessionResponse>
-    
+
     @GET("polls/{pollId}")
     suspend fun getPoll(@Path("pollId") pollId: String): Response<PollResponse>
-    
+
     @POST("polls/{pollId}/vote")
     suspend fun castVote(@Path("pollId") pollId: String, @Body request: VoteRequest): Response<VoteResponse>
+
+    @POST("polls/{pollId}/phase1-vote")
+    suspend fun castPhase1Vote(@Path("pollId") pollId: String, @Body request: Phase1VoteRequest): Response<VoteResponse>
+
+    @POST("polls/{pollId}/phase2-vote")
+    suspend fun castPhase2Vote(@Path("pollId") pollId: String, @Body request: Phase2VoteRequest): Response<VoteResponse>
 }
 
 /**
@@ -24,7 +30,9 @@ interface PollApiService {
 data class StartPollRequest(
     val teamId: String,
     val pollTitle: String,
-    val durationMinutes: Int
+    val durationMinutes: Int,
+    val includedMemberIds: List<String>,
+    val occasionNote: String = ""
 )
 
 /**
@@ -48,6 +56,9 @@ data class PollResponse(
     val teamId: String? = null,
     val teamName: String? = null,
     val status: String,
+    val phase: String? = null,  // "phase1", "phase2", or "closed"
+    val lockedInUserCount: Int? = null,
+    val hasCurrentUserLockedIn: Boolean? = null,
     val startedTime: String? = null,
     val duration: Int? = null,
     val remainingSeconds: Int? = null,
@@ -62,7 +73,10 @@ data class PollResponse(
  * Response data class for poll candidates
  */
 data class CandidateResponse(
-    val name: String
+    val name: String,
+    val ranking: Int? = null,
+    val voteCount: Int? = null,
+    val isRejected: Boolean? = null
 )
 
 /**
@@ -87,4 +101,19 @@ data class VoteResponse(
     val ok: Boolean,
     val yourCurrentVotes: List<String>,
     val totalSelectedCountForYou: Int
+)
+
+/**
+ * Request data class for Phase 1 voting (approval + optional rejection)
+ */
+data class Phase1VoteRequest(
+    val approvedCandidates: List<String>,
+    val rejectedCandidate: String? = null
+)
+
+/**
+ * Request data class for Phase 2 voting (single selection)
+ */
+data class Phase2VoteRequest(
+    val selectedCandidate: String
 )

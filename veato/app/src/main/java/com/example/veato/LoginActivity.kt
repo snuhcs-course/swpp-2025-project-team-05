@@ -10,7 +10,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.example.veato.databinding.ActivityLoginBinding
-import com.example.veato.ui.main.MainActivity
+import com.example.veato.MyTeamsActivity
 import com.example.veato.OnboardingActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -63,18 +63,23 @@ class LoginActivity : AppCompatActivity() {
 
     private suspend fun navigateBasedOnOnboardingStatus(userId: String) {
         try {
+            Log.d("AuthDebug", "Fetching user document for userId: $userId")
             val userDoc = db.collection("users").document(userId).get().await()
             val hasCompletedOnboarding = userDoc.getBoolean("onboardingCompleted") ?: false
+            Log.d("AuthDebug", "Onboarding completed: $hasCompletedOnboarding")
 
             if (hasCompletedOnboarding) {
+                Log.d("AuthDebug", "Navigating to MyTeamsActivity")
                 // Go to main app if onboarding already completed
-                startActivity(Intent(this, MainActivity::class.java))
+                startActivity(Intent(this, MyTeamsActivity::class.java))
             } else {
+                Log.d("AuthDebug", "Navigating to OnboardingActivity")
                 // Go to onboarding if not completed
                 startActivity(Intent(this, OnboardingActivity::class.java))
             }
             finish()
         } catch (e: Exception) {
+            Log.e("AuthDebug", "Error checking onboarding status: ${e.message}", e)
             // If error checking status, default to onboarding
             startActivity(Intent(this, OnboardingActivity::class.java))
             finish()
@@ -93,21 +98,39 @@ class LoginActivity : AppCompatActivity() {
         binding.progress.visibility = View.VISIBLE
         binding.btnLogin.isEnabled = false
 
+        Log.d("AuthDebug", "Attempting sign in with email: $email")
+
+        // Add a timeout check to see if request is hanging
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            Log.e("AuthDebug", "⏰ 10 second timeout reached - Firebase Auth callback never fired!")
+        }, 10000)
+
         auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
+            .addOnSuccessListener { authResult ->
+                Log.d("AuthDebug", "Sign in successful! AuthResult: $authResult")
                 binding.progress.visibility = View.GONE
                 binding.btnLogin.isEnabled = true
-                if (task.isSuccessful) {
-                    // Check onboarding status after successful login
-                    val userId = auth.currentUser?.uid
-                    if (userId != null) {
-                        lifecycleScope.launch {
-                            navigateBasedOnOnboardingStatus(userId)
-                        }
+
+                val userId = auth.currentUser?.uid
+                Log.d("AuthDebug", "User ID: $userId")
+                if (userId != null) {
+                    lifecycleScope.launch {
+                        Log.d("AuthDebug", "Navigating based on onboarding status")
+                        navigateBasedOnOnboardingStatus(userId)
                     }
                 } else {
-                    toast(task.exception?.localizedMessage ?: "Login failed")
+                    Log.e("AuthDebug", "User ID is null after successful login!")
+                    toast("Login error: User ID is null")
                 }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("AuthDebug", "Sign in failed: ${exception.localizedMessage}", exception)
+                binding.progress.visibility = View.GONE
+                binding.btnLogin.isEnabled = true
+                toast(exception.localizedMessage ?: "Login failed")
+            }
+            .addOnCompleteListener { task ->
+                Log.d("AuthDebug", "Sign in completed. Success: ${task.isSuccessful}, Exception: ${task.exception}")
             }
     }
 

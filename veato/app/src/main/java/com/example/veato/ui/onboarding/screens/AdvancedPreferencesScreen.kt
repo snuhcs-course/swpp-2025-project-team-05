@@ -96,7 +96,7 @@ fun AdvancedPreferencesScreen(
             showPrevious = true,
             showSkip = mealTypes.isEmpty() && portionSize == null,
             onSkip = { onNext() },
-            nextLabel = "Continue to Summary"
+            nextLabel = "Continue"
         )
     }
 }

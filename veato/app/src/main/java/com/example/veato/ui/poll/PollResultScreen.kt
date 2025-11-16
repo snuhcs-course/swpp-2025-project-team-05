@@ -35,6 +35,7 @@ fun PollResultScreen(
     onBackToMain: () -> Unit
 ) {
     val poll = state.poll ?: return
+    val winner = poll.results.firstOrNull()
 
     Column(
         modifier = Modifier
@@ -54,14 +55,55 @@ fun PollResultScreen(
             }
             Box(
                 modifier = Modifier
-                    .background(Color(0xFF3DD1A0), RoundedCornerShape(8.dp))
+                    .background(Color(0xFFDC2626), RoundedCornerShape(8.dp))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text("Closed", color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
 
-        // result card
+        // Winner celebration card
+        if (winner != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBEB)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "🏆 Winner 🏆",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFD97706)
+                        )
+                    )
+                    Text(
+                        text = winner.name,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF92400E)
+                        )
+                    )
+                    if (winner.voteCount > 0) {
+                        Text(
+                            text = "${winner.voteCount} votes",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = Color(0xFFB45309)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        // Complete results card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -75,18 +117,19 @@ fun PollResultScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Results",
+                    text = "Complete Results",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold
                     ),
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
 
-                // display top 3
-                poll.results.take(3).forEachIndexed { index, candidate ->
-                    CandidateBox(
+                // display all results
+                poll.results.forEachIndexed { index, candidate ->
+                    ResultCandidateRow(
                         rank = index + 1,
                         name = candidate.name,
+                        voteCount = candidate.voteCount,
                         isWinner = index == 0
                     )
                 }
@@ -102,11 +145,77 @@ fun PollResultScreen(
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9BD1C4))
         ) {
-            Text("Back to main page", color = Color.White)
+            Text("Back to Team", color = Color.White)
         }
     }
 }
 
+
+@Composable
+fun ResultCandidateRow(
+    rank: Int,
+    name: String,
+    voteCount: Int,
+    isWinner: Boolean
+) {
+    val bgColor = if (isWinner) Color(0xFFFFFBEB) else Color.White
+    val borderColor = if (isWinner) Color(0xFFD97706) else Color.LightGray
+    val textColor = if (isWinner) Color(0xFF92400E) else Color.Gray
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(8.dp))
+            .background(bgColor, RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            // Rank badge
+            Box(
+                modifier = Modifier
+                    .size(if (isWinner) 32.dp else 28.dp)
+                    .background(
+                        if (isWinner) Color(0xFFD97706) else Color(0xFFE0E0E0),
+                        shape = RoundedCornerShape(50)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (isWinner) "🏆" else rank.toString(),
+                    color = if (isWinner) Color.White else Color.Gray,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = if (isWinner) FontWeight.Bold else FontWeight.Normal,
+                    color = textColor
+                )
+            )
+        }
+
+        // Vote count
+        if (voteCount > 0) {
+            Text(
+                text = "$voteCount votes",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = if (isWinner) FontWeight.SemiBold else FontWeight.Normal,
+                    color = textColor
+                )
+            )
+        }
+    }
+}
 
 @Composable
 fun CandidateBox(
@@ -117,7 +226,7 @@ fun CandidateBox(
     val bgColor = if (isWinner) Color(0xFFF1FFF8) else Color.White
     val borderColor = if (isWinner) Color(0xFF3DD1A0) else Color.LightGray
     val textColor = if (isWinner) Color(0xFF333333) else Color.Gray
-    val scale = if (isWinner) 1.05f else 1f  // ⭐ 우승자만 살짝 커지게
+    val scale = if (isWinner) 1.05f else 1f
 
     Row(
         modifier = Modifier
@@ -128,7 +237,6 @@ fun CandidateBox(
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 순위 원형
         Box(
             modifier = Modifier
                 .size(if (isWinner) 28.dp else 24.dp)

@@ -93,6 +93,56 @@ class PollViewModel(
         }
     }
 
+    // Phase-specific methods
+
+    fun setRejectedCandidate(index: Int?) {
+        _state.update {
+            it.copy(
+                rejectedCandidateIndex = index,
+                rejectionUsed = index != null
+            )
+        }
+    }
+
+    fun submitPhase1Vote() {
+        viewModelScope.launch {
+            try {
+                val approvedIndices = _state.value.selectedIndices.toList()
+                val rejectedIndex = _state.value.rejectedCandidateIndex
+
+                repository.submitPhase1Vote(pollId, approvedIndices, rejectedIndex)
+
+                // Mark as voted/locked in
+                _state.update { it.copy(voted = true) }
+
+                // Refresh poll state
+                loadOnce()
+            } catch (e: Exception) {
+                // Handle error (can add error state if needed)
+            }
+        }
+    }
+
+    fun submitPhase2Vote() {
+        viewModelScope.launch {
+            try {
+                // In Phase 2, selectedIndices should only have one element
+                val selectedIndex = _state.value.selectedIndices.firstOrNull()
+                    ?: throw Exception("No candidate selected")
+
+                repository.submitPhase2Vote(pollId, selectedIndex)
+
+                // Mark as voted/locked in
+                _state.update { it.copy(voted = true) }
+
+                // Refresh poll state
+                loadOnce()
+            } catch (e: Exception) {
+                // Handle error (can add error state if needed)
+            }
+        }
+    }
+
     // remove demo close; backend auto-closes when time is up
 
 }

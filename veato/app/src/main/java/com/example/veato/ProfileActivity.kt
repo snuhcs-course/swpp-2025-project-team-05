@@ -1,23 +1,25 @@
 package com.example.veato
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,19 +28,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.example.veato.data.local.ProfileDataStoreImpl
 import com.example.veato.data.model.Allergen
-import com.example.veato.data.model.CuisineType
 import com.example.veato.data.model.DietaryType
-import com.example.veato.data.model.SpiceLevel
 import com.example.veato.data.model.UserProfile
 import com.example.veato.data.remote.ProfileApiDataSource
 import com.example.veato.data.repository.UserProfileRepositoryImpl
+import com.example.veato.ui.components.IngredientsChipInput
 import com.example.veato.ui.components.MultiSelectChipGroup
-import com.example.veato.ui.components.PreferenceSlider
+import com.example.veato.ui.main.MainActivity
 import com.example.veato.ui.profile.ProfileViewModel
 import com.example.veato.ui.profile.ProfileViewModelFactory
 import com.example.veato.ui.theme.VeatoTheme
@@ -52,17 +57,17 @@ class ProfileActivity : ComponentActivity() {
             VeatoTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background)
-                {
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     ProfileScreen()
                 }
             }
         }
     }
-
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen() {
     val context = LocalContext.current
@@ -79,135 +84,263 @@ fun ProfileScreen() {
     )
     val state by viewModel.state.collectAsState()
 
-    Column(Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
-        Spacer(Modifier.height(24.dp))
+    // Image picker launchers
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.selectImage(it) }
+    }
 
-        // name id picture
-        NameIdPictureBox(state.userProfile?.fullName, state.userProfile?.userName, state.userProfile != null)
-
-        Spacer(Modifier.height(24.dp))
-
-        // tab select button
-        TabRow(selectedTabIndex = state.tab) {
-            Tab(selected = (state.tab == 0), onClick = { viewModel.changeTab(0) }, text = { Text("Preferences") })
-            Tab(selected = (state.tab == 1), onClick = { if (!state.isEditing) viewModel.changeTab(1) else Toast.makeText(context, "Save your preferences first", Toast.LENGTH_SHORT).show() }, text = { Text("History") })
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            // Image saved to the URI provided
+            Toast.makeText(context, "Photo captured", Toast.LENGTH_SHORT).show()
         }
+    }
 
-        Spacer(Modifier.height(16.dp))
-
-        // actual tab show
+    Scaffold(
+        topBar = {
+            if (state.isEditing) {
+                TopAppBar(
+                    title = { Text("Edit Profile") },
+                    navigationIcon = {
+                        IconButton(onClick = { viewModel.toggleEditing() }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Cancel"
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.updateProfile() }) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Save",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                )
+            } else {
+                TopAppBar(
+                    title = { Text("Profile") },
+                    navigationIcon = {
+                        IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    }
+                )
+            }
+        },
+        bottomBar = {
+            BottomNavigationBar(currentScreen = "Profile")
+        }
+    ) { paddingValues ->
         when {
             state.isBusy -> LoadingCircle()
-            state.userProfile == null -> Text("No profile found.")
-            state.tab == 0 -> PreferencesTab(
-                userProfile = state.userProfile!!,
-                updateDietRestriction = viewModel::updateDietaryRestrictions,
-                updateAllergies = viewModel::updateAllergies,
-                updateFavoriteCuisines = viewModel::updateFavoriteCuisines,
-                updateSpiceTolerance = viewModel::updateSpiceTolerance,
-                updateProfile = viewModel::updateProfile,
-                isEditing = state.isEditing,
-                toggleMode = viewModel::toggleEditing
-            )
-            state.tab == 1 -> HistoryTab()
-        }
-    }
-}
-
-@Composable
-private fun NameIdPictureBox(fullName: String? = "", userName: String? = "", available:Boolean = true) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .height(80.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(Color.LightGray)
-        )
-        Column {
-            Text( if (available) fullName ?: "FULL_NAME" else "NOT AVAILABLE", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-            Text(if (available) "@${userName ?: "USER_NAME"}" else "NOT AVAILABLE", color = Color.Gray)
-        }
-    }
-}
-
-@Composable
-private fun LoadingCircle() {
-    Box(Modifier.fillMaxSize()) {
-        CircularProgressIndicator(Modifier.align(Alignment.Center))
-    }
-}
-
-
-@Composable
-private fun PreferencesTab(
-    userProfile: UserProfile,
-    updateDietRestriction: (List<DietaryType>) -> Unit,
-    updateAllergies: (List<Allergen>) -> Unit,
-    updateFavoriteCuisines: (List<CuisineType>) -> Unit,
-    updateSpiceTolerance: (SpiceLevel) -> Unit,
-    isEditing: Boolean,
-    toggleMode: () -> Unit,
-
-
-    updateProfile: () -> Unit
-) {
-
-
-Column(
-    verticalArrangement = Arrangement.spacedBy(12.dp),
-    modifier = Modifier.verticalScroll(rememberScrollState())
-) {
-        EditPreferenceButton(
-            isEditMode = isEditing,
-            onClick = {
-                if (isEditing) {
-                    updateProfile()
+            state.userProfile == null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No profile found.")
                 }
-                toggleMode()
             }
-        )
-        Text("Hard Constraints", style = MaterialTheme.typography.titleLarge)
-        DietRestrictionBox(
-            enabled = isEditing,
-            selectedItems = userProfile.hardConstraints.dietaryRestrictions,
-            onUpdate = updateDietRestriction
-        )
-         AllergiesBox(
-             enabled = isEditing,
-             selectedItems = userProfile.hardConstraints.allergies,
-             onUpdate = updateAllergies
-         )
-         Text("Soft Constraints", style = MaterialTheme.typography.titleLarge)
-         FavoriteCuisinesBox(
-             enabled = isEditing,
-             selectedItems = userProfile.softPreferences.favoriteCuisines,
-             onUpdate = updateFavoriteCuisines
-         )
-         SpiceToleranceBox(
-             enabled = isEditing,
-             value = userProfile.softPreferences.spiceTolerance,
-             onUpdate = updateSpiceTolerance
-         )
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(Modifier.height(16.dp))
+
+                    // Profile Picture
+                    ProfilePictureSection(
+                        profilePictureUrl = state.selectedImageUri?.toString()
+                            ?: state.userProfile?.profilePictureUrl ?: "",
+                        isEditing = state.isEditing,
+                        onCameraClick = {
+                            // Show dialog to choose camera or gallery
+                            galleryLauncher.launch("image/*")
+                        }
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // Full Name and Username
+                    if (state.isEditing) {
+                        OutlinedTextField(
+                            value = state.editedFullName,
+                            onValueChange = { viewModel.updateEditedFullName(it) },
+                            label = { Text("Full Name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = state.editedUserName,
+                            onValueChange = { viewModel.updateEditedUserName(it) },
+                            label = { Text("Username") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            prefix = { Text("@") }
+                        )
+                    } else {
+                        Text(
+                            text = state.userProfile?.fullName ?: "Full Name",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "@${state.userProfile?.userName ?: "username"}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Gray
+                        )
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+
+                    // Edit Profile Button (when not editing)
+                    if (!state.isEditing) {
+                        Button(
+                            onClick = { viewModel.toggleEditing() },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondary
+                            )
+                        ) {
+                            Text("Edit Profile")
+                        }
+                        Spacer(Modifier.height(24.dp))
+                    }
+
+                    // Error message
+                    state.saveError?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
+
+                    // Hard Constraints Section
+                    Text(
+                        "Dietary Preferences",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(16.dp))
+
+                    DietaryRestrictionsSection(
+                        enabled = state.isEditing,
+                        selectedItems = state.userProfile?.hardConstraints?.dietaryRestrictions
+                            ?: emptyList(),
+                        onUpdate = viewModel::updateDietaryRestrictions
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    AllergiesSection(
+                        enabled = state.isEditing,
+                        selectedItems = state.userProfile?.hardConstraints?.allergies
+                            ?: emptyList(),
+                        onUpdate = viewModel::updateAllergies
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    IngredientsToAvoidSection(
+                        enabled = state.isEditing,
+                        ingredients = state.userProfile?.hardConstraints?.avoidIngredients
+                            ?: emptyList(),
+                        onUpdate = viewModel::updateAvoidIngredients
+                    )
+
+                    Spacer(Modifier.height(32.dp))
+                }
+            }
+        }
     }
 }
 
 @Composable
-fun DietRestrictionBox(
+private fun ProfilePictureSection(
+    profilePictureUrl: String,
+    isEditing: Boolean,
+    onCameraClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier.size(120.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        // Profile Picture
+        if (profilePictureUrl.isNotEmpty()) {
+            Image(
+                painter = rememberAsyncImagePainter(profilePictureUrl),
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .clickable(enabled = isEditing) { onCameraClick() },
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray)
+                    .clickable(enabled = isEditing) { onCameraClick() }
+            )
+        }
+
+        // Camera icon overlay when editing
+        if (isEditing) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable { onCameraClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = "Change picture",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DietaryRestrictionsSection(
     enabled: Boolean,
-    selectedItems: List<DietaryType> = emptyList(),
+    selectedItems: List<DietaryType>,
     onUpdate: (List<DietaryType>) -> Unit
 ) {
-    Column {
-        Text("① Dietary Restrictions", style = MaterialTheme.typography.titleMedium)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Dietary Restrictions",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
         Spacer(Modifier.height(12.dp))
         MultiSelectChipGroup(
             items = DietaryType.entries.filter { it != DietaryType.CUSTOM },
@@ -221,13 +354,17 @@ fun DietRestrictionBox(
 }
 
 @Composable
-fun AllergiesBox(
+private fun AllergiesSection(
     enabled: Boolean,
-    selectedItems: List<Allergen> = emptyList(),
+    selectedItems: List<Allergen>,
     onUpdate: (List<Allergen>) -> Unit
 ) {
-    Column {
-        Text("② Food Allergies", style = MaterialTheme.typography.titleMedium)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Food Allergies",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
         Spacer(Modifier.height(12.dp))
         MultiSelectChipGroup(
             items = Allergen.entries.filter { it != Allergen.CUSTOM },
@@ -240,68 +377,103 @@ fun AllergiesBox(
     }
 }
 
-
 @Composable
-fun FavoriteCuisinesBox(
+private fun IngredientsToAvoidSection(
     enabled: Boolean,
-    selectedItems: List<CuisineType> = emptyList(),
-    onUpdate: (List<CuisineType>) -> Unit
+    ingredients: List<String>,
+    onUpdate: (List<String>) -> Unit
 ) {
-    Column {
-        Text("① Favorite Cuisines", style = MaterialTheme.typography.titleMedium)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Ingredients to Avoid",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
         Spacer(Modifier.height(12.dp))
-        MultiSelectChipGroup(
-            items = CuisineType.entries,
-            selectedItems = selectedItems,
-            onSelectionChange = onUpdate,
-            itemLabel = { it.displayName },
-            itemsPerRow = 2,
+        IngredientsChipInput(
+            ingredients = ingredients,
+            onIngredientsChange = onUpdate,
             enabled = enabled
         )
     }
 }
 
 @Composable
-fun SpiceToleranceBox(
-    enabled: Boolean,
-    value: SpiceLevel,
-    onUpdate: (SpiceLevel) -> Unit
-) {
-    Column {
-        Text("② Spice Tolerance", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(12.dp))
-        PreferenceSlider(
-            value = value.level.toFloat(),
-            onValueChange = { onUpdate(SpiceLevel.fromLevel(it.toInt())) },
-            valueRange = 1f..5f,
-            enabled = enabled,
-            steps = 3,
-            label = "",
-            startLabel = "No Spice",
-            endLabel = "Extra Spicy"
-        )
+private fun LoadingCircle() {
+    Box(Modifier.fillMaxSize()) {
+        CircularProgressIndicator(Modifier.align(Alignment.Center))
     }
 }
-
-
-
-
 
 @Composable
-private fun EditPreferenceButton(
-    isEditMode: Boolean,
-    onClick: () -> Unit
-) {
-    Button(onClick = onClick) {
-        Text(if (isEditMode) "Save Changes" else "Edit Preference", style = MaterialTheme.typography.labelSmall)
+private fun BottomNavigationBar(currentScreen: String) {
+    val context = LocalContext.current
+
+    // Exact match to XML: LinearLayout with Buttons
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .background(Color(0xFFE8F5E9))
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // My Preferences
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(64.dp)
+                .clickable {
+                    val intent = Intent(context, MyPreferencesActivity::class.java)
+                    context.startActivity(intent)
+                }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "My Preferences",
+                fontSize = 14.sp,
+                fontWeight = if (currentScreen == "Preferences") FontWeight.Bold else FontWeight.Normal,
+                color = Color.Black
+            )
+        }
+
+        // My Teams
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(64.dp)
+                .clickable {
+                    val intent = Intent(context, MyTeamsActivity::class.java)
+                    context.startActivity(intent)
+                }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "My Teams",
+                fontSize = 14.sp,
+                fontWeight = if (currentScreen == "MyTeams") FontWeight.Bold else FontWeight.Normal,
+                color = Color.Black
+            )
+        }
+
+        // My Profile
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(64.dp)
+                .clickable { /* Already on profile */ }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "My Profile",
+                fontSize = 14.sp,
+                fontWeight = if (currentScreen == "Profile") FontWeight.Bold else FontWeight.Normal,
+                color = Color.Black
+            )
+        }
     }
 }
-
-
-@Composable
-private fun HistoryTab() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("to be added later")
-    }
-}
-

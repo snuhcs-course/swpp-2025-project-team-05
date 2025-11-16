@@ -16,7 +16,7 @@ import com.example.veato.ui.onboarding.OnboardingViewModel
 import com.example.veato.ui.onboarding.OnboardingViewModelFactory
 import com.example.veato.ui.onboarding.screens.*
 import com.example.veato.ui.theme.VeatoTheme
-import com.example.veato.ui.main.MainActivity
+import com.example.veato.MyTeamsActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -66,9 +66,7 @@ class OnboardingActivity : ComponentActivity() {
                 "avoidIngredients" to profile.hardConstraints.avoidIngredients.toList(),
                 // Soft Preferences - convert enums to strings
                 "favoriteCuisines" to profile.softPreferences.favoriteCuisines.map { it.name },
-                "spiceTolerance" to profile.softPreferences.spiceTolerance.name,
-                "mealTypePreferences" to profile.softPreferences.mealTypePreferences.map { it.name },
-                "portionPreference" to (profile.softPreferences.portionPreference?.name ?: "MEDIUM")
+                "spiceTolerance" to profile.softPreferences.spiceTolerance.name
             )
 
             db.collection("users").document(userId)
@@ -76,7 +74,7 @@ class OnboardingActivity : ComponentActivity() {
                 .await()
 
             // Navigate to main app after successful save
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, MyTeamsActivity::class.java))
             finish()
         } catch (e: Exception) {
             // Show error and stay on current screen
@@ -169,19 +167,6 @@ fun OnboardingApp(onComplete: (com.example.veato.data.model.UserProfile) -> Unit
             SpiceToleranceScreen(
                 spiceLevel = profile.softPreferences.spiceTolerance,
                 onUpdate = { viewModel.updateSpiceTolerance(it) },
-                currentStep = state.currentStepNumber,
-                totalSteps = state.totalSteps,
-                onNext = { viewModel.nextScreen() },
-                onPrevious = { viewModel.previousScreen() }
-            )
-        }
-
-        is com.example.veato.ui.onboarding.OnboardingScreen.AdvancedPreferences -> {
-            AdvancedPreferencesScreen(
-                mealTypes = profile.softPreferences.mealTypePreferences,
-                portionSize = profile.softPreferences.portionPreference,
-                onUpdateMealTypes = { viewModel.updateMealTypePreferences(it) },
-                onUpdatePortionSize = { viewModel.updatePortionPreference(it) },
                 currentStep = state.currentStepNumber,
                 totalSteps = state.totalSteps,
                 onNext = { viewModel.nextScreen() },

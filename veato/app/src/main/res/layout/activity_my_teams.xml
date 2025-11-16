@@ -53,41 +53,51 @@
     <LinearLayout
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="64dp"
         android:background="@color/green_light"
         android:orientation="horizontal"
         android:gravity="center"
+        android:paddingHorizontal="8dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <Button
             android:id="@+id/btnMenuLogging"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="64dp"
             android:layout_weight="1"
-            android:text="Menu Logging"
+            android:text="My Preferences"
+            android:textSize="14sp"
             android:textAllCaps="false"
             android:background="@android:color/transparent"
-            android:textColor="@color/black" />
+            android:textColor="@color/black"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"/>
 
         <Button
             android:id="@+id/btnMyTeams"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="64dp"
             android:layout_weight="1"
             android:text="My Teams"
+            android:textSize="14sp"
             android:textAllCaps="false"
             android:background="@android:color/transparent"
-            android:textColor="@color/black" />
+            android:textColor="@color/black"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"/>
 
         <Button
             android:id="@+id/btnMyProfile"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="64dp"
             android:layout_weight="1"
             android:text="My Profile"
+            android:textSize="14sp"
             android:textAllCaps="false"
             android:background="@android:color/transparent"
-            android:textColor="@color/black" />
+            android:textColor="@color/black"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

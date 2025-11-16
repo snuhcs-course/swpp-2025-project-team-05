@@ -5,10 +5,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class Allergen(val displayName: String) {
     SHELLFISH("Shellfish"),
-    NUTS("Nuts (General)"),
     PEANUTS("Peanuts"),
     TREE_NUTS("Tree Nuts"),
-    DAIRY("Dairy/Milk"),
+    DAIRY("Dairy"),
     EGGS("Eggs"),
     SOY("Soy"),
     WHEAT("Wheat"),

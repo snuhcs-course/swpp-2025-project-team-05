@@ -13,7 +13,11 @@ import com.google.firebase.auth.FirebaseAuth
  */
 object RetrofitClient {
 
-    private const val BASE_URL = "https://veato-1.onrender.com/"
+    // Local backend (for development)
+    private const val BASE_URL = "http://10.0.2.2:5001/"
+
+    // Production backend (uncomment when deploying)
+    // private const val BASE_URL = "https://veato-1.onrender.com/"
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
