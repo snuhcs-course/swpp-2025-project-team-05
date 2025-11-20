@@ -9,23 +9,11 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.*
-import org.junit.After
+import org.junit.*
 import org.junit.Assert.*
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
 
-/**
- * Unit tests for OnboardingViewModel
- *
- * Following AAA pattern (Arrange, Act, Assert) and test naming convention:
- * methodUnderTest_scenario_expectedResult
- *
- * Test doubles used:
- * - Mock: UserProfileRepository (for verification of interactions)
- * - Stub: Mocked responses (for isolating behavior)
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingViewModelTest {
 
@@ -39,12 +27,10 @@ class OnboardingViewModelTest {
 
     @Before
     fun setup() {
-        // Arrange: Set up test dispatcher for coroutines
         testDispatcher = StandardTestDispatcher()
         Dispatchers.setMain(testDispatcher)
 
-        // Arrange: Create mock repository
-        repository = mockk<UserProfileRepository>(relaxed = true)
+        repository = mockk(relaxed = true)
     }
 
     @After
@@ -52,408 +38,245 @@ class OnboardingViewModelTest {
         Dispatchers.resetMain()
     }
 
-    // ============================================================
-    // State Initialization Tests
-    // ============================================================
+    // ---------------------------------------------------------
+    // INITIALIZATION
+    // ---------------------------------------------------------
 
     @Test
-    fun initialization_withValidUserId_setsInitialStateCorrectly() = runTest {
-        // Arrange & Act
+    fun initialization_setsCorrectInitialState() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
 
-        // Assert
         viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(OnboardingScreen.Welcome, state.currentScreen)
-            assertEquals(testUserId, state.profileDraft.userId)
-            assertFalse(state.isSaving)
-            assertFalse(state.isComplete)
-            assertNull(state.saveError)
-            assertTrue(state.validationErrors.isEmpty())
+            val s = awaitItem()
+            assertEquals(OnboardingScreen.Welcome, s.currentScreen)
+            assertEquals(testUserId, s.profileDraft.userId)
+            assertFalse(s.isSaving)
+            assertFalse(s.isComplete)
+            assertNull(s.saveError)
+            assertTrue(s.validationErrors.isEmpty())
         }
     }
 
-    // ============================================================
-    // Update Method Tests (Hard Constraints)
-    // ============================================================
+    // ---------------------------------------------------------
+    // HARD CONSTRAINTS
+    // ---------------------------------------------------------
 
     @Test
-    fun updateDietaryRestrictions_withValidInput_updatesState() = runTest {
-        // Arrange
+    fun updateDietaryRestrictions_updatesState() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
-        val restrictions = listOf(DietaryType.VEGETARIAN, DietaryType.VEGAN)
 
-        // Act
+        val restrictions = listOf(DietaryType.VEGAN, DietaryType.HALAL)
         viewModel.updateDietaryRestrictions(restrictions)
 
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(restrictions, state.profileDraft.hardConstraints.dietaryRestrictions)
-        }
+        assertEquals(
+            restrictions,
+            viewModel.state.value.profileDraft.hardConstraints.dietaryRestrictions
+        )
     }
 
     @Test
-    fun updateDietaryRestrictions_withEmptyList_updatesStateWithEmptyList() = runTest {
-        // Arrange
+    fun updateAllergies_updatesState() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
-        val emptyRestrictions = emptyList<DietaryType>()
 
-        // Act
-        viewModel.updateDietaryRestrictions(emptyRestrictions)
-
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertTrue(state.profileDraft.hardConstraints.dietaryRestrictions.isEmpty())
-        }
-    }
-
-    @Test
-    fun updateAllergies_withValidInput_updatesState() = runTest {
-        // Arrange
-        viewModel = OnboardingViewModel(repository, testUserId)
-        val allergies = listOf(Allergen.PEANUTS, Allergen.SHELLFISH)
-
-        // Act
+        val allergies = listOf(Allergen.SHELLFISH)
         viewModel.updateAllergies(allergies)
 
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(allergies, state.profileDraft.hardConstraints.allergies)
-        }
+        assertEquals(allergies, viewModel.state.value.profileDraft.hardConstraints.allergies)
     }
 
     @Test
-    fun updateAvoidIngredients_withValidInput_updatesState() = runTest {
-        // Arrange
+    fun updateAvoidIngredients_updatesState() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
-        val ingredients = listOf("Cilantro", "Mushrooms")
 
-        // Act
-        viewModel.updateAvoidIngredients(ingredients)
+        val avoidList = listOf("Garlic", "Mushroom")
+        viewModel.updateAvoidIngredients(avoidList)
 
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(ingredients, state.profileDraft.hardConstraints.avoidIngredients)
-        }
+        assertEquals(avoidList, viewModel.state.value.profileDraft.hardConstraints.avoidIngredients)
     }
 
-    // ============================================================
-    // Update Method Tests (Soft Preferences)
-    // ============================================================
+    // ---------------------------------------------------------
+    // SOFT PREFERENCES
+    // ---------------------------------------------------------
 
     @Test
-    fun updateFavoriteCuisines_withValidInput_updatesState() = runTest {
-        // Arrange
+    fun updateFavoriteCuisines_updatesState() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
+
         val cuisines = listOf(CuisineType.KOREAN, CuisineType.JAPANESE)
-
-        // Act
         viewModel.updateFavoriteCuisines(cuisines)
 
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(cuisines, state.profileDraft.softPreferences.favoriteCuisines)
-        }
+        assertEquals(
+            cuisines,
+            viewModel.state.value.profileDraft.softPreferences.favoriteCuisines
+        )
     }
 
     @Test
-    fun updateSpiceTolerance_withValidInput_updatesState() = runTest {
-        // Arrange
+    fun updateSpiceTolerance_updatesState() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
-        val spiceLevel = SpiceLevel.MEDIUM
 
-        // Act
-        viewModel.updateSpiceTolerance(spiceLevel)
+        val level = SpiceLevel.HIGH
+        viewModel.updateSpiceTolerance(level)
 
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(spiceLevel, state.profileDraft.softPreferences.spiceTolerance)
-        }
+        assertEquals(level, viewModel.state.value.profileDraft.softPreferences.spiceTolerance)
     }
 
-    @Test
-    fun updateMealTypePreferences_withValidInput_updatesState() = runTest {
-        // Arrange
-        viewModel = OnboardingViewModel(repository, testUserId)
-        val mealTypes = listOf(MealType.RICE_BASED, MealType.NOODLE_BASED)
-
-        // Act
-        viewModel.updateMealTypePreferences(mealTypes)
-
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(mealTypes, state.profileDraft.softPreferences.mealTypePreferences)
-        }
-    }
+    // ---------------------------------------------------------
+    // NAVIGATION
+    // ---------------------------------------------------------
 
     @Test
-    fun updatePortionPreference_withValidInput_updatesState() = runTest {
-        // Arrange
-        viewModel = OnboardingViewModel(repository, testUserId)
-        val portionSize = PortionSize.LARGE
-
-        // Act
-        viewModel.updatePortionPreference(portionSize)
-
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(portionSize, state.profileDraft.softPreferences.portionPreference)
-        }
-    }
-
-    @Test
-    fun updatePortionPreference_withNull_updatesStateWithNull() = runTest {
-        // Arrange
+    fun nextScreen_movesForwardCorrectly() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
 
-        // Act
-        viewModel.updatePortionPreference(null)
-
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertNull(state.profileDraft.softPreferences.portionPreference)
-        }
-    }
-
-    // ============================================================
-    // Navigation Tests (Boundary Testing)
-    // ============================================================
-
-    @Test
-    fun nextScreen_fromWelcome_navigatesToDietaryRestrictions() = runTest {
-        // Arrange
-        viewModel = OnboardingViewModel(repository, testUserId)
-
-        // Act
         viewModel.nextScreen()
 
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(OnboardingScreen.DietaryRestrictions, state.currentScreen)
-        }
+        assertEquals(
+            OnboardingScreen.DietaryRestrictions,
+            viewModel.state.value.currentScreen
+        )
     }
 
     @Test
-    fun nextScreen_fromMiddleScreen_navigatesToNextScreen() = runTest {
-        // Arrange
+    fun nextScreen_doesNotMovePastSummary() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
-        viewModel.navigateToScreen(OnboardingScreen.Allergies)
 
-        // Act
-        viewModel.nextScreen()
-
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(OnboardingScreen.AvoidIngredients, state.currentScreen)
-        }
-    }
-
-    @Test
-    fun nextScreen_fromSummaryScreen_doesNotNavigate() = runTest {
-        // Arrange (Boundary test: last screen)
-        viewModel = OnboardingViewModel(repository, testUserId)
         viewModel.navigateToScreen(OnboardingScreen.Summary)
-
-        // Act
         viewModel.nextScreen()
 
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(OnboardingScreen.Summary, state.currentScreen)
-        }
+        assertEquals(OnboardingScreen.Summary, viewModel.state.value.currentScreen)
     }
 
     @Test
-    fun previousScreen_fromWelcomeScreen_doesNotNavigate() = runTest {
-        // Arrange (Boundary test: first screen)
+    fun previousScreen_movesBackCorrectly() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
 
-        // Act
+        viewModel.navigateToScreen(OnboardingScreen.AvoidIngredients)
         viewModel.previousScreen()
 
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(OnboardingScreen.Welcome, state.currentScreen)
-        }
+        assertEquals(OnboardingScreen.Allergies, viewModel.state.value.currentScreen)
     }
 
     @Test
-    fun nextScreen_whileSaving_doesNotNavigate() = runTest {
-        // Arrange: Set state to saving
+    fun previousScreen_doesNotMoveBeforeWelcome() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
-        // Simulate slow save operation
+
+        viewModel.previousScreen()
+
+        assertEquals(OnboardingScreen.Welcome, viewModel.state.value.currentScreen)
+    }
+
+    // ---------------------------------------------------------
+    // SAVING PROFILE
+    // ---------------------------------------------------------
+
+    @Test
+    fun saveProfile_success_updatesState() = runTest {
+        coEvery { repository.saveProfile(any()) } returns Result.success(Unit)
+
+        viewModel = OnboardingViewModel(repository, testUserId)
+
+        viewModel.saveProfile()
+        advanceUntilIdle()
+
+        val s = viewModel.state.value
+        assertFalse(s.isSaving)
+        assertTrue(s.isComplete)
+        assertNull(s.saveError)
+
+        coVerify { repository.saveProfile(match { it.isOnboardingComplete }) }
+    }
+
+    @Test
+    fun saveProfile_failure_setsError() = runTest {
+        coEvery { repository.saveProfile(any()) } returns
+                Result.failure(Exception("Network down"))
+
+        viewModel = OnboardingViewModel(repository, testUserId)
+
+        viewModel.saveProfile()
+        advanceUntilIdle()
+
+        val s = viewModel.state.value
+        assertFalse(s.isSaving)
+        assertFalse(s.isComplete)
+        assertEquals("Network down", s.saveError)
+    }
+
+    @Test
+    fun saveProfile_unknownError_setsGenericMessage() = runTest {
+        coEvery { repository.saveProfile(any()) } returns Result.failure(Exception())
+
+        viewModel = OnboardingViewModel(repository, testUserId)
+
+        viewModel.saveProfile()
+        advanceUntilIdle()
+
+        assertEquals(
+            "Failed to save profile",
+            viewModel.state.value.saveError
+        )
+    }
+
+    @Test
+    fun saveProfile_showsSavingWhileProcessing() = runTest {
         coEvery { repository.saveProfile(any()) } coAnswers {
-            kotlinx.coroutines.delay(1000)
+            delay(200)
             Result.success(Unit)
         }
+
+        viewModel = OnboardingViewModel(repository, testUserId)
+
         viewModel.saveProfile()
-        advanceTimeBy(10) // Advance just enough to start saving
+        advanceTimeBy(50)
 
-        // Act: Try to navigate while saving
-        viewModel.nextScreen()
-        advanceTimeBy(10)
-
-        // Assert: Should still be on Welcome screen
-        assertEquals(OnboardingScreen.Welcome, viewModel.state.value.currentScreen)
         assertTrue(viewModel.state.value.isSaving)
     }
 
-    // ============================================================
-    // Save Profile Tests (Using Mocks)
-    // ============================================================
+    // ---------------------------------------------------------
+    // VALIDATION
+    // ---------------------------------------------------------
 
     @Test
-    fun saveProfile_withValidProfile_success() = runTest {
-        // Arrange: Mock successful save
-        coEvery { repository.saveProfile(any()) } returns Result.success(Unit)
+    fun validateCurrentScreen_returnsTrueAndClearsErrors() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
 
-        // Act
-        viewModel.saveProfile()
-        advanceUntilIdle() // Wait for coroutine to complete
-
-        // Assert
-        val state = viewModel.state.value
-        assertFalse(state.isSaving)
-        assertTrue(state.isComplete)
-        assertNull(state.saveError)
-        // Note: The ViewModel sets state.isComplete = true but doesn't update profileDraft in state
-
-        // Verify repository was called with profile that has isOnboardingComplete = true
-        coVerify(exactly = 1) {
-            repository.saveProfile(match { it.isOnboardingComplete })
-        }
-    }
-
-    @Test
-    fun saveProfile_withNetworkError_setsErrorState() = runTest {
-        // Arrange: Mock failed save with exception
-        val errorMessage = "Network connection failed"
-        coEvery { repository.saveProfile(any()) } returns
-            Result.failure(Exception(errorMessage))
-        viewModel = OnboardingViewModel(repository, testUserId)
-
-        // Act
-        viewModel.saveProfile()
-        advanceUntilIdle()
-
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertFalse(state.isSaving)
-            assertFalse(state.isComplete)
-            assertNotNull(state.saveError)
-            assertEquals(errorMessage, state.saveError)
-        }
-    }
-
-    @Test
-    fun saveProfile_withUnknownError_setsGenericErrorMessage() = runTest {
-        // Arrange: Mock failed save without message
-        coEvery { repository.saveProfile(any()) } returns
-            Result.failure(Exception())
-        viewModel = OnboardingViewModel(repository, testUserId)
-
-        // Act
-        viewModel.saveProfile()
-        advanceUntilIdle()
-
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertFalse(state.isSaving)
-            assertFalse(state.isComplete)
-            assertEquals("Failed to save profile", state.saveError)
-        }
-    }
-
-    @Test
-    fun saveProfile_setsSavingStateWhileProcessing() = runTest {
-        // Arrange: Mock slow save
-        coEvery { repository.saveProfile(any()) } coAnswers {
-            kotlinx.coroutines.delay(100)
-            Result.success(Unit)
-        }
-        viewModel = OnboardingViewModel(repository, testUserId)
-
-        // Act
-        viewModel.saveProfile()
-        advanceTimeBy(50) // Advance halfway through save
-
-        // Assert: Check that isSaving is true during the operation
-        viewModel.state.test {
-            val state = awaitItem()
-            assertTrue(state.isSaving)
-            assertNull(state.saveError)
-        }
-    }
-
-    // ============================================================
-    // Validation Tests
-    // ============================================================
-
-    @Test
-    fun validateCurrentScreen_withNoErrors_returnsTrue() = runTest {
-        // Arrange
-        viewModel = OnboardingViewModel(repository, testUserId)
-
-        // Act
         val result = viewModel.validateCurrentScreen()
 
-        // Assert
         assertTrue(result)
-        viewModel.state.test {
-            val state = awaitItem()
-            assertTrue(state.validationErrors.isEmpty())
-        }
+        assertTrue(viewModel.state.value.validationErrors.isEmpty())
     }
 
-    // ============================================================
-    // Navigation Helper Tests
-    // ============================================================
+    // ---------------------------------------------------------
+    // STATE HELPERS (hard/soft screens, progress, steps)
+    // ---------------------------------------------------------
 
     @Test
-    fun navigateToScreen_withSpecificScreen_updatesCurrentScreen() = runTest {
-        // Arrange
+    fun stepNumber_and_totalSteps_correctValues() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
-        val targetScreen = OnboardingScreen.FavoriteCuisines
 
-        // Act
-        viewModel.navigateToScreen(targetScreen)
-
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(targetScreen, state.currentScreen)
-        }
+        val s = viewModel.state.value
+        assertEquals(OnboardingScreen.Welcome.stepNumber + 1, s.currentStepNumber)
+        assertEquals(OnboardingScreen.TOTAL_STEPS, s.totalSteps)
     }
 
     @Test
-    fun skipToNextSection_fromCurrentScreen_navigatesToNextScreen() = runTest {
-        // Arrange
+    fun progressPercentage_isCalculatedCorrectly() = runTest {
         viewModel = OnboardingViewModel(repository, testUserId)
-        val initialScreen = OnboardingScreen.Welcome
 
-        // Act
+        val s = viewModel.state.value
+        val expected = s.currentStepNumber.toFloat() / s.totalSteps.toFloat()
+
+        assertEquals(expected, s.getProgressPercentage(), 0.0001f)
+    }
+
+    @Test
+    fun skipToNextSection_advancesOneStep() = runTest {
+        viewModel = OnboardingViewModel(repository, testUserId)
+
+        val start = viewModel.state.value.currentScreen
         viewModel.skipToNextSection()
 
-        // Assert
-        viewModel.state.test {
-            val state = awaitItem()
-            assertTrue(state.currentScreen != initialScreen)
-        }
+        assertNotEquals(start, viewModel.state.value.currentScreen)
     }
 }

@@ -568,7 +568,7 @@ Return ONLY valid JSON with this exact format:
 
         client = openai.OpenAI(api_key=api_key)
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-5.1",
             messages=[
                 {"role": "system", "content": "You rank meals by soft preferences. Return only valid JSON."},
                 {"role": "user", "content": prompt}

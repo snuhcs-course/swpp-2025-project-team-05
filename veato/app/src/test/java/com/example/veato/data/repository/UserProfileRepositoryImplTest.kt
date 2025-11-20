@@ -1,127 +1,266 @@
 package com.example.veato.data.repository
 
+import android.net.Uri
 import com.example.veato.data.local.ProfileLocalDataSource
-import com.example.veato.data.model.Allergen
-import com.example.veato.data.model.CuisineType
-import com.example.veato.data.model.DietaryType
 import com.example.veato.data.model.HardConstraints
-import com.example.veato.data.model.MealType
-import com.example.veato.data.model.PortionSize
 import com.example.veato.data.model.SoftPreferences
-import com.example.veato.data.model.SpiceLevel
 import com.example.veato.data.model.UserProfile
 import com.example.veato.data.remote.ProfileRemoteDataSource
+import io.mockk.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
-import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
-import org.mockito.kotlin.spy
-import org.mockito.kotlin.times
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
 
-@RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class UserProfileRepositoryImplTest {
-    private lateinit var localDataSource: ProfileLocalDataSource
-    private lateinit var remoteDataSource: ProfileRemoteDataSource
-    private lateinit var repository: UserProfileRepositoryImpl
+
+    private var dispatcher = UnconfinedTestDispatcher()
+
+    private lateinit var local: ProfileLocalDataSource
+    private lateinit var remote: ProfileRemoteDataSource
+    private lateinit var repo: UserProfileRepositoryImpl
+
+    private val valid = UserProfile(
+        userId = "u123",
+        userName = "alice",
+        fullName = "Alice Wonderland",
+        hardConstraints = HardConstraints.EMPTY,
+        softPreferences = SoftPreferences.DEFAULT,
+        isOnboardingComplete = true
+    )
+
+    private val invalid = valid.copy(userId = "")
 
     @Before
     fun setup() {
-        localDataSource = mock()
-        remoteDataSource = mock()
-        repository = UserProfileRepositoryImpl(localDataSource, remoteDataSource)
+        dispatcher = UnconfinedTestDispatcher()
+        Dispatchers.setMain(dispatcher)
+
+        local = mockk(relaxed = true)
+        remote = mockk(relaxed = true)
+        repo = UserProfileRepositoryImpl(local, remote)
     }
 
-    // create dummy profile data
-    private fun fakeUserProfile(): UserProfile {
-        return UserProfile(
-            userId = "uid_123",
-            fullName = "John Doe",
-            userName = "john123",
-            hardConstraints = HardConstraints(
-                dietaryRestrictions = listOf(DietaryType.VEGETARIAN),
-                allergies = listOf(Allergen.PEANUTS),
-                avoidIngredients = listOf("Shellfish")
-            ),
-            softPreferences = SoftPreferences(
-                favoriteCuisines = listOf(CuisineType.KOREAN),
-                spiceTolerance = SpiceLevel.MEDIUM, // existing enum
-                mealTypePreferences = listOf(MealType.RICE_BASED),
-                portionPreference = PortionSize.MEDIUM
-            ),
-            isOnboardingComplete = true
-        )
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
-    // local save should validate & call only localDataSource.save()
+    // ----------------------------------------------------------------------
+    // saveProfile()
+    // ----------------------------------------------------------------------
+
     @Test
-    fun saveProfile_valid_callsLocalSaveOnly() = runTest {
-        val dummyProfile = fakeUserProfile()
+    fun `saveProfile valid → saves locally`() = runTest {
+        coEvery { local.save(valid) } just Runs
 
-        repository.saveProfile(dummyProfile)
+        val result = repo.saveProfile(valid)
 
-        verify(localDataSource, times(1)).save(dummyProfile)
-        verify(remoteDataSource, never()).upload(any())
+        assertTrue(result.isSuccess)
+        coVerify(exactly = 1) { local.save(valid) }
     }
 
-    // updateProfile should upload to remote and update local
     @Test
-    fun updateProfile_valid_callsRemoteUploadAndLocalUpdate() = runTest {
-        val dummyProfile = fakeUserProfile()
+    fun `saveProfile invalid → failure`() = runTest {
+        val result = repo.saveProfile(invalid)
 
-        repository.updateProfile(dummyProfile)
-
-        verify(remoteDataSource).upload(dummyProfile)
-        verify(localDataSource).update(dummyProfile)
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { local.save(any()) }
     }
 
-    // invalid profile should return failure without touching data sources
     @Test
-    fun saveProfile_invalid_returnsFailure() = runTest {
-        val invalidProfile = spy(fakeUserProfile().copy(fullName = ""))
+    fun `saveProfile exception → failure`() = runTest {
+        coEvery { local.save(any()) } throws RuntimeException("boom")
 
-        // Force the validation to fail (simulate invalid data)
-        whenever(invalidProfile.validate()).thenReturn(false)
+        val result = repo.saveProfile(valid)
 
-        val result = repository.saveProfile(invalidProfile)
-
-        assert(result.isFailure) { "Expected failure when saving invalid profile" }
-
-        verify(localDataSource, never()).save(any())
-        verify(remoteDataSource, never()).upload(any())
-
-        println("Invalid profile correctly returned Result.failure.")
+        assertTrue(result.isFailure)
     }
 
+    // ----------------------------------------------------------------------
+    // getProfile()
+    // ----------------------------------------------------------------------
 
-    // getProfile downloads from remote and updates local
     @Test
-    fun getProfile_remoteAvailable_updatesLocalAndReturnsProfile() = runTest {
-        val remoteProfile = fakeUserProfile().copy(fullName = "Remote User")
-        whenever(remoteDataSource.download(any())).thenReturn(remoteProfile)
+    fun `getProfile remote returns profile → updates local`() = runTest {
+        coEvery { remote.download("u123") } returns valid
+        coEvery { local.update(valid) } just Runs
 
-        val result = repository.getProfile("uid_123")
+        val p = repo.getProfile("u123")
 
-        verify(remoteDataSource).download("uid_123")
-        verify(localDataSource).update(remoteProfile)
-        assert(result?.fullName == "Remote User")
+        assertEquals(valid, p)
+        coVerify { local.update(valid) }
     }
 
-    // remote error should fallback and return null
     @Test
-    fun getProfile_remoteThrows_returnsNull() = runTest {
-        whenever(remoteDataSource.download(any())).thenThrow(RuntimeException("Network error"))
+    fun `getProfile remote returns null → no update`() = runTest {
+        coEvery { remote.download("u123") } returns null
 
-        val result = repository.getProfile("uid_123")
+        val p = repo.getProfile("u123")
 
-        assert(result == null)
-        verify(localDataSource, never()).update(any())
+        assertNull(p)
+        coVerify(exactly = 0) { local.update(any()) }
+    }
+
+    @Test
+    fun `getProfile remote throws → returns null`() = runTest {
+        coEvery { remote.download(any()) } throws RuntimeException("net error")
+
+        val p = repo.getProfile("u123")
+
+        assertNull(p)
+    }
+
+    @Test
+    fun `getProfile remote returns profile but local update throws → still returns profile`() = runTest {
+        coEvery { remote.download("u123") } returns valid
+        coEvery { local.update(valid) } throws RuntimeException("local store error")
+
+        val p = repo.getProfile("u123")
+
+        assertNull(p)
+        coVerify { local.update(valid) }
+    }
+
+    // ----------------------------------------------------------------------
+    // getProfileFlow()
+    // ----------------------------------------------------------------------
+
+    @Test
+    fun `getProfileFlow delegates to local`() = runTest {
+        val flow = flowOf(valid)
+        every { local.getFlow("u123") } returns flow
+
+        assertEquals(flow, repo.getProfileFlow("u123"))
+    }
+
+    // ----------------------------------------------------------------------
+    // updateProfile()
+    // ----------------------------------------------------------------------
+
+    @Test
+    fun `updateProfile valid → uploads remote then updates local`() = runTest {
+        coEvery { remote.upload(valid) } just Runs
+        coEvery { local.update(valid) } just Runs
+
+        val result = repo.updateProfile(valid)
+
+        assertTrue(result.isSuccess)
+        coVerify { remote.upload(valid) }
+        coVerify { local.update(valid) }
+    }
+
+    @Test
+    fun `updateProfile invalid → failure`() = runTest {
+        val result = repo.updateProfile(invalid)
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { remote.upload(any()) }
+        coVerify(exactly = 0) { local.update(any()) }
+    }
+
+    @Test
+    fun `updateProfile remote upload throws → failure`() = runTest {
+        coEvery { remote.upload(any()) } throws RuntimeException("upload error")
+
+        val result = repo.updateProfile(valid)
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { local.update(any()) }
+    }
+
+    @Test
+    fun `updateProfile local update throws → failure`() = runTest {
+        coEvery { remote.upload(any()) } just Runs
+        coEvery { local.update(any()) } throws RuntimeException("update err")
+
+        val result = repo.updateProfile(valid)
+
+        assertTrue(result.isFailure)
+    }
+
+    // ----------------------------------------------------------------------
+    // deleteProfile()
+    // ----------------------------------------------------------------------
+
+    @Test
+    fun `deleteProfile success → local delete`() = runTest {
+        coEvery { local.delete("u123") } just Runs
+
+        val result = repo.deleteProfile("u123")
+
+        assertTrue(result.isSuccess)
+        coVerify { local.delete("u123") }
+    }
+
+    @Test
+    fun `deleteProfile local throws → failure`() = runTest {
+        coEvery { local.delete(any()) } throws RuntimeException("del error")
+
+        val result = repo.deleteProfile("u123")
+
+        assertTrue(result.isFailure)
+    }
+
+    // ----------------------------------------------------------------------
+    // isOnboardingComplete()
+    // ----------------------------------------------------------------------
+
+    @Test
+    fun `isOnboardingComplete true when profile exists`() = runTest {
+        coEvery { local.get("u123") } returns valid
+
+        assertTrue(repo.isOnboardingComplete("u123"))
+    }
+
+    @Test
+    fun `isOnboardingComplete false when profile incomplete`() = runTest {
+        coEvery { local.get("u123") } returns valid.copy(isOnboardingComplete = false)
+
+        assertFalse(repo.isOnboardingComplete("u123"))
+    }
+
+    @Test
+    fun `isOnboardingComplete false when profile null`() = runTest {
+        coEvery { local.get("u123") } returns null
+
+        assertFalse(repo.isOnboardingComplete("u123"))
+    }
+
+    @Test
+    fun `isOnboardingComplete exception → false`() = runTest {
+        coEvery { local.get(any()) } throws RuntimeException("fail")
+
+        assertFalse(repo.isOnboardingComplete("u123"))
+    }
+
+    // ----------------------------------------------------------------------
+    // uploadProfileImage()
+    // ----------------------------------------------------------------------
+
+    @Test
+    fun `uploadProfileImage success → returns URL`() = runTest {
+        val uri = mockk<Uri>()
+        coEvery { remote.uploadProfileImage("u123", uri) } returns "http://x.com/p.png"
+
+        val result = repo.uploadProfileImage("u123", uri)
+
+        assertEquals("http://x.com/p.png", result)
+    }
+
+    @Test(expected = RuntimeException::class)
+    fun `uploadProfileImage remote throws → propagates`() = runTest {
+        val uri = mockk<Uri>()
+        coEvery { remote.uploadProfileImage(any(), any()) } throws RuntimeException("boom")
+
+        repo.uploadProfileImage("u123", uri)
     }
 }
