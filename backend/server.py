@@ -573,7 +573,7 @@ Return ONLY valid JSON with this exact format:
                 {"role": "system", "content": "You rank meals by soft preferences. Return only valid JSON."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=300,
+            max_completion_tokens=300,
             temperature=0.7
         )
 
