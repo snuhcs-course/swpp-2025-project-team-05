@@ -918,4 +918,109 @@ class TeamDetailActivity : ComponentActivity() {
                 Toast.makeText(this, "Failed to leave team", Toast.LENGTH_SHORT).show()
             }
     }
+
+    // ---------------------------------------------------------------------
+    // TEST HELPERS (Used only by Robolectric tests)
+    // ---------------------------------------------------------------------
+    @Suppress("unused")
+    fun testJoinPoll(team: Team) {
+        val pollId = team.currentlyOpenPoll
+        if (pollId == null) {
+            Toast.makeText(this, "No active poll", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val intent = Intent(this, VoteSessionActivity::class.java)
+        intent.putExtra("pollId", pollId)
+        startActivity(intent)
+    }
+
+    @Suppress("unused")
+    fun testLeaveTeam(team: Team) {
+        leaveTeam(team)
+    }
+
+    @Suppress("unused")
+    fun testAddMember(team: Team, email: String) {
+        val uid = auth.currentUser?.uid ?: return
+
+        if (email.isBlank()) {
+            Toast.makeText(this, "Please enter an email", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!email.contains("@")) {
+            Toast.makeText(this, "Please enter a valid email", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Step 1: Query Firestore for user email
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .whereEqualTo("email", email.trim())
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.isEmpty) {
+                    Toast.makeText(this, "User not found with that email", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
+
+                val userId = snapshot.documents[0].id
+
+                // Step 2: Add user to team
+                FirebaseFirestore.getInstance()
+                    .collection("teams")
+                    .document(team.id)
+                    .update("members", com.google.firebase.firestore.FieldValue.arrayUnion(userId))
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Member added successfully", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Failed to add member", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error searching for user", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    @Suppress("unused")
+    fun testEditMember(teamId: String, memberId: String, position: String, ageGroup: String) {
+        FirebaseFirestore.getInstance()
+            .collection("teams")
+            .document(teamId)
+            .collection("members_info")
+            .document(memberId)
+            .set(mapOf("position" to position, "ageGroup" to ageGroup))
+            .addOnSuccessListener {
+                Toast.makeText(this, "Member details updated", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to update member", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    @Suppress("unused")
+    fun testRemoveMember(teamId: String, memberId: String) {
+        FirebaseFirestore.getInstance()
+            .collection("teams")
+            .document(teamId)
+            .update("members", com.google.firebase.firestore.FieldValue.arrayRemove(memberId))
+            .addOnSuccessListener {
+                Toast.makeText(this, "Member removed", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to remove member", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    @Suppress("unused")
+    fun testFirestoreLoad(teamId: String) {
+        db.collection("teams").document(teamId)
+            .get()
+            .addOnSuccessListener { }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error loading team", Toast.LENGTH_SHORT).show()
+            }
+    }
 }

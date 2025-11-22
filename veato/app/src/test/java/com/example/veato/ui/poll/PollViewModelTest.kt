@@ -41,7 +41,6 @@ class PollViewModelTest {
     fun setup() {
         repository = mockk()
 
-        // 🔥 IMPORTANT FIX:
         // First call → open poll
         // Second call → closed poll
         coEvery { repository.getPoll("poll1") } returnsMany listOf(

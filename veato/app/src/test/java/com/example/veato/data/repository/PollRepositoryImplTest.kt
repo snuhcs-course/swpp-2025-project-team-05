@@ -41,6 +41,10 @@ class PollRepositoryImplTest {
         unmockkAll()
     }
 
+    // ----------------------------------------------------------------------
+    // Helper
+    // ----------------------------------------------------------------------
+
     private fun mockPollResponse(): PollResponse =
         PollResponse(
             pollId = "p123",
@@ -58,10 +62,6 @@ class PollRepositoryImplTest {
             lockedInUserCount = 1,
             hasCurrentUserLockedIn = true
         )
-
-    // ----------------------------------------------------------------------
-    // startVotingSession()
-    // ----------------------------------------------------------------------
 
     @Test
     fun `startVotingSession - success`() = runTest {
@@ -107,10 +107,6 @@ class PollRepositoryImplTest {
         repository.startVotingSession("t1", "Test", 10, listOf("u1"), "")
     }
 
-    // ----------------------------------------------------------------------
-    // getPoll()
-    // ----------------------------------------------------------------------
-
     @Test
     fun `getPoll - success`() = runTest {
         coEvery { apiService.getPoll(any()) } returns Response.success(mockPollResponse())
@@ -148,10 +144,6 @@ class PollRepositoryImplTest {
 
         repository.getPoll("p123")
     }
-
-    // ----------------------------------------------------------------------
-    // getPoll() tests for missing branches
-    // ----------------------------------------------------------------------
 
     @Test
     fun `getPoll - null phase defaults to PHASE1`() = runTest {
@@ -207,10 +199,6 @@ class PollRepositoryImplTest {
         Assert.assertFalse(poll.hasCurrentUserLockedIn)
     }
 
-    // ----------------------------------------------------------------------
-    // sendBallot()
-    // ----------------------------------------------------------------------
-
     @Test
     fun `sendBallot - success`() = runTest {
         coEvery { apiService.getPoll("p1") } returns Response.success(mockPollResponse())
@@ -243,7 +231,7 @@ class PollRepositoryImplTest {
         repository.sendBallot("p1", "u1", listOf(0))
     }
 
-    // test empty choices
+    // EXTRA: test empty choices
     @Test
     fun `sendBallot - empty choice list`() = runTest {
         coEvery { apiService.getPoll("p1") } returns Response.success(mockPollResponse())
@@ -255,10 +243,6 @@ class PollRepositoryImplTest {
 
         coVerify { apiService.castVote("p1", any()) }
     }
-
-    // ----------------------------------------------------------------------
-    // revokeBallot()
-    // ----------------------------------------------------------------------
 
     @Test
     fun `revokeBallot - success`() = runTest {
@@ -282,10 +266,6 @@ class PollRepositoryImplTest {
 
         repository.revokeBallot("p1", "u1")
     }
-
-    // ----------------------------------------------------------------------
-    // submitPhase1Vote()
-    // ----------------------------------------------------------------------
 
     @Test
     fun `submitPhase1Vote - success`() = runTest {
@@ -320,7 +300,7 @@ class PollRepositoryImplTest {
         repository.submitPhase1Vote("p1", listOf(0), null)
     }
 
-    // missing branch — no rejectedIndex
+    // EXTRA: missing branch — no rejectedIndex
     @Test
     fun `submitPhase1Vote - no rejectedIndex`() = runTest {
         coEvery { apiService.getPoll(any()) } returns Response.success(mockPollResponse())
@@ -332,10 +312,6 @@ class PollRepositoryImplTest {
 
         coVerify { apiService.castPhase1Vote("p1", any()) }
     }
-
-    // ----------------------------------------------------------------------
-    // submitPhase2Vote()
-    // ----------------------------------------------------------------------
 
     @Test
     fun `submitPhase2Vote - success`() = runTest {
@@ -380,7 +356,7 @@ class PollRepositoryImplTest {
         repository.submitPhase2Vote("p1", 0)
     }
 
-    // missing branch — zero candidates
+    // EXTRA: missing branch — zero candidates
     @Test(expected = Exception::class)
     fun `submitPhase2Vote - no candidates`() = runTest {
         val p = mockPollResponse().copy(phase = "phase2", candidates = emptyList())

@@ -35,9 +35,6 @@ class ProfileViewModelTest {
         viewModel = ProfileViewModel(repository, "u1")
     }
 
-    // ────────────────────────────────────────────────
-    // toggleEditing()
-    // ────────────────────────────────────────────────
     @Test
     fun toggleEditing_entersEditMode() = runTest {
         viewModel.toggleEditing()
@@ -56,9 +53,6 @@ class ProfileViewModelTest {
         assertNull(s.selectedImageUri)
     }
 
-    // ────────────────────────────────────────────────
-    // Simple field updates
-    // ────────────────────────────────────────────────
     @Test
     fun updateEditedFullName_updatesState() = runTest {
         viewModel.updateEditedFullName("New Name")
@@ -78,9 +72,6 @@ class ProfileViewModelTest {
         assertEquals(uri, viewModel.state.value.selectedImageUri)
     }
 
-    // ────────────────────────────────────────────────
-    // HardConstraints updates
-    // ────────────────────────────────────────────────
     @Test
     fun updateDietaryRestrictions_updatesProfile() = runTest {
         viewModel.updateDietaryRestrictions(listOf(DietaryType.VEGAN))
@@ -126,9 +117,6 @@ class ProfileViewModelTest {
         )
     }
 
-    // ────────────────────────────────────────────────
-    // uploadImage()
-    // ────────────────────────────────────────────────
     @Test
     fun uploadImage_success() = runTest {
         val uri = mockk<Uri>()
@@ -153,9 +141,6 @@ class ProfileViewModelTest {
         assertFalse(viewModel.state.value.isUploadingImage)
     }
 
-    // ────────────────────────────────────────────────
-    // updateProfile(): Empty fields → validation error
-    // ────────────────────────────────────────────────
     @Test
     fun updateProfile_emptyFields_setsValidationError() = runTest {
         viewModel.toggleEditing()  // enter edit mode
@@ -167,9 +152,6 @@ class ProfileViewModelTest {
         assertEquals("Name and username cannot be empty", viewModel.state.value.saveError)
     }
 
-    // ────────────────────────────────────────────────
-    // updateProfile(): Image upload fails → stop save
-    // ────────────────────────────────────────────────
     @Test
     fun updateProfile_imageUploadFails_setsError() = runTest {
         viewModel.toggleEditing()
@@ -186,9 +168,6 @@ class ProfileViewModelTest {
         assertFalse(s.isBusy)
     }
 
-    // ────────────────────────────────────────────────
-    // updateProfile(): Successful update
-    // ────────────────────────────────────────────────
     @Test
     fun updateProfile_success_updatesState() = runTest {
         viewModel.toggleEditing()
@@ -212,9 +191,6 @@ class ProfileViewModelTest {
         assertEquals("Changed", s.editedUserName)
     }
 
-    // ────────────────────────────────────────────────
-    // updateProfileData()
-    // ────────────────────────────────────────────────
     @Test
     fun updateProfileData_success_callsLoadProfile() = runTest {
         val updated = fakeProfile.copy(fullName = "HELLO")

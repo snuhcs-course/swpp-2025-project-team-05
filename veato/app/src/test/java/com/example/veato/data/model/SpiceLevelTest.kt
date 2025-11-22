@@ -4,7 +4,6 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SpiceLevelTest {
-
     @Test
     fun fromLevel_returnsCorrectEnum() {
         assertEquals(SpiceLevel.NONE, SpiceLevel.fromLevel(1))

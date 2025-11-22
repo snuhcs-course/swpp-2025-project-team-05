@@ -4,7 +4,6 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BudgetRangeTest {
-
     @Test
     fun constructor_validRange_createsInstance() {
         val range = BudgetRange(3000, 8000)

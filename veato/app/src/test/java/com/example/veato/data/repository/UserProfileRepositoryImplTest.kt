@@ -54,9 +54,6 @@ class UserProfileRepositoryImplTest {
         Dispatchers.resetMain()
     }
 
-    // ----------------------------------------------------------------------
-    // saveProfile()
-    // ----------------------------------------------------------------------
 
     @Test
     fun `saveProfile valid → saves locally`() = runTest {
@@ -84,10 +81,6 @@ class UserProfileRepositoryImplTest {
 
         assertTrue(result.isFailure)
     }
-
-    // ----------------------------------------------------------------------
-    // getProfile()
-    // ----------------------------------------------------------------------
 
     @Test
     fun `getProfile remote returns profile → updates local`() = runTest {
@@ -130,10 +123,6 @@ class UserProfileRepositoryImplTest {
         coVerify { local.update(valid) }
     }
 
-    // ----------------------------------------------------------------------
-    // getProfileFlow()
-    // ----------------------------------------------------------------------
-
     @Test
     fun `getProfileFlow delegates to local`() = runTest {
         val flow = flowOf(valid)
@@ -141,10 +130,6 @@ class UserProfileRepositoryImplTest {
 
         assertEquals(flow, repo.getProfileFlow("u123"))
     }
-
-    // ----------------------------------------------------------------------
-    // updateProfile()
-    // ----------------------------------------------------------------------
 
     @Test
     fun `updateProfile valid → uploads remote then updates local`() = runTest {
@@ -187,10 +172,6 @@ class UserProfileRepositoryImplTest {
         assertTrue(result.isFailure)
     }
 
-    // ----------------------------------------------------------------------
-    // deleteProfile()
-    // ----------------------------------------------------------------------
-
     @Test
     fun `deleteProfile success → local delete`() = runTest {
         coEvery { local.delete("u123") } just Runs
@@ -209,10 +190,6 @@ class UserProfileRepositoryImplTest {
 
         assertTrue(result.isFailure)
     }
-
-    // ----------------------------------------------------------------------
-    // isOnboardingComplete()
-    // ----------------------------------------------------------------------
 
     @Test
     fun `isOnboardingComplete true when profile exists`() = runTest {
@@ -241,10 +218,6 @@ class UserProfileRepositoryImplTest {
 
         assertFalse(repo.isOnboardingComplete("u123"))
     }
-
-    // ----------------------------------------------------------------------
-    // uploadProfileImage()
-    // ----------------------------------------------------------------------
 
     @Test
     fun `uploadProfileImage success → returns URL`() = runTest {

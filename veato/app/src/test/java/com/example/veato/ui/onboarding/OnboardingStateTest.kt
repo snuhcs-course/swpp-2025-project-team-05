@@ -6,10 +6,6 @@ import org.junit.Test
 
 class OnboardingStateTest {
 
-    // ---------------------------------------------------------
-    // Initialization Tests
-    // ---------------------------------------------------------
-
     @Test
     fun initialState_hasCorrectDefaults() {
         val state = OnboardingState()
@@ -22,10 +18,6 @@ class OnboardingStateTest {
         assertEquals("temp_user", state.profileDraft.userId)
     }
 
-    // ---------------------------------------------------------
-    // Step Number / Total Steps
-    // ---------------------------------------------------------
-
     @Test
     fun currentStepNumber_matchesScreenStepPlusOne() {
         val state = OnboardingState(currentScreen = OnboardingScreen.Allergies)
@@ -37,10 +29,6 @@ class OnboardingStateTest {
         val state = OnboardingState()
         assertEquals(OnboardingScreen.TOTAL_STEPS, state.totalSteps)
     }
-
-    // ---------------------------------------------------------
-    // Navigation Logic
-    // ---------------------------------------------------------
 
     @Test
     fun canNavigateNext_returnsFalse_onSummaryScreen() {
@@ -78,10 +66,6 @@ class OnboardingStateTest {
         assertTrue(state.canNavigatePrevious())
     }
 
-    // ---------------------------------------------------------
-    // Progress Percentage
-    // ---------------------------------------------------------
-
     @Test
     fun getProgressPercentage_isCorrectForScreen() {
         val state = OnboardingState(currentScreen = OnboardingScreen.FavoriteCuisines)
@@ -89,10 +73,6 @@ class OnboardingStateTest {
 
         assertEquals(expected, state.getProgressPercentage(), 0.0001f)
     }
-
-    // ---------------------------------------------------------
-    // Screen Category Logic
-    // ---------------------------------------------------------
 
     @Test
     fun isHardConstraintScreen_returnsTrue_forHardScreens() {
@@ -151,10 +131,6 @@ class OnboardingStateTest {
             assertFalse("Not a soft screen: ${screen.route}", state.isSoftPreferenceScreen())
         }
     }
-
-    // ---------------------------------------------------------
-    // Save Error & Completion flags
-    // ---------------------------------------------------------
 
     @Test
     fun state_withSaveError_holdsErrorCorrectly() {

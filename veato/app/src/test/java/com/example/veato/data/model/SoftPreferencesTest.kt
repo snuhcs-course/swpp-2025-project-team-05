@@ -4,7 +4,6 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SoftPreferencesTest {
-
     @Test
     fun defaultSoftPreferences_hasNoPreferences() {
         val prefs = SoftPreferences.DEFAULT
