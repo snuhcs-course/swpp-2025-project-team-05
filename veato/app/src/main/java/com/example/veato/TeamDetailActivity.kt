@@ -1023,4 +1023,47 @@ class TeamDetailActivity : ComponentActivity() {
                 Toast.makeText(this, "Error loading team", Toast.LENGTH_SHORT).show()
             }
     }
+
+    @Suppress("unused")
+    fun testLoadMemberDetailsForTest(team: Team, onLoaded: (List<MemberDetail>) -> Unit) {
+        val currentUserId = auth.currentUser?.uid
+        val memberInfoList = mutableListOf<MemberDetail>()
+
+        val db = FirebaseFirestore.getInstance()
+
+        team.members.forEach { memberId ->
+            try {
+                val userDoc = db.collection("users").document(memberId).get().result
+                val fullName = userDoc?.getString("fullName") ?: "Unknown"
+                val email = userDoc?.getString("email") ?: ""
+
+                val memberInfoDoc = db.collection("teams")
+                    .document(team.id)
+                    .collection("members_info")
+                    .document(memberId)
+                    .get()
+                    .result
+
+                val position = memberInfoDoc?.getString("position")
+                val ageGroup = memberInfoDoc?.getString("ageGroup")
+
+                memberInfoList.add(
+                    MemberDetail(
+                        userId = memberId,
+                        fullName = fullName,
+                        email = email,
+                        isLeader = memberId == team.leaderId,
+                        position = position,
+                        ageGroup = ageGroup,
+                        isCurrentUser = memberId == currentUserId
+                    )
+                )
+            } catch (e: Exception) {
+                // skip member
+            }
+        }
+
+        onLoaded(memberInfoList)
+    }
+
 }
