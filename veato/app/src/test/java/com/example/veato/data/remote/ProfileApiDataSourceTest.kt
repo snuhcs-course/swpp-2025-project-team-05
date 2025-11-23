@@ -199,4 +199,62 @@ class ProfileApiDataSourceTest {
         val result = dataSource.download("uidNull")
         assertNull(result)
     }
+
+    @Test
+    fun download_WhenExceptionThrown_ReturnsNull() = runBlocking {
+        every { documentRef.get() } throws RuntimeException("boom")
+
+        val result = dataSource.download("uidCrash")
+        assertNull(result)
+    }
+
+    @Test
+    fun download_MissingSpiceTolerance_UsesDefaultMedium() = runBlocking {
+        val fakeMap = mapOf(
+            "fullName" to "Tester",
+            "username" to "user"
+        )
+        every { snapshot.exists() } returns true
+        every { snapshot.data } returns fakeMap
+        every { documentRef.get() } returns fakeTask(snapshot)
+
+        val result = dataSource.download("uidMissingSpice")!!
+        assertEquals(SpiceLevel.MEDIUM, result.softPreferences.spiceTolerance)
+    }
+
+    @Test
+    fun download_MissingOnboardingCompleted_DefaultsToFalse() = runBlocking {
+        val fakeMap = mapOf("fullName" to "A", "username" to "B")
+        every { snapshot.exists() } returns true
+        every { snapshot.data } returns fakeMap
+        every { documentRef.get() } returns fakeTask(snapshot)
+
+        val result = dataSource.download("uidOnboard")!!
+        assertFalse(result.isOnboardingComplete)
+    }
+
+    @Test
+    fun download_MissingProfilePictureUrl_DefaultsToEmpty() = runBlocking {
+        val fakeMap = mapOf("fullName" to "X", "username" to "Y")
+        every { snapshot.exists() } returns true
+        every { snapshot.data } returns fakeMap
+        every { documentRef.get() } returns fakeTask(snapshot)
+
+        val result = dataSource.download("uidPic")!!
+        assertEquals("", result.profilePictureUrl)
+    }
+
+    @Test
+    fun download_MissingNames_UsesDefaultValues() = runBlocking {
+        val fakeMap = emptyMap<String, Any>()
+
+        every { snapshot.exists() } returns true
+        every { snapshot.data } returns fakeMap
+        every { documentRef.get() } returns fakeTask(snapshot)
+
+        val result = dataSource.download("uidDefaultNames")!!
+
+        assertEquals("full_name", result.fullName)
+        assertEquals("user_name", result.userName)
+    }
 }

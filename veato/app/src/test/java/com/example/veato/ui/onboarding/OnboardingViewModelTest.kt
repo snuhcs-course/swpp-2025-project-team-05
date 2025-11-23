@@ -279,4 +279,32 @@ class OnboardingViewModelTest {
 
         assertNotEquals(start, viewModel.state.value.currentScreen)
     }
+
+    @Test
+    fun navigateToScreen_setsCorrectScreen() = runTest {
+        viewModel = OnboardingViewModel(repository, testUserId)
+
+        viewModel.navigateToScreen(OnboardingScreen.AvoidIngredients)
+
+        assertEquals(OnboardingScreen.AvoidIngredients, viewModel.state.value.currentScreen)
+    }
+
+    @Test
+    fun saveProfile_setsSavingTrueAndClearsErrorImmediately() = runTest {
+        coEvery { repository.saveProfile(any()) } coAnswers {
+            delay(1000)   // long delay so completion will NOT run yet
+            Result.success(Unit)
+        }
+
+        viewModel = OnboardingViewModel(repository, testUserId)
+
+        viewModel.saveProfile()
+
+        // Run only the first queued event (the immediate update)
+        advanceTimeBy(1)
+
+        val state = viewModel.state.value
+        assertTrue(state.isSaving)
+        assertNull(state.saveError)
+    }
 }

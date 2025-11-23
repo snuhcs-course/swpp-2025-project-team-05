@@ -63,4 +63,6 @@ class BudgetRangeTest {
         assertEquals(3000, range.component1())
         assertEquals(8000, range.component2())
     }
+
+
 }

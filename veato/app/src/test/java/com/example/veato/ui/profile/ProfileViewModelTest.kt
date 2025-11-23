@@ -6,6 +6,7 @@ import com.example.veato.data.repository.UserProfileRepository
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
+import kotlinx.coroutines.delay
 import org.junit.*
 import org.junit.Assert.*
 import com.example.veato.MainDispatcherRule
@@ -212,4 +213,160 @@ class ProfileViewModelTest {
 
         assertEquals("x", viewModel.state.value.saveError)
     }
+
+    @Test
+    fun loadProfile_failure_setsError() = runTest {
+        coEvery { repository.getProfile("u1") } throws RuntimeException("load failed")
+
+        viewModel = ProfileViewModel(repository, "u1")
+
+        assertEquals("load failed", viewModel.state.value.saveError)
+        assertFalse(viewModel.state.value.isBusy)
+    }
+
+    @Test
+    fun toggleEditing_entersEditMode_resetsSelectedImage() = runTest {
+        viewModel.selectImage(mockk())
+        viewModel.toggleEditing()  // Enter edit
+
+        assertNull(viewModel.state.value.selectedImageUri)
+    }
+
+    @Test
+    fun updateProfile_repositoryFailure_setsError() = runTest {
+        viewModel.toggleEditing()
+        viewModel.updateEditedFullName("New")
+        viewModel.updateEditedUserName("User")
+
+        coEvery { repository.updateProfile(any()) } returns Result.failure(Exception("update failed"))
+
+        viewModel.updateProfile()
+
+        assertEquals("update failed", viewModel.state.value.saveError)
+        assertFalse(viewModel.state.value.isBusy)
+    }
+
+    @Test
+    fun updateProfileData_loadProfileFails_setsError() = runTest {
+        val updated = fakeProfile.copy(fullName = "X")
+
+        coEvery { repository.updateProfile(updated) } returns Result.success(Unit)
+        coEvery { repository.getProfile("u1") } throws RuntimeException("reload failed")
+
+        viewModel.updateProfileData(updated)
+
+        assertEquals("reload failed", viewModel.state.value.saveError)
+    }
+
+    @Test
+    fun updateProfile_withoutImageUpload_stillUpdatesProfile() = runTest {
+        viewModel.toggleEditing()
+
+        coEvery { repository.updateProfile(any()) } returns Result.success(Unit)
+        coEvery { repository.getProfile("u1") } returns fakeProfile.copy(
+            fullName = "X",
+            userName = "Y"
+        )
+
+        viewModel.updateEditedFullName("X")
+        viewModel.updateEditedUserName("Y")
+
+        viewModel.updateProfile()
+
+        assertEquals("X", viewModel.state.value.editedFullName)
+        assertEquals("Y", viewModel.state.value.editedUserName)
+    }
+
+    @Test
+    fun updateDietaryRestrictions_noProfile_noCrash() = runTest {
+        coEvery { repository.getProfile("u1") } returns null
+        viewModel = ProfileViewModel(repository, "u1")
+
+        viewModel.updateDietaryRestrictions(listOf(DietaryType.VEGAN))
+
+        assertNull(viewModel.state.value.userProfile)
+    }
+
+    @Test
+    fun toggleEditing_exitMode_resetsSaveError() = runTest {
+        // enter edit mode
+        viewModel.toggleEditing()
+
+        // simulate an error
+        viewModel.updateEditedFullName("")
+        viewModel.updateEditedUserName("")
+        viewModel.updateProfile()
+        assertNotNull(viewModel.state.value.saveError)
+
+        // exit edit mode
+        viewModel.toggleEditing()
+
+        // saveError MUST be reset
+        assertNull(viewModel.state.value.saveError)
+    }
+
+    @Test
+    fun updateProfile_withoutEnteringEditMode_updatesProfile() = runTest {
+        coEvery { repository.updateProfile(any()) } returns Result.success(Unit)
+        coEvery { repository.getProfile("u1") } returns fakeProfile.copy(
+            fullName = "Z",
+            userName = "ZZ"
+        )
+
+        viewModel.updateProfile()
+
+        assertEquals("Z", viewModel.state.value.editedFullName)
+        assertEquals("ZZ", viewModel.state.value.editedUserName)
+    }
+
+    @Test
+    fun updateAllergies_noProfile_noCrash() = runTest {
+        coEvery { repository.getProfile("u1") } returns null
+        viewModel = ProfileViewModel(repository, "u1")
+
+        viewModel.updateAllergies(listOf(Allergen.EGGS))
+        assertNull(viewModel.state.value.userProfile)
+    }
+
+    @Test
+    fun updateAvoidIngredients_noProfile_noCrash() = runTest {
+        coEvery { repository.getProfile("u1") } returns null
+        viewModel = ProfileViewModel(repository, "u1")
+
+        viewModel.updateAvoidIngredients(listOf("onion"))
+        assertNull(viewModel.state.value.userProfile)
+    }
+
+    @Test
+    fun updateFavoriteCuisines_noProfile_noCrash() = runTest {
+        coEvery { repository.getProfile("u1") } returns null
+        viewModel = ProfileViewModel(repository, "u1")
+
+        viewModel.updateFavoriteCuisines(listOf(CuisineType.JAPANESE))
+        assertNull(viewModel.state.value.userProfile)
+    }
+
+    @Test
+    fun updateSpiceTolerance_noProfile_noCrash() = runTest {
+        coEvery { repository.getProfile("u1") } returns null
+        viewModel = ProfileViewModel(repository, "u1")
+
+        viewModel.updateSpiceTolerance(SpiceLevel.LOW)
+        assertNull(viewModel.state.value.userProfile)
+    }
+
+    @Test
+    fun loadProfile_setsBusyTrueAtStart() = runTest {
+        val slowRepository = mockk<UserProfileRepository>()
+        coEvery { slowRepository.getProfile("u1") } coAnswers {
+            delay(50)
+            fakeProfile
+        }
+
+        val vm = ProfileViewModel(slowRepository, "u1")
+
+        // Immediately after init, before delay finishes
+        assertTrue(vm.state.value.isBusy)
+    }
+
 }
