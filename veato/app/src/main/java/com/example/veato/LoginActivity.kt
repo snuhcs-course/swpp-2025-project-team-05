@@ -12,6 +12,7 @@ import com.google.firebase.ktx.Firebase
 import com.example.veato.databinding.ActivityLoginBinding
 import com.example.veato.MyTeamsActivity
 import com.example.veato.OnboardingActivity
+import com.example.veato.data.remote.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import android.util.Log
@@ -32,16 +33,6 @@ class LoginActivity : AppCompatActivity() {
         }
         binding.tvForgot.setOnClickListener { sendReset() }
     }
-
-//    override fun onStart() {
-//        super.onStart()
-//        // If already logged in, check if onboarding is complete
-//        auth.currentUser?.let { user ->
-//            lifecycleScope.launch {
-//                navigateBasedOnOnboardingStatus(user.uid)
-//            }
-//        }
-//    }
 
     override fun onStart() {
         super.onStart()
@@ -139,18 +130,36 @@ class LoginActivity : AppCompatActivity() {
     private fun sendReset() {
         val email = binding.etEmail.text?.toString()?.trim().orEmpty()
         if (email.isEmpty() || !email.contains("@")) {
-            toast("Enter a valid email to receive a reset link")
+            toast("Enter a valid email")
             return
         }
+
         binding.progress.visibility = View.VISIBLE
         binding.btnLogin.isEnabled = false
 
-        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-            .addOnCompleteListener {
-                binding.progress.visibility = View.GONE
-                binding.btnLogin.isEnabled = true
-                // Always show a generic message (prevents user enumeration)
-                toast("Reset link has been sent if registered")
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.checkEmailApiService
+                    .checkEmail(CheckEmailRequest(email))
+
+                if (response.exists == true) {
+                    // Email exists -> send reset
+                    FirebaseAuth.getInstance()
+                        .sendPasswordResetEmail(email)
+                        .addOnCompleteListener {
+                            toast("Reset password link has been sent to the registered email")
+                        }
+                } else {
+                    // Email not found
+                    toast("This email is not registered")
+                }
+
+            } catch (e: Exception) {
+                toast("Server error: ${e.message}")
             }
+
+            binding.progress.visibility = View.GONE
+            binding.btnLogin.isEnabled = true
+        }
     }
 }

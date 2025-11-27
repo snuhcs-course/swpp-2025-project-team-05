@@ -1,6 +1,5 @@
 package com.example.veato.ui.auth
 
-import android.content.Intent
 import android.os.Looper
 import android.widget.EditText
 import android.widget.TextView
@@ -9,6 +8,10 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.veato.MyTeamsActivity
 import com.example.veato.OnboardingActivity
 import com.example.veato.R
+import com.example.veato.data.remote.CheckEmailApiService
+import com.example.veato.data.remote.CheckEmailRequest
+import com.example.veato.data.remote.CheckEmailResponse
+import com.example.veato.data.remote.RetrofitClient
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.tasks.OnSuccessListener
@@ -21,7 +24,6 @@ import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlin.time.Duration.Companion.milliseconds
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -37,19 +39,23 @@ class LoginActivityTest {
     private lateinit var mockAuth: FirebaseAuth
     private lateinit var mockUser: FirebaseUser
     private lateinit var mockFirestore: FirebaseFirestore
+    private lateinit var mockCheckEmailService: CheckEmailApiService
     private lateinit var scenario: ActivityScenario<LoginActivity>
 
     @Before
     fun setup() {
         mockkStatic(FirebaseAuth::class)
         mockkStatic(FirebaseFirestore::class)
+        mockkObject(RetrofitClient)
 
         mockAuth = mockk(relaxed = true)
         mockFirestore = mockk(relaxed = true)
         mockUser = mockk(relaxed = true)
+        mockCheckEmailService = mockk(relaxed = true)
 
         every { FirebaseAuth.getInstance() } returns mockAuth
         every { FirebaseFirestore.getInstance() } returns mockFirestore
+        coEvery { RetrofitClient.checkEmailApiService } returns mockCheckEmailService
 
         scenario = ActivityScenario.launch(LoginActivity::class.java)
     }
@@ -114,8 +120,9 @@ class LoginActivityTest {
         advanceUntilIdle()
         flush()
 
-        val nextIntent = shadowOf(ApplicationProvider.getApplicationContext() as android.app.Application)
-            .nextStartedActivity
+        val nextIntent = shadowOf(
+            ApplicationProvider.getApplicationContext() as android.app.Application
+        ).nextStartedActivity
 
         assertNotNull(nextIntent)
         assertEquals(MyTeamsActivity::class.java.name, nextIntent.component?.className)
@@ -148,44 +155,96 @@ class LoginActivityTest {
         advanceUntilIdle()
         flush()
 
-        val nextIntent = shadowOf(ApplicationProvider.getApplicationContext() as android.app.Application)
-            .nextStartedActivity
+        val nextIntent = shadowOf(
+            ApplicationProvider.getApplicationContext() as android.app.Application
+        ).nextStartedActivity
 
         assertNotNull(nextIntent)
         assertEquals(OnboardingActivity::class.java.name, nextIntent.component?.className)
     }
 
     // ----------------------------------------------------
-    // sendReset() successful
+    // sendReset(): email exists → Firebase reset called
     // ----------------------------------------------------
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun sendReset_shows_generic_message() {
+    fun sendReset_emailExists_sendsResetAndShowsSuccessToast() = runTest {
+        coEvery {
+            mockCheckEmailService.checkEmail(any())
+        } returns CheckEmailResponse(exists = true)
+
         every {
             mockAuth.sendPasswordResetEmail(any())
         } returns Tasks.forResult(null)
 
         scenario.onActivity { activity ->
-            activity.findViewById<EditText>(R.id.etEmail).setText("user@test.com")
+            activity.findViewById<EditText>(R.id.etEmail)
+                .setText("registered@test.com")
             activity.findViewById<TextView>(R.id.tvForgot).performClick()
         }
 
+        advanceUntilIdle()
         flush()
 
-        assertEquals("Reset link has been sent if registered", ShadowToast.getTextOfLatestToast())
+        assertEquals(
+            "Reset password link has been sent to the registered email",
+            ShadowToast.getTextOfLatestToast()
+        )
     }
 
+    // ----------------------------------------------------
+    // sendReset(): email NOT registered
+    // ----------------------------------------------------
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun login_emptyFields_showsRequiredMessage() {
-        scenario.onActivity { activity ->
-            activity.findViewById<EditText>(R.id.etEmail).setText("")
-            activity.findViewById<EditText>(R.id.etPassword).setText("")
+    fun sendReset_emailNotRegistered_showsNotRegisteredToast() = runTest {
+        coEvery {
+            mockCheckEmailService.checkEmail(any())
+        } returns CheckEmailResponse(exists = false)
 
-            activity.findViewById<TextView>(R.id.btnLogin).performClick()
+        scenario.onActivity { activity ->
+            activity.findViewById<EditText>(R.id.etEmail)
+                .setText("unknown@test.com")
+            activity.findViewById<TextView>(R.id.tvForgot).performClick()
         }
 
-        assertEquals("Email and password are required", ShadowToast.getTextOfLatestToast())
+        advanceUntilIdle()
+        flush()
+
+        assertEquals(
+            "This email is not registered",
+            ShadowToast.getTextOfLatestToast()
+        )
     }
 
+    // ----------------------------------------------------
+    // sendReset(): server error
+    // ----------------------------------------------------
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun sendReset_serverError_showsServerErrorToast() = runTest {
+        coEvery {
+            mockCheckEmailService.checkEmail(any())
+        } throws Exception("Backend down")
+
+        scenario.onActivity { activity ->
+            activity.findViewById<EditText>(R.id.etEmail)
+                .setText("user@test.com")
+            activity.findViewById<TextView>(R.id.tvForgot).performClick()
+        }
+
+        advanceUntilIdle()
+        flush()
+
+        assertTrue(
+            ShadowToast.getTextOfLatestToast().toString().contains("Server error")
+        )
+    }
+
+
+    // ----------------------------------------------------
+    // sendReset(): invalid email
+    // ----------------------------------------------------
     @Test
     fun sendReset_invalidEmail_showsError() {
         scenario.onActivity { activity ->
@@ -193,9 +252,26 @@ class LoginActivityTest {
             activity.findViewById<TextView>(R.id.tvForgot).performClick()
         }
 
-        assertEquals("Enter a valid email to receive a reset link", ShadowToast.getTextOfLatestToast())
+        assertEquals("Enter a valid email", ShadowToast.getTextOfLatestToast())
     }
 
+    // ----------------------------------------------------
+    // Empty login fields
+    // ----------------------------------------------------
+    @Test
+    fun login_emptyFields_showsRequiredMessage() {
+        scenario.onActivity { activity ->
+            activity.findViewById<EditText>(R.id.etEmail).setText("")
+            activity.findViewById<EditText>(R.id.etPassword).setText("")
+            activity.findViewById<TextView>(R.id.btnLogin).performClick()
+        }
+
+        assertEquals("Email and password are required", ShadowToast.getTextOfLatestToast())
+    }
+
+    // ----------------------------------------------------
+    // Login success but UID == null
+    // ----------------------------------------------------
     @Test
     fun login_success_but_uidNull_showsError() = runTest {
         val fakeTask = mockk<Task<AuthResult>>(relaxed = true)
@@ -205,7 +281,7 @@ class LoginActivityTest {
         } answers {
             every { fakeTask.addOnSuccessListener(any()) } answers {
                 val listener = arg<OnSuccessListener<AuthResult>>(0)
-                listener.onSuccess(mockk()) // simulate Firebase success
+                listener.onSuccess(mockk())
                 fakeTask
             }
             fakeTask
@@ -219,46 +295,43 @@ class LoginActivityTest {
             activity.findViewById<TextView>(R.id.btnLogin).performClick()
         }
 
-        shadowOf(Looper.getMainLooper()).idle()
+        flush()
 
         assertEquals("Login error: User ID is null", ShadowToast.getTextOfLatestToast())
     }
-
 
     @Test
     fun onStart_noUser_doesNothing() {
         every { mockAuth.currentUser } returns null
 
         val scenario = ActivityScenario.launch(LoginActivity::class.java)
-
-        val next = shadowOf(ApplicationProvider.getApplicationContext() as android.app.Application)
-            .nextStartedActivity
+        val next = shadowOf(
+            ApplicationProvider.getApplicationContext() as android.app.Application
+        ).nextStartedActivity
 
         assertNull(next)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun navigateBasedOnOnboardingStatus_firestoreThrows_goesToOnboarding() = runTest {
         val authResult = mockk<AuthResult>()
         val fakeTask = mockk<Task<AuthResult>>(relaxed = true)
 
-        // Make Firebase call trigger .addOnSuccessListener immediately
         every {
             mockAuth.signInWithEmailAndPassword(any(), any())
         } answers {
             every { fakeTask.addOnSuccessListener(any()) } answers {
                 val listener = arg<OnSuccessListener<AuthResult>>(0)
-                listener.onSuccess(authResult)   // FIRE success
+                listener.onSuccess(authResult)
                 fakeTask
             }
             fakeTask
         }
 
-        // Simulate logged-in user
         every { mockAuth.currentUser } returns mockUser
         every { mockUser.uid } returns "u777"
 
-        // Firestore throws inside navigateBasedOnOnboardingStatus()
         every {
             mockFirestore.collection("users").document("u777").get()
         } returns Tasks.forException(Exception("Firestore error"))
@@ -269,7 +342,7 @@ class LoginActivityTest {
             activity.findViewById<TextView>(R.id.btnLogin).performClick()
         }
 
-        shadowOf(Looper.getMainLooper()).idle()
+        flush()
         advanceUntilIdle()
 
         val nextIntent = shadowOf(
@@ -277,7 +350,7 @@ class LoginActivityTest {
         ).nextStartedActivity
 
         assertNotNull(nextIntent)
-        assertEquals(OnboardingActivity::class.java.name, nextIntent!!.component?.className)
+        assertEquals(OnboardingActivity::class.java.name, nextIntent.component?.className)
     }
 
     @Test
@@ -287,11 +360,9 @@ class LoginActivityTest {
         scenario.onActivity { activity ->
             activity.findViewById<EditText>(R.id.etEmail).setText("x@x.com")
             activity.findViewById<EditText>(R.id.etPassword).setText("123456")
-
             activity.findViewById<TextView>(R.id.btnLogin).performClick()
         }
 
         assertTrue(true)
     }
-
 }
