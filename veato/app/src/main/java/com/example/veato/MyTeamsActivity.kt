@@ -300,7 +300,7 @@ class MyTeamsActivity : ComponentActivity() {
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Toast.makeText(this, "Error loading teams", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(this, "Error loading teams", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 

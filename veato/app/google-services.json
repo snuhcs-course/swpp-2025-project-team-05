@@ -12,7 +12,20 @@
           "package_name": "com.example.veato"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "977712872549-3cigbo8vetd8a29s39sqv2ofdt26frt4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.veato",
+            "certificate_hash": "59d20cc71c040006cc490d6df8d852a3457edf08"
+          }
+        },
+        {
+          "client_id": "977712872549-vv2rokqtjh1sgbjjduplfckc93moijto.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBsE9cRyKg8WH9a1RH4p8nJloGCMJmYqhA"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "977712872549-vv2rokqtjh1sgbjjduplfckc93moijto.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

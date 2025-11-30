@@ -23,13 +23,25 @@ import com.example.veato.ProfileActivity
 import com.example.veato.ui.auth.LoginActivity
 import com.example.veato.ui.theme.VeatoTheme
 import com.google.firebase.auth.FirebaseAuth
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+
 
 class MainActivity : ComponentActivity() {
 
     private val auth = FirebaseAuth.getInstance()
+    private lateinit var googleSignInClient: GoogleSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(com.example.veato.R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         setContent {
             VeatoTheme {
@@ -63,10 +75,14 @@ class MainActivity : ComponentActivity() {
                         Button(
                             onClick = {
                                 auth.signOut()
-                                val intent = Intent(context, LoginActivity::class.java)
-                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                context.startActivity(intent)
-                                finish()
+                                googleSignInClient.signOut().addOnCompleteListener {
+
+                                    val intent = Intent(context, LoginActivity::class.java)
+                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                    context.startActivity(intent)
+
+                                    finish()
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF4CAF50)
