@@ -50,4 +50,5 @@ object RetrofitClient {
         .build()
     
     val pollApiService: PollApiService = retrofit.create(PollApiService::class.java)
+    val checkEmailApiService: CheckEmailApiService = retrofit.create(CheckEmailApiService::class.java)
 }

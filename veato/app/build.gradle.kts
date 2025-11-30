@@ -60,13 +60,13 @@ tasks.withType<Test>().configureEach {
     jvmArgs("-noverify")
 }
 
-// Disable test compilation for APK builds
-tasks.whenTaskAdded {
-    if (name.contains("compileDebugUnitTestKotlin") ||
-        name.contains("compileDebugAndroidTestKotlin")) {
-        enabled = false
-    }
-}
+//// Disable test compilation for APK builds
+//tasks.whenTaskAdded {
+//    if (name.contains("compileDebugUnitTestKotlin") ||
+//        name.contains("compileDebugAndroidTestKotlin")) {
+//        enabled = false
+//    }
+//}
 
 dependencies {
     implementation(libs.androidx.core.ktx)

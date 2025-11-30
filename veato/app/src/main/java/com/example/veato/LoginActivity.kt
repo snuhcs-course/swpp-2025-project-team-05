@@ -10,16 +10,25 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.example.veato.databinding.ActivityLoginBinding
-import com.example.veato.MyPreferencesActivity
+import com.example.veato.MyTeamsActivity
 import com.example.veato.OnboardingActivity
+import com.example.veato.data.remote.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import android.util.Log
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
+import com.example.veato.R
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private val auth by lazy { FirebaseAuth.getInstance() }
     private val db by lazy { Firebase.firestore }
+    private lateinit var googleSignInClient: GoogleSignInClient
+    private val RC_SIGN_IN = 9001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,17 +40,57 @@ class LoginActivity : AppCompatActivity() {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
         binding.tvForgot.setOnClickListener { sendReset() }
+
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+
+
+        binding.btnGoogle.setOnClickListener {
+            signInWithGoogle()
+        }
     }
 
-//    override fun onStart() {
-//        super.onStart()
-//        // If already logged in, check if onboarding is complete
-//        auth.currentUser?.let { user ->
-//            lifecycleScope.launch {
-//                navigateBasedOnOnboardingStatus(user.uid)
-//            }
-//        }
-//    }
+    private fun signInWithGoogle() {
+        googleSignInClient.signOut() // forces chooser next time
+            .addOnCompleteListener {
+                val signInIntent = googleSignInClient.signInIntent
+                startActivityForResult(signInIntent, RC_SIGN_IN)
+            }
+    }
+
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == RC_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                firebaseAuthWithGoogle(account.idToken!!)
+            } catch (e: ApiException) {
+                Toast.makeText(this, "Google sign-in failed: ${e.statusCode}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun firebaseAuthWithGoogle(idToken: String) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
+                    lifecycleScope.launch {
+                        navigateBasedOnOnboardingStatus(userId)
+                    }
+                } else {
+                    Toast.makeText(this, "Authentication Failed.", Toast.LENGTH_SHORT).show()
+                }
+            }
+    }
 
     override fun onStart() {
         super.onStart()
@@ -69,9 +118,9 @@ class LoginActivity : AppCompatActivity() {
             Log.d("AuthDebug", "Onboarding completed: $hasCompletedOnboarding")
 
             if (hasCompletedOnboarding) {
-                Log.d("AuthDebug", "Navigating to MyPreferencesActivity")
+                Log.d("AuthDebug", "Navigating to MyTeamsActivity")
                 // Go to main app if onboarding already completed
-                startActivity(Intent(this, MyPreferencesActivity::class.java))
+                startActivity(Intent(this, MyTeamsActivity::class.java))
             } else {
                 Log.d("AuthDebug", "Navigating to OnboardingActivity")
                 // Go to onboarding if not completed
@@ -139,18 +188,36 @@ class LoginActivity : AppCompatActivity() {
     private fun sendReset() {
         val email = binding.etEmail.text?.toString()?.trim().orEmpty()
         if (email.isEmpty() || !email.contains("@")) {
-            toast("Enter a valid email to receive a reset link")
+            toast("Enter a valid email")
             return
         }
+
         binding.progress.visibility = View.VISIBLE
         binding.btnLogin.isEnabled = false
 
-        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-            .addOnCompleteListener {
-                binding.progress.visibility = View.GONE
-                binding.btnLogin.isEnabled = true
-                // Always show a generic message (prevents user enumeration)
-                toast("Reset link has been sent if registered")
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.checkEmailApiService
+                    .checkEmail(CheckEmailRequest(email))
+
+                if (response.exists == true) {
+                    // Email exists -> send reset
+                    FirebaseAuth.getInstance()
+                        .sendPasswordResetEmail(email)
+                        .addOnCompleteListener {
+                            toast("Reset password link has been sent to the registered email")
+                        }
+                } else {
+                    // Email not found
+                    toast("This email is not registered")
+                }
+
+            } catch (e: Exception) {
+                toast("Server error: ${e.message}")
             }
+
+            binding.progress.visibility = View.GONE
+            binding.btnLogin.isEnabled = true
+        }
     }
 }
