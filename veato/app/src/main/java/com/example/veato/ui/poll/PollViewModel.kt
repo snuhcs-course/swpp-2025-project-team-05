@@ -30,7 +30,24 @@ class PollViewModel(
             _state.update { it.copy(isBusy = true) }
             try {
                 val poll = repository.getPoll(pollId)
-                _state.update { it.copy(poll = poll, isBusy = false) }
+                val currentPhase = _state.value.poll?.phase
+                val newPhase = poll.phase
+
+                // If phase changed, reset voting state to allow voting in new phase
+                if (currentPhase != null && currentPhase != newPhase) {
+                    _state.update {
+                        it.copy(
+                            poll = poll,
+                            isBusy = false,
+                            voted = false,
+                            selectedIndices = emptySet(),
+                            rejectionUsed = false,
+                            rejectedCandidateName = null
+                        )
+                    }
+                } else {
+                    _state.update { it.copy(poll = poll, isBusy = false) }
+                }
             } catch (e: Exception) {
                 _state.update { it.copy(isBusy = false) }
             }
@@ -44,7 +61,25 @@ class PollViewModel(
             while (true) {
                 try {
                     val poll = repository.getPoll(pollId)
-                    _state.update { it.copy(poll = poll, isBusy = false) }
+                    val currentPhase = _state.value.poll?.phase
+                    val newPhase = poll.phase
+
+                    // If phase changed, reset voting state to allow voting in new phase
+                    if (currentPhase != null && currentPhase != newPhase) {
+                        _state.update {
+                            it.copy(
+                                poll = poll,
+                                isBusy = false,
+                                voted = false,
+                                selectedIndices = emptySet(),
+                                rejectionUsed = false,
+                                rejectedCandidateName = null
+                            )
+                        }
+                    } else {
+                        _state.update { it.copy(poll = poll, isBusy = false) }
+                    }
+
                     if (poll.isOpen) {
                         delay(1000)  // Reduced from 2000ms to 1000ms for faster sync
                     } else {

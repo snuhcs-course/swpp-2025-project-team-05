@@ -1078,8 +1078,20 @@ def get_poll(poll_id):
         # For two-phase polls, only close on timeout if we're past a grace period
         # to allow members to complete Phase 2 voting after Phase 1 ends
         should_auto_close = False
+        should_transition_to_phase2 = False
+
         if seconds_left <= 0 and poll_data["status"] == "active" and current_phase != "closed":
-            if is_two_phase and current_phase == "phase2":
+            if is_two_phase and current_phase == "phase1":
+                # Phase 1 timeout: transition to Phase 2 if anyone voted
+                phase1_votes = poll_data.get("phase1Votes", {})
+                if len(phase1_votes) > 0:
+                    # At least one person voted - transition to Phase 2
+                    should_transition_to_phase2 = True
+                    print(f"Phase 1 timeout with {len(phase1_votes)} votes - transitioning to Phase 2", flush=True)
+                else:
+                    # Nobody voted - close the poll
+                    should_auto_close = True
+            elif is_two_phase and current_phase == "phase2":
                 # In Phase 2: only close if all members locked in or significant timeout
                 # This prevents premature closure during Phase 1 → Phase 2 transition
                 locked_in_users = poll_data.get("lockedInUsers", [])
@@ -1093,7 +1105,14 @@ def get_poll(poll_id):
                 # Not in Phase 2 or not two-phase: normal auto-close
                 should_auto_close = True
 
-        if should_auto_close:
+        if should_transition_to_phase2:
+            # Transition from Phase 1 to Phase 2
+            transition_phase1_to_phase2(poll_id)
+            # Reload poll data after transition
+            poll_doc = poll_ref.get()
+            poll_data = poll_doc.to_dict()
+            current_phase = "phase2"
+        elif should_auto_close:
             poll_data = close_poll_internal(poll_id)
             current_phase = "closed"
 

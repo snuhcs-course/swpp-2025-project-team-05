@@ -43,6 +43,7 @@ import kotlinx.coroutines.tasks.await
 data class MemberDetail(
     val userId: String,
     val fullName: String,
+    val userName: String,
     val email: String,
     val isLeader: Boolean,
     val position: String? = null,
@@ -221,18 +222,24 @@ class TeamDetailActivity : ComponentActivity() {
         var emailToAdd by remember { mutableStateOf("") }
         var showEditMemberDialog by remember { mutableStateOf<MemberDetail?>(null) }
         var showRemoveMemberDialog by remember { mutableStateOf<MemberDetail?>(null) }
+        var refreshTrigger by remember { mutableStateOf(0) }
 
         // Load members with their details
-        LaunchedEffect(team.id) {
+        LaunchedEffect(team.id, refreshTrigger) {
             isLoadingMembers = true
             try {
+                // Reload team data to get latest member list
+                val latestTeamDoc = db.collection("teams").document(team.id).get().await()
+                val latestMembers = latestTeamDoc.get("members") as? List<*> ?: emptyList<Any>()
+
                 val memberInfoList = mutableListOf<MemberDetail>()
 
-                for (memberId in team.members) {
+                for (memberId in latestMembers.filterIsInstance<String>()) {
                     try {
                         // Fetch user document
                         val userDoc = db.collection("users").document(memberId).get().await()
                         val fullName = userDoc.getString("fullName") ?: userDoc.getString("username") ?: "Unknown"
+                        val userName = userDoc.getString("username") ?: ""
                         val email = userDoc.getString("email") ?: ""
 
                         // Fetch member_info from subcollection
@@ -250,6 +257,7 @@ class TeamDetailActivity : ComponentActivity() {
                             MemberDetail(
                                 userId = memberId,
                                 fullName = fullName,
+                                userName = userName,
                                 email = email,
                                 isLeader = memberId == team.leaderId,
                                 position = position,
@@ -333,30 +341,26 @@ class TeamDetailActivity : ComponentActivity() {
                 onEmailChange = { emailToAdd = it },
                 isLeader = isLeader,
                 currentUserId = currentUserId,
-                onAddMember = { email ->
+                onAddMember = { username ->
                     // Add member logic
-                    if (email.isBlank()) {
-                        Toast.makeText(context, "Please enter an email", Toast.LENGTH_SHORT).show()
+                    if (username.isBlank()) {
+                        Toast.makeText(context, "Please enter a username", Toast.LENGTH_SHORT).show()
                         return@TeamMembersSection
                     }
 
-                    if (!email.contains("@")) {
-                        Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
-                        return@TeamMembersSection
-                    }
-
-                    if (memberDetails.any { it.email == email.trim() }) {
+                    // Check if user already in team by userName (case-insensitive)
+                    if (memberDetails.any { it.userName.equals(username.trim(), ignoreCase = true) }) {
                         Toast.makeText(context, "User already in team", Toast.LENGTH_SHORT).show()
                         return@TeamMembersSection
                     }
 
-                    // Query Firestore to find user by email
+                    // Query Firestore to find user by username
                     db.collection("users")
-                        .whereEqualTo("email", email.trim())
+                        .whereEqualTo("username", username.trim().lowercase())
                         .get()
                         .addOnSuccessListener { querySnapshot ->
                             if (querySnapshot.isEmpty) {
-                                Toast.makeText(context, "User not found with that email", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "User not found with that username", Toast.LENGTH_SHORT).show()
                             } else {
                                 val userDoc = querySnapshot.documents[0]
                                 val userId = userDoc.id
@@ -367,7 +371,7 @@ class TeamDetailActivity : ComponentActivity() {
                                     .addOnSuccessListener {
                                         Toast.makeText(context, "Member added successfully", Toast.LENGTH_SHORT).show()
                                         emailToAdd = ""
-                                        // Trigger reload by updating the team
+                                        refreshTrigger++  // Trigger reload
                                     }
                                     .addOnFailureListener {
                                         Toast.makeText(context, "Failed to add member", Toast.LENGTH_SHORT).show()
@@ -403,7 +407,7 @@ class TeamDetailActivity : ComponentActivity() {
                         .addOnSuccessListener {
                             Toast.makeText(context, "Member details updated", Toast.LENGTH_SHORT).show()
                             showEditMemberDialog = null
-                            // Trigger reload
+                            refreshTrigger++  // Trigger reload
                         }
                         .addOnFailureListener {
                             Toast.makeText(context, "Failed to update member", Toast.LENGTH_SHORT).show()
@@ -424,7 +428,7 @@ class TeamDetailActivity : ComponentActivity() {
                         .addOnSuccessListener {
                             Toast.makeText(context, "Member removed", Toast.LENGTH_SHORT).show()
                             showRemoveMemberDialog = null
-                            // Trigger reload
+                            refreshTrigger++  // Trigger reload
                         }
                         .addOnFailureListener {
                             Toast.makeText(context, "Failed to remove member", Toast.LENGTH_SHORT).show()
@@ -549,9 +553,10 @@ class TeamDetailActivity : ComponentActivity() {
                 OutlinedTextField(
                     value = emailToAdd,
                     onValueChange = onEmailChange,
-                    label = { Text("Enter member email") },
+                    label = { Text("Enter username") },
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    prefix = { Text("@") }
                 )
                 IconButton(
                     onClick = { onAddMember(emailToAdd) },
