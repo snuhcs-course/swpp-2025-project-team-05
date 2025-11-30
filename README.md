@@ -6,8 +6,7 @@ Veato is a mobile application that helps groups make dining decisions through in
 The demo video presents the full flow:
 User Registration → Profile Setup → Team Creation → Poll Generation → Two-Phase Voting → Results
 
-<video src="https://github.com/user-attachments/assets/73c50b0e-6ec0-4b93-831c-a87afe950336" controls width="600"></video>
-
+<video src="https://github.com/user-attachments/assets/5bf7ea85-c6f7-40ac-9e6e-ebc11c8d5045" controls width="600"></video>
 
 ---
 
