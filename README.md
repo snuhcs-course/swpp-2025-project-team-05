@@ -32,7 +32,7 @@ Expected output:
 ```
 ✅ Firebase credentials detected.
 ✅ OPENAI_API_KEY set: LLM recommendations enabled.
-✅ Loaded 290 food items from database
+✅ Loaded 350 food items from database
  * Running on http://127.0.0.1:5001
 ```
 
@@ -63,17 +63,19 @@ cd veato
 
 ### 2. Team Management
 - **Create teams** for group dining decisions
-- **View team members** and their basic preferences
+- **Add members** through their username
+- **View team members** including their position and age group
+- **Leader-controlled member attributes** assign or update each member’s position & age group
 - **Team-based polls** restricted to team members
 - **Member management** with role-based access
 
 ### 3. AI-Powered Menu Recommendations
 - **LLM-based ranking** using OpenAI GPT-4
-- **290+ food items** with nutritional information
+- **350+ food items** with nutritional information
 - **10 meal types supported**:
-  - rice-based (64 items), soup-based (31), meat-based (44), noodle-based (46)
-  - seafood-based (23), bread-based (37), salad-based (5)
-  - snack (15), dessert (16), beverage (9)
+  - rice-based (66 items), soup-based (35), meat-based (50), noodle-based (50)
+  - seafood-based (25), bread-based (42), salad-based (15)
+  - snack (19), dessert (25), beverage (18)
 - **Occasion-aware filtering**: "dessert", "light lunch", "high protein dinner"
 - **Nutrition-based ranking**: Calories, protein, carbs, fat
 - **Heaviness filtering**: Light, medium, heavy meals
