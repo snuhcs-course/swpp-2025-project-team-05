@@ -130,7 +130,7 @@ cd veato
   6. Spice tolerance (none, mild, medium, spicy, very spicy)
   7. Review & confirm
 
-**2. Team Formation (2 min)**
+**2. Team Formation (3 min)**
 - Create or join dining teams
 - View team member profiles
 - Access team-based polls
@@ -142,7 +142,7 @@ cd veato
 - **Automatic replacement** - Rejected items instantly replaced
 - **Lock-in** - Confirm choices and wait for others
 - **Phase 2 voting** - Select top pick from 3 finalists
-- **Results** - View winner with full ranking
+- **Results** - View the chosen menu only
 
 **4. Preference Management (ongoing)**
 - Edit soft preferences (cuisines, spice level)
