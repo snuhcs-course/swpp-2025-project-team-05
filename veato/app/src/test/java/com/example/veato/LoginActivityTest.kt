@@ -1,5 +1,6 @@
 package com.example.veato.ui.auth
 
+import android.content.Intent
 import android.os.Looper
 import android.widget.EditText
 import android.widget.TextView
@@ -12,9 +13,13 @@ import com.example.veato.data.remote.CheckEmailApiService
 import com.example.veato.data.remote.CheckEmailRequest
 import com.example.veato.data.remote.CheckEmailResponse
 import com.example.veato.data.remote.RetrofitClient
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
-import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -364,5 +369,36 @@ class LoginActivityTest {
         }
 
         assertTrue(true)
+    }
+
+    // ----------------------------------------------------
+    // GOOGLE SIGN-IN TESTS
+    // ----------------------------------------------------
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun googleSignIn_click_launchesIntent() {
+        val mockClient = mockk<GoogleSignInClient>(relaxed = true)
+        val fakeIntent = Intent("GOOGLE_SIGN_IN")
+
+        mockkStatic(GoogleSignIn::class)
+        every { GoogleSignIn.getClient(any(), any()) } returns mockClient
+        every { mockClient.signOut() } returns Tasks.forResult(null)
+        every { mockClient.signInIntent } returns fakeIntent
+
+        // Relaunch so mocks apply
+        val scenario = ActivityScenario.launch(LoginActivity::class.java)
+
+        scenario.onActivity { activity ->
+            activity.findViewById<TextView>(R.id.btnGoogle).performClick()
+        }
+
+        flush()
+
+        val nextIntent = shadowOf(
+            ApplicationProvider.getApplicationContext() as android.app.Application
+        ).nextStartedActivity
+
+        assertEquals("GOOGLE_SIGN_IN", nextIntent.action)
     }
 }

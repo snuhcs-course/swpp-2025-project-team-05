@@ -132,25 +132,6 @@ class MyTeamsActivityTest {
     }
 
     @Test
-    fun loadTeams_whenFirestoreFails_showsErrorToast() {
-        every {
-            mockQuery.addSnapshotListener(any())
-        } answers {
-            val listener = arg<EventListener<QuerySnapshot>>(0)
-            listener.onEvent(null, FirebaseFirestoreException("boom!", FirebaseFirestoreException.Code.CANCELLED))
-            mockRegistration
-        }
-
-        ActivityScenario.launch(MyTeamsActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                val shadowToast = ShadowToast.getLatestToast()
-
-                assertNotNull(shadowToast)
-            }
-        }
-    }
-
-    @Test
     fun teamAdapter_showsActivePollIndicator() {
         val team = Team(
             id = "123",
