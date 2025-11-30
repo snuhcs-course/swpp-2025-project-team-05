@@ -46,7 +46,7 @@ class PollViewModel(
                     val poll = repository.getPoll(pollId)
                     _state.update { it.copy(poll = poll, isBusy = false) }
                     if (poll.isOpen) {
-                        delay(2000)
+                        delay(1000)  // Reduced from 2000ms to 1000ms for faster sync
                     } else {
                         break
                     }
@@ -96,19 +96,66 @@ class PollViewModel(
     // Phase-specific methods
 
     fun setRejectedCandidate(index: Int?) {
-        _state.update {
-            it.copy(
-                rejectedCandidateIndex = index,
-                rejectionUsed = index != null
-            )
+        if (index == null) {
+            // Clear rejection
+            _state.update {
+                it.copy(
+                    rejectedCandidateName = null,
+                    rejectionUsed = false,
+                    vetoError = null
+                )
+            }
+            return
         }
+
+        // Get candidate name from current poll
+        val candidateName = _state.value.poll?.candidates?.getOrNull(index)?.name ?: return
+
+        // Immediately reject candidate and get replacement
+        viewModelScope.launch {
+            // Set loading state
+            _state.update { it.copy(isVetoing = true, vetoError = null) }
+
+            try {
+                // Call API to reject and get updated poll with replacement
+                val updatedPoll = repository.rejectCandidateImmediately(pollId, index)
+
+                // Update state with new poll (includes replacement candidate)
+                _state.update {
+                    it.copy(
+                        poll = updatedPoll,
+                        rejectedCandidateName = candidateName,  // Store NAME not index
+                        rejectionUsed = true,
+                        isVetoing = false,
+                        vetoError = null
+                    )
+                }
+            } catch (e: Exception) {
+                // If rejection fails, show error and DON'T update local state
+                _state.update {
+                    it.copy(
+                        isVetoing = false,
+                        vetoError = e.message ?: "Failed to reject menu. Please try again."
+                    )
+                }
+            }
+        }
+    }
+
+    // Clear veto error (called when user dismisses error snackbar)
+    fun clearVetoError() {
+        _state.update { it.copy(vetoError = null) }
     }
 
     fun submitPhase1Vote() {
         viewModelScope.launch {
             try {
                 val approvedIndices = _state.value.selectedIndices.toList()
-                val rejectedIndex = _state.value.rejectedCandidateIndex
+
+                // Convert rejected candidate name back to current index
+                val rejectedIndex = _state.value.rejectedCandidateName?.let { name ->
+                    _state.value.poll?.candidates?.indexOfFirst { it.name == name }?.takeIf { it >= 0 }
+                }
 
                 repository.submitPhase1Vote(pollId, approvedIndices, rejectedIndex)
 

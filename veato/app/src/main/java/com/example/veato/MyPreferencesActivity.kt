@@ -1,23 +1,22 @@
 package com.example.veato
 
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,12 +24,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.veato.data.local.ProfileDataStoreImpl
 import com.example.veato.data.model.CuisineType
 import com.example.veato.data.model.SpiceLevel
+import com.example.veato.data.model.getIconResource
 import com.example.veato.data.remote.ProfileApiDataSource
 import com.example.veato.data.repository.UserProfileRepositoryImpl
 import com.example.veato.ui.components.MultiSelectChipGroup
 import com.example.veato.ui.profile.ProfileViewModel
 import com.example.veato.ui.profile.ProfileViewModelFactory
 import com.example.veato.ui.theme.VeatoTheme
+import com.example.veato.ui.components.VeatoBottomNavigationBar
+import com.example.veato.ui.components.NavigationScreen
+
 import com.google.firebase.auth.FirebaseAuth
 
 class MyPreferencesActivity : ComponentActivity() {
@@ -65,28 +68,63 @@ class MyPreferencesActivity : ComponentActivity() {
         )
         val state by viewModel.state.collectAsState()
 
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        // Show snackbar on save error
+        LaunchedEffect(state.saveError) {
+            state.saveError?.let { error ->
+                snackbarHostState.showSnackbar(
+                    message = error,
+                    actionLabel = "Dismiss",
+                    duration = SnackbarDuration.Long
+                )
+            }
+        }
+
+        // Show snackbar on save success
+        LaunchedEffect(state.saveSuccess) {
+            state.saveSuccess?.let { message ->
+                snackbarHostState.showSnackbar(
+                    message = message,
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "My Preferences",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { finish() }) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back"
-                            )
+                if (state.isEditing) {
+                    TopAppBar(
+                        title = { Text("Edit Preferences") },
+                        navigationIcon = {
+                            IconButton(onClick = { viewModel.toggleEditing() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Cancel"
+                                )
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { viewModel.updateProfile() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Save",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
-                    }
-                )
+                    )
+                } else {
+                    TopAppBar(
+                        title = { Text("My Preferences") }
+                    )
+                }
             },
             bottomBar = {
-                BottomNavigationBar(currentScreen = "Preferences")
+                VeatoBottomNavigationBar(currentScreen = NavigationScreen.PREFERENCES)
+            },
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
             }
         ) { paddingValues ->
             when {
@@ -115,12 +153,34 @@ class MyPreferencesActivity : ComponentActivity() {
                             .padding(24.dp)
                     ) {
                         Text(
-                            "Soft Preferences",
+                            "What I want to eat right now",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
 
+                        Spacer(Modifier.height(8.dp))
+
+                        Text(
+                            "These settings only affect ranking. Your restrictions still apply.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
                         Spacer(Modifier.height(24.dp))
+
+                        // Edit Preferences Button (when not editing)
+                        if (!state.isEditing) {
+                            Button(
+                                onClick = { viewModel.toggleEditing() },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary
+                                )
+                            ) {
+                                Text("Edit Preferences")
+                            }
+                            Spacer(Modifier.height(24.dp))
+                        }
 
                         // Favorite Cuisines
                         Text(
@@ -130,60 +190,28 @@ class MyPreferencesActivity : ComponentActivity() {
                         )
                         Spacer(Modifier.height(8.dp))
                         MultiSelectChipGroup(
-                            items = CuisineType.values().toList(),
+                            items = CuisineType.entries,
                             selectedItems = state.userProfile?.softPreferences?.favoriteCuisines ?: emptyList(),
                             onSelectionChange = { selected ->
-                                val updatedProfile = state.userProfile?.copy(
-                                    softPreferences = state.userProfile!!.softPreferences.copy(
-                                        favoriteCuisines = selected
-                                    )
-                                )
-                                updatedProfile?.let {
-                                    viewModel.updateProfileData(it)
-                                }
+                                viewModel.updateFavoriteCuisines(selected)
                             },
-                            itemLabel = { it.name },
-                            enabled = true
+                            itemLabel = { "${it.koreanName} ${it.displayName}" },
+                            itemIcon = { it.getIconResource() },
+                            enabled = state.isEditing
                         )
 
                         Spacer(Modifier.height(24.dp))
 
-                        // Spice Tolerance
-                        Text(
-                            "Spice Tolerance",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        SpiceLevelSelector(
+                        // Your Spice Level (using slider)
+                        SpiceSlider(
                             selectedLevel = state.userProfile?.softPreferences?.spiceTolerance,
                             onLevelSelected = { level ->
-                                val updatedProfile = state.userProfile?.copy(
-                                    softPreferences = state.userProfile!!.softPreferences.copy(
-                                        spiceTolerance = level
-                                    )
-                                )
-                                updatedProfile?.let {
-                                    viewModel.updateProfileData(it)
-                                }
-                            }
+                                viewModel.updateSpiceTolerance(level)
+                            },
+                            enabled = state.isEditing
                         )
 
                         Spacer(Modifier.height(32.dp))
-
-                        // Save button
-                        Button(
-                            onClick = {
-                                viewModel.updateProfile()
-                                Toast.makeText(context, "Preferences saved!", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF4CAF50)
-                            )
-                        ) {
-                            Text("Save Preferences")
-                        }
                     }
                 }
             }
@@ -191,95 +219,82 @@ class MyPreferencesActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun SpiceLevelSelector(
+    private fun SpiceSlider(
         selectedLevel: SpiceLevel?,
-        onLevelSelected: (SpiceLevel) -> Unit
+        onLevelSelected: (SpiceLevel) -> Unit,
+        enabled: Boolean = true,
+        modifier: Modifier = Modifier
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            SpiceLevel.values().forEach { level ->
-                FilterChip(
-                    selected = selectedLevel == level,
-                    onClick = { onLevelSelected(level) },
-                    label = { Text(level.name) },
-                    modifier = Modifier.weight(1f)
+        // Map SpiceLevel to slider position (0-4) and vice versa
+        val spiceLevels = listOf(
+            SpiceLevel.NONE,    // position 0
+            SpiceLevel.LOW,     // position 1
+            SpiceLevel.MEDIUM,  // position 2
+            SpiceLevel.HIGH,    // position 3
+            SpiceLevel.EXTRA    // position 4
+        )
+
+        val currentPosition = selectedLevel?.let { level ->
+            spiceLevels.indexOf(level).toFloat()
+        } ?: 2f  // Default to MEDIUM if null
+
+        val labels = listOf("No", "Low", "Medium", "High", "Extra")
+
+        Column(modifier = modifier.fillMaxWidth()) {
+            // Label: "Your Spice Level"
+            Text(
+                "Your Spice Level",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            // Live value display
+            Text(
+                selectedLevel?.displayName ?: "Medium Spice Preferred",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // Slider with labels
+            Column {
+                Slider(
+                    value = currentPosition,
+                    onValueChange = { value ->
+                        val position = value.toInt().coerceIn(0, 4)
+                        onLevelSelected(spiceLevels[position])
+                    },
+                    valueRange = 0f..4f,
+                    steps = 3,  // 5 total positions (0, 1, 2, 3, 4) = 3 steps between
+                    enabled = enabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics {
+                            contentDescription = "Spice level, currently ${selectedLevel?.displayName ?: "Medium"}"
+                        }
                 )
+
+                // Snap point labels below slider
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    labels.forEach { label ->
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }
 
-    @Composable
-    private fun BottomNavigationBar(currentScreen: String) {
-        val context = LocalContext.current
-
-        // Exact match to ProfileActivity navigation
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(Color(0xFFE8F5E9))
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // My Preferences
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable { /* Already on Preferences */ }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Preferences",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "Preferences") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-
-            // My Teams
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, MyTeamsActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Teams",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "MyTeams") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-
-            // My Profile
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, ProfileActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Profile",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "Profile") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-        }
-    }
 }

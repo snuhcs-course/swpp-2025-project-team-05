@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.veato.data.model.CuisineType
+import com.example.veato.data.model.getIconResource
 import com.example.veato.ui.components.*
 import com.example.veato.ui.theme.Dimensions
 
@@ -52,6 +53,7 @@ fun FavoriteCuisinesScreen(
                     selectedItems = selectedCuisines,
                     onSelectionChange = onUpdate,
                     itemLabel = { "${it.koreanName} ${it.displayName}" },
+                    itemIcon = { it.getIconResource() },
                     itemsPerRow = 2
                 )
             }

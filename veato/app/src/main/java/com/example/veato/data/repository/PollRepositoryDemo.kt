@@ -48,6 +48,11 @@ class PollRepositoryDemo : PollRepository{
         // Demo implementation - no-op
     }
 
+    override suspend fun rejectCandidateImmediately(pollId: String, rejectedIndex: Int): Poll {
+        // Demo implementation - return current poll
+        return getPoll(pollId)
+    }
+
     override suspend fun submitPhase2Vote(pollId: String, selectedIndex: Int) {
         // Demo implementation - no-op
     }

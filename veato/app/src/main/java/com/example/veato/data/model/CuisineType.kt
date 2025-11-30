@@ -1,5 +1,6 @@
 package com.example.veato.data.model
 
+import com.example.veato.R
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -8,10 +9,22 @@ enum class CuisineType(val displayName: String, val koreanName: String) {
     JAPANESE("Japanese", "일식"),
     CHINESE("Chinese", "중식"),
     WESTERN("Western", "양식"),
-    INDIAN("Indian", "인도"),
-    MEXICAN("Mexican", "멕시칸"),
-    THAI("Thai", "태국"),
-    SOUTHEAST_ASIAN("Southeast Asian", "동남아"),
-    ITALIAN("Italian", "이탈리안"),
-    FRENCH("French", "프랑스")
+    EUROPEAN("Italian/French", "이탈리안/프랑스"),
+    ASIAN("Southeast Asian", "동남아")
+    // Legacy values removed: INDIAN, MEXICAN, THAI, ITALIAN, FRENCH
+    // They map to: ASIAN (indian, thai), WESTERN (mexican), EUROPEAN (italian, french)
+}
+
+/**
+ * Returns the drawable resource ID for this cuisine type's icon
+ */
+fun CuisineType.getIconResource(): Int {
+    return when (this) {
+        CuisineType.KOREAN -> R.drawable.ic_cuisine_korean
+        CuisineType.JAPANESE -> R.drawable.ic_cuisine_japanese
+        CuisineType.CHINESE -> R.drawable.ic_cuisine_chinese
+        CuisineType.WESTERN -> R.drawable.ic_cuisine_western
+        CuisineType.EUROPEAN -> R.drawable.ic_cuisine_european
+        CuisineType.ASIAN -> R.drawable.ic_cuisine_asian
+    }
 }

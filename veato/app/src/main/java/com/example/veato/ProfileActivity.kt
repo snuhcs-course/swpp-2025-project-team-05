@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -22,8 +23,10 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +42,7 @@ import com.example.veato.data.local.ProfileDataStoreImpl
 import com.example.veato.data.model.Allergen
 import com.example.veato.data.model.DietaryType
 import com.example.veato.data.model.UserProfile
+import com.example.veato.data.model.getIconResource
 import com.example.veato.data.remote.ProfileApiDataSource
 import com.example.veato.data.repository.UserProfileRepositoryImpl
 import com.example.veato.ui.components.IngredientsChipInput
@@ -47,6 +51,9 @@ import com.example.veato.ui.main.MainActivity
 import com.example.veato.ui.profile.ProfileViewModel
 import com.example.veato.ui.profile.ProfileViewModelFactory
 import com.example.veato.ui.theme.VeatoTheme
+import com.example.veato.ui.components.VeatoBottomNavigationBar
+import com.example.veato.ui.components.NavigationScreen
+
 import com.google.firebase.auth.FirebaseAuth
 
 
@@ -83,6 +90,18 @@ fun ProfileScreen() {
         )
     )
     val state by viewModel.state.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show snackbar on save success
+    LaunchedEffect(state.saveSuccess) {
+        state.saveSuccess?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
 
     // Image picker launchers
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -125,20 +144,15 @@ fun ProfileScreen() {
                 )
             } else {
                 TopAppBar(
-                    title = { Text("Profile") },
-                    navigationIcon = {
-                        IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    }
+                    title = { Text("Profile") }
                 )
             }
         },
         bottomBar = {
-            BottomNavigationBar(currentScreen = "Profile")
+            VeatoBottomNavigationBar(currentScreen = NavigationScreen.PROFILE)
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         }
     ) { paddingValues ->
         when {
@@ -269,6 +283,25 @@ fun ProfileScreen() {
                         onUpdate = viewModel::updateAvoidIngredients
                     )
 
+                    Spacer(Modifier.height(24.dp))
+
+                    // Logout Button
+                    Button(
+                        onClick = {
+                            FirebaseAuth.getInstance().signOut()
+                            val intent = Intent(context, com.example.veato.ui.auth.LoginActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            context.startActivity(intent)
+                            (context as? ProfileActivity)?.finish()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Log Out")
+                    }
+
                     Spacer(Modifier.height(32.dp))
                 }
             }
@@ -343,10 +376,11 @@ private fun DietaryRestrictionsSection(
         )
         Spacer(Modifier.height(12.dp))
         MultiSelectChipGroup(
-            items = DietaryType.entries.filter { it != DietaryType.CUSTOM },
+            items = DietaryType.entries,
             selectedItems = selectedItems,
             onSelectionChange = onUpdate,
             itemLabel = { it.displayName },
+            itemIcon = { it.getIconResource() },
             itemsPerRow = 2,
             enabled = enabled
         )
@@ -367,10 +401,11 @@ private fun AllergiesSection(
         )
         Spacer(Modifier.height(12.dp))
         MultiSelectChipGroup(
-            items = Allergen.entries.filter { it != Allergen.CUSTOM },
+            items = Allergen.entries,
             selectedItems = selectedItems,
             onSelectionChange = onUpdate,
             itemLabel = { it.displayName },
+            itemIcon = { it.getIconResource() },
             itemsPerRow = 2,
             enabled = enabled
         )
@@ -405,75 +440,3 @@ private fun LoadingCircle() {
     }
 }
 
-@Composable
-private fun BottomNavigationBar(currentScreen: String) {
-    val context = LocalContext.current
-
-    // Exact match to XML: LinearLayout with Buttons
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(64.dp)
-            .background(Color(0xFFE8F5E9))
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // My Preferences
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(64.dp)
-                .clickable {
-                    val intent = Intent(context, MyPreferencesActivity::class.java)
-                    context.startActivity(intent)
-                }
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "My Preferences",
-                fontSize = 14.sp,
-                fontWeight = if (currentScreen == "Preferences") FontWeight.Bold else FontWeight.Normal,
-                color = Color.Black
-            )
-        }
-
-        // My Teams
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(64.dp)
-                .clickable {
-                    val intent = Intent(context, MyTeamsActivity::class.java)
-                    context.startActivity(intent)
-                }
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "My Teams",
-                fontSize = 14.sp,
-                fontWeight = if (currentScreen == "MyTeams") FontWeight.Bold else FontWeight.Normal,
-                color = Color.Black
-            )
-        }
-
-        // My Profile
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(64.dp)
-                .clickable { /* Already on profile */ }
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "My Profile",
-                fontSize = 14.sp,
-                fontWeight = if (currentScreen == "Profile") FontWeight.Bold else FontWeight.Normal,
-                color = Color.Black
-            )
-        }
-    }
-}

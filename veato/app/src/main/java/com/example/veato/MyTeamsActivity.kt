@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -23,6 +24,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.veato.ui.theme.VeatoTheme
+import com.example.veato.ui.components.VeatoBottomNavigationBar
+import com.example.veato.ui.components.NavigationScreen
+
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -79,7 +83,7 @@ class MyTeamsActivity : ComponentActivity() {
                                 showCreateDialog = true
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF4CAF50)
+                                containerColor = MaterialTheme.colorScheme.primary
                             ),
                             modifier = Modifier.padding(end = 8.dp)
                         ) {
@@ -91,7 +95,7 @@ class MyTeamsActivity : ComponentActivity() {
                 )
             },
             bottomBar = {
-                BottomNavigationBar(currentScreen = "MyTeams")
+                VeatoBottomNavigationBar(currentScreen = NavigationScreen.TEAMS)
             }
         ) { paddingValues ->
             // RecyclerView wrapped in AndroidView
@@ -195,7 +199,7 @@ class MyTeamsActivity : ComponentActivity() {
                     },
                     enabled = !isCreating,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
+                        containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
                     if (isCreating) {
@@ -218,79 +222,6 @@ class MyTeamsActivity : ComponentActivity() {
                 }
             }
         )
-    }
-
-    @Composable
-    private fun BottomNavigationBar(currentScreen: String) {
-        val context = LocalContext.current
-
-        // Exact match to ProfileActivity navigation
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(Color(0xFFE8F5E9))
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // My Preferences
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, MyPreferencesActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Preferences",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "Preferences") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-
-            // My Teams
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable { /* Already on My Teams */ }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Teams",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "MyTeams") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-
-            // My Profile
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, ProfileActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Profile",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "Profile") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-        }
     }
 
     private fun loadTeams() {

@@ -14,17 +14,17 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
-    primary = VeatoMint,
+    primary = VeatoCoral,
     onPrimary = VeatoSurface,
-    primaryContainer = VeatoMintLight,
+    primaryContainer = VeatoCoralLight,
     onPrimaryContainer = VeatoTextPrimary,
 
-    secondary = VeatoInfo,
-    onSecondary = VeatoSurface,
-    secondaryContainer = Gray100,
+    secondary = VeatoGolden,
+    onSecondary = VeatoTextPrimary,
+    secondaryContainer = VeatoGoldenLight,
     onSecondaryContainer = VeatoTextPrimary,
 
-    tertiary = VeatoSuccess,
+    tertiary = VeatoPeach,
     onTertiary = VeatoSurface,
 
     error = VeatoError,
@@ -45,27 +45,27 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = VeatoMint,
+    primary = VeatoCoralLight,
     onPrimary = Gray900,
-    primaryContainer = VeatoMintDark,
-    onPrimaryContainer = VeatoSurface,
+    primaryContainer = VeatoCoralDark,
+    onPrimaryContainer = Gray100,
 
-    secondary = VeatoInfo,
+    secondary = VeatoGolden,
     onSecondary = Gray900,
     secondaryContainer = Gray700,
-    onSecondaryContainer = VeatoSurface,
+    onSecondaryContainer = Gray100,
 
-    tertiary = VeatoSuccess,
+    tertiary = VeatoPeach,
     onTertiary = Gray900,
 
     error = VeatoError,
     onError = Gray900,
 
     background = Gray900,
-    onBackground = VeatoSurface,
+    onBackground = Gray100,
 
     surface = Gray800,
-    onSurface = VeatoSurface,
+    onSurface = Gray100,
     surfaceVariant = Gray700,
     onSurfaceVariant = Gray300,
 

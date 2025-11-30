@@ -8,6 +8,7 @@ data class ProfileState(
     val isBusy: Boolean = true,
     val isEditing: Boolean = false,
     val saveError: String? = null,
+    val saveSuccess: String? = null,
     val editedFullName: String = "",
     val editedUserName: String = "",
     val selectedImageUri: Uri? = null,

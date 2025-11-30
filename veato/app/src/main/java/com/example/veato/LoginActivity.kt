@@ -10,7 +10,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.example.veato.databinding.ActivityLoginBinding
-import com.example.veato.MyTeamsActivity
+import com.example.veato.MyPreferencesActivity
 import com.example.veato.OnboardingActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -69,9 +69,9 @@ class LoginActivity : AppCompatActivity() {
             Log.d("AuthDebug", "Onboarding completed: $hasCompletedOnboarding")
 
             if (hasCompletedOnboarding) {
-                Log.d("AuthDebug", "Navigating to MyTeamsActivity")
+                Log.d("AuthDebug", "Navigating to MyPreferencesActivity")
                 // Go to main app if onboarding already completed
-                startActivity(Intent(this, MyTeamsActivity::class.java))
+                startActivity(Intent(this, MyPreferencesActivity::class.java))
             } else {
                 Log.d("AuthDebug", "Navigating to OnboardingActivity")
                 // Go to onboarding if not completed

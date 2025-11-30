@@ -81,10 +81,10 @@ fun VoteScreen(
             }
             Box(
                 modifier = Modifier
-                    .background(Color(0xFF3DD1A0), RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Text(formattedTime, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(formattedTime, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -94,7 +94,7 @@ fun VoteScreen(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFDFDFD)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
@@ -156,19 +156,19 @@ fun CandidateButton(
         border = BorderStroke(
             width = 1.dp,
             color = when {
-                isDisabled -> Color.LightGray
-                isSelected -> Color(0xFF3DD1A0)
-                else -> Color.Gray
+                isDisabled -> MaterialTheme.colorScheme.outlineVariant
+                isSelected -> MaterialTheme.colorScheme.primary
+                else -> MaterialTheme.colorScheme.outline
             }
         ),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = when {
-                isSelected -> Color(0xFFF1FFF8)
-                else -> Color(0xFFFDFDFD)
+                isSelected -> MaterialTheme.colorScheme.primaryContainer
+                else -> MaterialTheme.colorScheme.surface
 
             },
-            contentColor = Color.Black,
-            disabledContentColor = Color.DarkGray
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
         Row(
@@ -205,7 +205,7 @@ fun VoteButton(
                 .height(48.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedCount > 0) Color(0xFF3DD1A0) else Color.LightGray
+                containerColor = if (selectedCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Text("$selectedCount selected  •  Vote")
@@ -217,7 +217,7 @@ fun VoteButton(
                 .fillMaxWidth()
                 .height(48.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
             Text("Cancel Vote")
         }

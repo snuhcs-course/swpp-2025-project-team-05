@@ -136,7 +136,7 @@ fun VoteSettingScreen(
         // Card Section
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE9F3EF)),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F2F2)),
             shape = RoundedCornerShape(12.dp)
         ) {
             Column(
@@ -271,7 +271,7 @@ fun VoteSettingScreen(
                 }
             },
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF91CFC1)
+                containerColor = Color(0xFFEB8765)
             ),
             modifier = Modifier
                 .fillMaxWidth()

@@ -2,31 +2,37 @@ package com.example.veato.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Colors - Refined Sage/Teal Theme
-val VeatoMint = Color(0xFF5FA88A)         // More muted, sophisticated teal
-val VeatoMintLight = Color(0xFF8DC9B3)    // Softer light variant
-val VeatoMintDark = Color(0xFF3D7A63)     // Deeper, richer dark variant
+// Primary Colors - Coral/Salmon Theme
+val VeatoCoral = Color(0xFFEB8765)          // Coral salmon - main brand color
+val VeatoCoralLight = Color(0xFFF0A489)     // Lighter coral variant
+val VeatoCoralDark = Color(0xFFD96A48)      // Deeper coral variant
 
-// Background Colors - More refined neutrals
-val VeatoBackgroundLight = Color(0xFFF8FAF9)  // Very subtle tint
-val VeatoBackground = Color(0xFFFAFAFA)       // Clean, pure background
-val VeatoSurface = Color(0xFFFFFFFF)
+// Secondary & Tertiary Colors
+val VeatoGolden = Color(0xFFEBD765)         // Golden yellow - accents, warnings
+val VeatoGoldenLight = Color(0xFFF0E189)    // Lighter golden variant
+val VeatoPeach = Color(0xFFEBA165)          // Peachy orange - secondary actions
+val VeatoBeige = Color(0xFFEBDCB3)          // Beige - subtle backgrounds
+
+// Background Colors
+val VeatoBackgroundLight = Color(0xFFFBF7EC)  // Very light beige tint
+val VeatoBackground = Color(0xFFF2F2F2)       // Light gray background
+val VeatoSurface = Color(0xFFFFFFFF)          // White for surfaces
+val VeatoNavBar = Color(0xFFF6EFD5)           // Beige for navigation bar
 
 // Text Colors - Better hierarchy
 val VeatoTextPrimary = Color(0xFF1A1D1E)     // Deeper, richer black
 val VeatoTextSecondary = Color(0xFF6B7280)   // Medium gray
 val VeatoTextHint = Color(0xFF9CA3AF)        // Lighter gray
 
-// Constraint/Warning Colors - More refined
-val VeatoWarning = Color(0xFFE67E4D)         // Warmer, less garish orange
-val VeatoWarningLight = Color(0xFFF5B299)
-val VeatoError = Color(0xFFE74C4C)           // Slightly muted red
+// Warning/Error Colors
+val VeatoWarning = Color(0xFFEBD765)         // Golden yellow for warnings
+val VeatoWarningLight = Color(0xFFF0E189)    // Light golden variant
+val VeatoError = Color(0xFFE74C4C)           // Keep traditional red for errors
 
-// Success/Preference Colors - More elegant
-val VeatoSuccess = Color(0xFF4CAF50)         // Classic material green
-val VeatoInfo = Color(0xFF5B9BD5)            // Calmer blue
+// Success Color
+val VeatoSuccess = Color(0xFFEB8765)         // Coral for success states
 
-// Neutral/Gray Scale - Enhanced palette
+// Neutral/Gray Scale - Standard grays
 val Gray50 = Color(0xFFFAFAFA)
 val Gray100 = Color(0xFFF5F5F5)
 val Gray200 = Color(0xFFEEEEEE)

@@ -65,7 +65,8 @@ data class PollResponse(
     val candidates: List<CandidateResponse>? = null,
     val yourCurrentVotes: List<String>? = null,
     val totalSelectedCountForYou: Int? = null,
-    val resultRanking: List<RankingResponse>? = null,
+    val results: List<CandidateResponse>? = null,  // Results for closed polls (includes name + voteCount)
+    val resultRanking: List<RankingResponse>? = null,  // Legacy field
     val winner: String? = null
 )
 
@@ -76,6 +77,7 @@ data class CandidateResponse(
     val name: String,
     val ranking: Int? = null,
     val voteCount: Int? = null,
+    val phase1ApprovalCount: Int? = null,    // Phase 1 approval votes (shown in Phase 2)
     val isRejected: Boolean? = null
 )
 
@@ -108,7 +110,8 @@ data class VoteResponse(
  */
 data class Phase1VoteRequest(
     val approvedCandidates: List<String>,
-    val rejectedCandidate: String? = null
+    val rejectedCandidate: String? = null,
+    val lockIn: Boolean = true  // Set false to reject without locking in vote
 )
 
 /**

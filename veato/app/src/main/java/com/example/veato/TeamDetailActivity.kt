@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -31,6 +32,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.veato.ui.theme.VeatoTheme
+import com.example.veato.ui.components.VeatoBottomNavigationBar
+import com.example.veato.ui.components.NavigationScreen
+
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -130,7 +134,7 @@ class TeamDetailActivity : ComponentActivity() {
                 )
             },
             bottomBar = {
-                BottomNavigationBar(currentScreen = "MyTeams")
+                VeatoBottomNavigationBar(currentScreen = NavigationScreen.TEAMS)
             }
         ) { paddingValues ->
             when {
@@ -305,7 +309,7 @@ class TeamDetailActivity : ComponentActivity() {
                     icon = Icons.Default.PlayArrow,
                     label = "Start New Poll",
                     onClick = onStartPoll,
-                    containerColor = Color(0xFF4CAF50)
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -470,7 +474,7 @@ class TeamDetailActivity : ComponentActivity() {
                     modifier = Modifier
                         .size(10.dp)
                         .background(
-                            color = if (hasActivePoll) Color(0xFF4CAF50) else Color(0xFFF44336),
+                            color = if (hasActivePoll) MaterialTheme.colorScheme.primary else Color(0xFFF44336),
                             shape = CircleShape
                         )
                 )
@@ -489,7 +493,7 @@ class TeamDetailActivity : ComponentActivity() {
         icon: ImageVector,
         label: String,
         onClick: () -> Unit,
-        containerColor: Color = Color(0xFF4CAF50)
+        containerColor: Color = MaterialTheme.colorScheme.primary
     ) {
         Button(
             onClick = onClick,
@@ -627,7 +631,7 @@ class TeamDetailActivity : ComponentActivity() {
                         )
                         if (member.isLeader) {
                             Surface(
-                                color = Color(0xFF4CAF50),
+                                color = MaterialTheme.colorScheme.primary,
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text(
@@ -828,81 +832,6 @@ class TeamDetailActivity : ComponentActivity() {
             "Birthday Celebration" -> listOf("Birthday Person", "Family", "Friend", "Colleague", "Other")
             "Romantic Date" -> listOf("Partner", "Date", "Other")
             else -> listOf("Guest", "Participant", "Other")
-        }
-    }
-
-    @Composable
-    private fun BottomNavigationBar(currentScreen: String) {
-        val context = LocalContext.current
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(Color(0xFFE8F5E9))
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // My Preferences
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, MyPreferencesActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Preferences",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "Preferences") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-
-            // My Teams
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, MyTeamsActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Teams",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "MyTeams") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-
-            // My Profile
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, ProfileActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Profile",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "Profile") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
         }
     }
 

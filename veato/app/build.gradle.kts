@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.example.veato"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.veato"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -55,6 +55,19 @@ android {
     }
 }
 
+tasks.withType<Test>().configureEach {
+    systemProperty("robolectric.environment", "sdk")
+    jvmArgs("-noverify")
+}
+
+// Disable test compilation for APK builds
+tasks.whenTaskAdded {
+    if (name.contains("compileDebugUnitTestKotlin") ||
+        name.contains("compileDebugAndroidTestKotlin")) {
+        enabled = false
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -72,7 +85,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx")
 
     // UI helpers
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
 
@@ -89,6 +102,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.ui:ui-text-google-fonts")
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.6")
@@ -117,9 +131,14 @@ dependencies {
 
     // Unit Testing
     testImplementation("io.mockk:mockk:1.13.8")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("io.mockk:mockk-agent-jvm:1.13.8")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("app.cash.turbine:turbine:1.0.0")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("org.robolectric:robolectric:4.13")
+    testImplementation("androidx.test:core:1.5.0")
+    testImplementation("androidx.datastore:datastore-preferences-core:1.1.0")
+    testImplementation("androidx.datastore:datastore-preferences:1.1.1")
 
     // Compose Testing
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.01.00"))

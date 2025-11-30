@@ -124,8 +124,11 @@ fun PollResultScreen(
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
 
-                // display all results
-                poll.results.forEachIndexed { index, candidate ->
+                // Only display results for candidates that were actually votable
+                val votableCandidateNames = poll.candidates.map { it.name }.toSet()
+                val filteredResults = poll.results.filter { it.name in votableCandidateNames }
+
+                filteredResults.forEachIndexed { index, candidate ->
                     ResultCandidateRow(
                         rank = index + 1,
                         name = candidate.name,
@@ -224,7 +227,7 @@ fun CandidateBox(
     isWinner: Boolean
 ) {
     val bgColor = if (isWinner) Color(0xFFF1FFF8) else Color.White
-    val borderColor = if (isWinner) Color(0xFF3DD1A0) else Color.LightGray
+    val borderColor = if (isWinner) MaterialTheme.colorScheme.primary else Color.LightGray
     val textColor = if (isWinner) Color(0xFF333333) else Color.Gray
     val scale = if (isWinner) 1.05f else 1f
 
@@ -241,7 +244,7 @@ fun CandidateBox(
             modifier = Modifier
                 .size(if (isWinner) 28.dp else 24.dp)
                 .background(
-                    if (isWinner) Color(0xFF3DD1A0) else Color(0xFFE0E0E0),
+                    if (isWinner) MaterialTheme.colorScheme.primary else Color(0xFFE0E0E0),
                     shape = RoundedCornerShape(50)
                 ),
             contentAlignment = Alignment.Center

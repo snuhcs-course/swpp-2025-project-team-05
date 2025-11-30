@@ -1,9 +1,12 @@
 package com.example.veato.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import com.example.veato.ui.theme.Dimensions
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -14,6 +17,7 @@ fun <T> MultiSelectChipGroup(
     onSelectionChange: (List<T>) -> Unit,
     modifier: Modifier = Modifier,
     itemLabel: (T) -> String,
+    itemIcon: ((T) -> Int?)? = null,
     itemsPerRow: Int = 2,
     enabled: Boolean = true
 ) {
@@ -28,6 +32,7 @@ fun <T> MultiSelectChipGroup(
             ) {
                 rowItems.forEach { item ->
                     val isSelected = selectedItems.contains(item)
+                    val iconResId = itemIcon?.invoke(item)
                     FilterChip(
                         selected = isSelected,
                         onClick = {
@@ -46,6 +51,15 @@ fun <T> MultiSelectChipGroup(
                                 style = MaterialTheme.typography.labelMedium
                             )
                         },
+                        leadingIcon = if (iconResId != null) {
+                            {
+                                Image(
+                                    painter = painterResource(id = iconResId),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        } else null,
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary,

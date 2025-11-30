@@ -121,7 +121,7 @@ fun Phase2VoteScreen(
                 poll.candidates.take(3).forEachIndexed { index, candidate ->
                     Phase2CandidateRow(
                         name = candidate.name,
-                        phase1Votes = candidate.voteCount,
+                        phase1Votes = candidate.phase1ApprovalCount,
                         index = index,
                         isSelected = selectedIndex == index,
                         isLocked = state.voted || poll.hasCurrentUserLockedIn,
