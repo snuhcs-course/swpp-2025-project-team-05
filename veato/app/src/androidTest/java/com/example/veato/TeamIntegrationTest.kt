@@ -82,6 +82,8 @@ class TeamIntegrationTest {
 
         // 4) Initialize Espresso Intents
         Intents.init()
+
+        composeRule.activityRule.scenario.recreate()
     }
 
     @After
@@ -362,5 +364,36 @@ class TeamIntegrationTest {
                 false
             }
         }
+    }
+
+    @Test
+    fun teamDetail_backButton_returnsToMyTeamsList() {
+        // Navigate to TeamDetail from the RecyclerView card
+        waitForTeamCardToAppear()
+        onView(withText(testTeamName))
+            .perform(click())
+
+        // 2) Verify TeamDetail is shown
+        composeRule.onNodeWithText("Team Members")
+            .assertIsDisplayed()
+
+        // 3) Press back
+        composeRule.onNodeWithContentDescription("Back")
+            .assertIsDisplayed()
+            .performClick()
+
+        // 4) WAIT until the new MyTeamsActivity Compose tree is fully visible
+        composeRule.waitUntil(10_000L) {
+            composeRule.onAllNodesWithText("Teams")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        // 5) Assertions (now guaranteed to succeed)
+        composeRule.onNodeWithText("Teams")
+            .assertIsDisplayed()
+
+        composeRule.onNodeWithText("Create new team")
+            .assertIsDisplayed()
     }
 }
