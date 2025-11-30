@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.veato.data.model.DietaryType
+import com.example.veato.data.model.getIconResource
 import com.example.veato.ui.components.*
 import com.example.veato.ui.theme.Dimensions
 
@@ -48,10 +49,11 @@ fun DietaryRestrictionsScreen(
                 title = "Your Restrictions"
             ) {
                 MultiSelectChipGroup(
-                    items = DietaryType.entries.filter { it != DietaryType.CUSTOM },
+                    items = DietaryType.entries,
                     selectedItems = selectedRestrictions,
                     onSelectionChange = onUpdate,
                     itemLabel = { it.displayName },
+                    itemIcon = { it.getIconResource() },
                     itemsPerRow = 2
                 )
             }

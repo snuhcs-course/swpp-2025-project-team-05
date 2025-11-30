@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- Allow cleartext traffic for local backend development -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">10.0.2.2</domain>
-    </domain-config>
-    <!-- Allow localhost for some devices -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">localhost</domain>
+        <!-- Emulator localhost -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- Physical device - Mac's local IP -->
+        <domain includeSubdomains="true">172.16.30.1</domain>
+        <!-- Localhost -->
+        <domain includeSubdomains="true">localhost</domain>
+        <!-- Allow other local network IPs (192.168.x.x range) -->
+        <domain includeSubdomains="true">192.168.0.0</domain>
     </domain-config>
 </network-security-config>
-
-

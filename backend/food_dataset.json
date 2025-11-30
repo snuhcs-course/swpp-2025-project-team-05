@@ -1505,7 +1505,8 @@
       "gluten-free",
       "lactose-free",
       "pescatarian",
-      "halal"
+      "halal",
+      "kosher"
     ]
   },
   {
@@ -2842,7 +2843,7 @@
   },
   {
     "food_id": "F097",
-    "name": "Soybean Noodle Soup",
+    "name": "Cold Soybean Soup Noodle",
     "description": "Cold noodles served in chilled soybean broth, perfect for summer.",
     "cuisine": "korean",
     "allergens": [
@@ -3866,7 +3867,7 @@
   },
   {
     "food_id": "F133",
-    "name": "Kimchi Pancake",
+    "name": "Kimchi Pancake (Kimchi Jeon)",
     "description": "Savory Korean pancake made with chopped kimchi and flour batter.",
     "cuisine": "korean",
     "ingredients": [
@@ -3889,7 +3890,7 @@
   },
   {
     "food_id": "F134",
-    "name": "Seafood Pancake",
+    "name": "Seafood Pancake (Haemul Jeon)",
     "description": "Seafood pancake made with squid, shrimp, and green onion batter.",
     "cuisine": "korean",
     "ingredients": [
@@ -3946,7 +3947,7 @@
   },
   {
     "food_id": "F136",
-    "name": "Soy Sauce Crab",
+    "name": "Soy Sauce Marinated Crab",
     "description": "Raw crab marinated in soy sauce, a Korean specialty.",
     "cuisine": "korean",
     "ingredients": [
@@ -5818,7 +5819,7 @@
   },
   {
     "food_id": "F202",
-    "name": "Seafood Marinara Pasta",
+    "name": "Seafood Pasta",
     "description": "Italian spaghetti in tomato sauce with shrimp, squid, and mussels.",
     "cuisine": "western",
     "ingredients": [
@@ -8555,6 +8556,1624 @@
       "halal",
       "kosher",
       "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F291",
+    "name": "Caprese Salad",
+    "description": "Classic Italian salad made with fresh mozzarella, tomato, and basil, drizzled with olive oil and balsamic glaze.",
+    "cuisine": "western",
+    "ingredients": [
+      "mozzarella",
+      "tomato",
+      "basil",
+      "olive oil",
+      "balsamic vinegar"
+    ],
+    "spice_level": 0,
+    "meal_type": "salad-based",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 320,
+      "protein": 16,
+      "fat": 24,
+      "carbs": 8
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F292",
+    "name": "Avocado Egg Salad",
+    "description": "Creamy salad made with mashed avocado, boiled eggs, lettuce, and lemon dressing.",
+    "cuisine": "western",
+    "ingredients": [
+      "egg",
+      "avocado",
+      "lettuce",
+      "lemon",
+      "olive oil"
+    ],
+    "spice_level": 0,
+    "meal_type": "salad-based",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 390,
+      "protein": 18,
+      "fat": 28,
+      "carbs": 10
+    },
+    "allergens": [
+      "egg"
+    ],
+    "dietary_violations": [
+      "vegan"
+    ]
+  },
+  {
+    "food_id": "F293",
+    "name": "Tofu Avocado Salad",
+    "description": "Vegan-friendly salad with grilled tofu, avocado, sesame dressing, and mixed greens.",
+    "cuisine": "western",
+    "ingredients": [
+      "tofu",
+      "avocado",
+      "lettuce",
+      "sesame oil",
+      "soy sauce"
+    ],
+    "spice_level": 0,
+    "meal_type": "salad-based",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 400,
+      "protein": 20,
+      "fat": 22,
+      "carbs": 20
+    },
+    "allergens": [
+      "soy",
+      "sesame"
+    ],
+    "dietary_violations": []
+  },
+  {
+    "food_id": "F294",
+    "name": "Greek Chicken Salad",
+    "description": "Grilled chicken breast served over Greek-style salad with olives, feta cheese, and olive oil dressing.",
+    "cuisine": "western",
+    "ingredients": [
+      "chicken",
+      "feta cheese",
+      "tomato",
+      "olive",
+      "lettuce"
+    ],
+    "spice_level": 0,
+    "meal_type": "salad-based",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 460,
+      "protein": 36,
+      "fat": 24,
+      "carbs": 12
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "lactose-free",
+      "pescatarian"]
+  },
+  {
+    "food_id": "F295",
+    "name": "Grilled Beef Salad",
+    "description": "Tender slices of grilled beef served on a bed of mixed greens with soy-balsamic dressing.",
+    "cuisine": "western",
+    "ingredients": [
+      "beef",
+      "lettuce",
+      "tomato",
+      "soy sauce",
+      "balsamic vinegar"
+    ],
+    "spice_level": 1,
+    "meal_type": "salad-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 520,
+      "protein": 38,
+      "fat": 24,
+      "carbs": 22
+    },
+    "allergens": [
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F296",
+    "name": "Roast Duck Salad",
+    "description": "Smoked and roasted duck slices served with greens, orange slices, and citrus soy dressing.",
+    "cuisine": "western",
+    "ingredients": [
+      "duck",
+      "lettuce",
+      "orange",
+      "soy sauce",
+      "olive oil"
+    ],
+    "spice_level": 0,
+    "meal_type": "salad-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 550,
+      "protein": 36,
+      "fat": 28,
+      "carbs": 20
+    },
+    "allergens": [
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F297",
+    "name": "Pork Bulgogi Salad",
+    "description": "Korean-style salad topped with sweet and spicy marinated pork and sesame dressing.",
+    "cuisine": "korean",
+    "ingredients": [
+      "pork",
+      "gochujang",
+      "lettuce",
+      "sesame oil",
+      "garlic"
+    ],
+    "spice_level": 2,
+    "meal_type": "salad-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 580,
+      "protein": 32,
+      "fat": 30,
+      "carbs": 28
+    },
+    "allergens": [
+      "sesame",
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "halal",
+      "kosher",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F298",
+    "name": "Chicken Bacon Ranch Salad",
+    "description": "Hearty salad with grilled chicken, crispy bacon, cheese, and ranch dressing.",
+    "cuisine": "western",
+    "ingredients": [
+      "chicken",
+      "bacon",
+      "cheese",
+      "lettuce",
+      "ranch dressing"
+    ],
+    "spice_level": 0,
+    "meal_type": "salad-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 580,
+      "protein": 40,
+      "fat": 34,
+      "carbs": 14
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "halal",
+      "kosher",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F299",
+    "name": "Korean Ramyeon",
+    "description": "Instant Korean noodle soup served in a spicy broth, often topped with egg, green onion, and kimchi.",
+    "cuisine": "korean",
+    "ingredients": [
+      "noodles",
+      "gochugaru",
+      "egg",
+      "green onion",
+      "kimchi"
+    ],
+    "spice_level": 4,
+    "meal_type": "noodle-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 540,
+      "protein": 16,
+      "fat": 20,
+      "carbs": 72
+    },
+    "allergens": [
+      "gluten",
+      "soy",
+      "egg"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F300",
+    "name": "Japanese Nabe Hotpot",
+    "description": "Japanese-style hotpot with sliced meat, tofu, mushrooms, and vegetables simmered in soy-based broth, served with rice or udon.",
+    "cuisine": "japanese",
+    "ingredients": [
+      "beef",
+      "tofu",
+      "mushroom",
+      "soy sauce",
+      "vegetables"
+    ],
+    "spice_level": 1,
+    "meal_type": "soup-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 720,
+      "protein": 40,
+      "fat": 28,
+      "carbs": 68
+    },
+    "allergens": [
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F301",
+    "name": "Yakitori Skewers",
+    "description": "Grilled chicken skewers glazed with sweet soy tare sauce, served with scallions.",
+    "cuisine": "japanese",
+    "ingredients": [
+      "chicken",
+      "soy sauce",
+      "sugar",
+      "mirin",
+      "scallion"
+    ],
+    "spice_level": 0,
+    "meal_type": "meat-based",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 390,
+      "protein": 32,
+      "fat": 20,
+      "carbs": 14
+    },
+    "allergens": [
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "halal",
+      "kosher",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F307",
+    "name": "Salmon Sashimi",
+    "description": "Freshly sliced raw salmon served with soy sauce, wasabi, and daikon radish.",
+    "cuisine": "japanese",
+    "ingredients": [
+      "salmon",
+      "soy sauce",
+      "wasabi",
+      "radish"
+    ],
+    "spice_level": 0,
+    "meal_type": "seafood-based",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 310,
+      "protein": 28,
+      "fat": 18,
+      "carbs": 4
+    },
+    "allergens": [
+      "fish",
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan"
+    ]
+  },
+  {
+    "food_id": "F308",
+    "name": "Soju",
+    "description": "Korea’s most popular distilled liquor made from rice or sweet potato, often enjoyed with BBQ or spicy dishes.",
+    "cuisine": "korean",
+    "ingredients": [
+      "distilled spirit"
+    ],
+    "spice_level": 0,
+    "meal_type": "beverage",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 540,
+      "protein": 0,
+      "fat": 0,
+      "carbs": 0
+    },
+    "allergens": [],
+    "dietary_violations": [
+      "halal",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F309",
+    "name": "Beer",
+    "description": "Light and crisp alcoholic beverage, commonly paired with fried chicken or spicy dishes in Korea.",
+    "cuisine": "korean",
+    "ingredients": [
+      "barley",
+      "hops",
+      "water",
+      "yeast"
+    ],
+    "spice_level": 0,
+    "meal_type": "beverage",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 150,
+      "protein": 2,
+      "fat": 0,
+      "carbs": 13
+    },
+    "allergens": [
+      "gluten"
+    ],
+    "dietary_violations": [
+      "halal",
+      "kosher",
+      "gluten-free"
+    ]
+  },
+  {
+    "food_id": "F310",
+    "name": "Highball",
+    "description": "Whiskey mixed with soda water and lemon, a popular light cocktail in Korean bars and izakayas.",
+    "cuisine": "japanese",
+    "ingredients": [
+      "whiskey",
+      "soda water",
+      "lemon"
+    ],
+    "spice_level": 0,
+    "meal_type": "beverage",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 160,
+      "protein": 0,
+      "fat": 0,
+      "carbs": 5
+    },
+    "allergens": [],
+    "dietary_violations": [
+      "halal",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F311",
+    "name": "Sake",
+    "description": "Traditional Japanese rice wine with a smooth, lightly sweet flavor, served warm or chilled.",
+    "cuisine": "japanese",
+    "ingredients": [
+      "rice",
+      "yeast",
+      "water"
+    ],
+    "spice_level": 0,
+    "meal_type": "beverage",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 120,
+      "protein": 0,
+      "fat": 0,
+      "carbs": 6
+    },
+    "allergens": [],
+    "dietary_violations": [
+      "halal",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F312",
+    "name": "Makgeolli",
+    "description": "Traditional Korean rice wine with a sweet, tangy, and milky flavor, often served in a bowl.",
+    "cuisine": "korean",
+    "ingredients": [
+      "rice",
+      "yeast",
+      "water"
+    ],
+    "spice_level": 0,
+    "meal_type": "beverage",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 200,
+      "protein": 2,
+      "fat": 0,
+      "carbs": 18
+    },
+    "allergens": [],
+    "dietary_violations": [
+      "halal",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F313",
+    "name": "Cocktail",
+    "description": "Simple cocktail made with vodka and cranberry juice, served over ice.",
+    "cuisine": "western",
+    "ingredients": [
+      "vodka",
+      "cranberry juice",
+      "ice"
+    ],
+    "spice_level": 0,
+    "meal_type": "beverage",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 180,
+      "protein": 0,
+      "fat": 0,
+      "carbs": 10
+    },
+    "allergens": [],
+    "dietary_violations": [
+      "halal",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F314",
+    "name": "Wine",
+    "description": "Fermented grape wine with deep aroma, often paired with steak or pasta dishes.",
+    "cuisine": "western",
+    "ingredients": [
+      "grapes",
+      "yeast"
+    ],
+    "spice_level": 0,
+    "meal_type": "beverage",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 125,
+      "protein": 0,
+      "fat": 0,
+      "carbs": 4
+    },
+    "allergens": [],
+    "dietary_violations": [
+      "halal",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F315",
+    "name": "Vanilla Ice Cream",
+    "description": "Classic creamy vanilla ice cream, smooth and rich in flavor.",
+    "cuisine": "western",
+    "ingredients": [
+      "milk",
+      "cream",
+      "sugar",
+      "vanilla"
+    ],
+    "spice_level": 0,
+    "meal_type": "dessert",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 250,
+      "protein": 5,
+      "fat": 14,
+      "carbs": 26
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F316",
+    "name": "Chocolate Ice Cream",
+    "description": "Smooth and rich chocolate ice cream made with cocoa and fresh cream.",
+    "cuisine": "western",
+    "ingredients": [
+      "milk",
+      "cream",
+      "cocoa",
+      "sugar"
+    ],
+    "spice_level": 0,
+    "meal_type": "dessert",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 270,
+      "protein": 6,
+      "fat": 16,
+      "carbs": 25
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F317",
+    "name": "Green Tea Ice Cream",
+    "description": "Japanese-style matcha ice cream with a balance of creamy sweetness and green tea bitterness.",
+    "cuisine": "japanese",
+    "ingredients": [
+      "milk",
+      "cream",
+      "matcha",
+      "sugar"
+    ],
+    "spice_level": 0,
+    "meal_type": "dessert",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 240,
+      "protein": 5,
+      "fat": 12,
+      "carbs": 28
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F318",
+    "name": "Mint Chocolate Chip Ice Cream",
+    "description": "Refreshing mint ice cream mixed with chocolate chips, a popular café dessert in Korea.",
+    "cuisine": "western",
+    "ingredients": [
+      "milk",
+      "cream",
+      "mint",
+      "chocolate",
+      "sugar"
+    ],
+    "spice_level": 0,
+    "meal_type": "dessert",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 270,
+      "protein": 5,
+      "fat": 15,
+      "carbs": 28
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F319",
+    "name": "Cookies and Cream Ice Cream",
+    "description": "Vanilla ice cream blended with crushed chocolate cookies, creamy and crunchy in texture.",
+    "cuisine": "western",
+    "ingredients": [
+      "milk",
+      "cream",
+      "cookies",
+      "sugar"
+    ],
+    "spice_level": 0,
+    "meal_type": "dessert",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 280,
+      "protein": 6,
+      "fat": 16,
+      "carbs": 30
+    },
+    "allergens": [
+      "dairy",
+      "gluten"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free",
+      "gluten-free"
+    ]
+  },
+  {
+    "food_id": "F320",
+    "name": "Strawberry Bingsu",
+    "description": "Korean shaved ice dessert topped with strawberries, condensed milk, and vanilla ice cream.",
+    "cuisine": "korean",
+    "ingredients": [
+      "ice",
+      "strawberry",
+      "condensed milk",
+      "ice cream"
+    ],
+    "spice_level": 0,
+    "meal_type": "dessert",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 430,
+      "protein": 8,
+      "fat": 14,
+      "carbs": 65
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F321",
+    "name": "Mango Bingsu",
+    "description": "Shaved ice topped with fresh mango cubes, condensed milk, and vanilla ice cream.",
+    "cuisine": "korean",
+    "ingredients": [
+      "ice",
+      "mango",
+      "condensed milk",
+      "ice cream"
+    ],
+    "spice_level": 0,
+    "meal_type": "dessert",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 440,
+      "protein": 8,
+      "fat": 14,
+      "carbs": 68
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F322",
+    "name": "Injeolmi Bingsu",
+    "description": "Traditional Korean shaved ice dessert with soybean powder, mochi rice cake, and sweet condensed milk.",
+    "cuisine": "korean",
+    "ingredients": [
+      "ice",
+      "soybean powder",
+      "mochi",
+      "condensed milk"
+    ],
+    "spice_level": 0,
+    "meal_type": "dessert",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 460,
+      "protein": 10,
+      "fat": 14,
+      "carbs": 72
+    },
+    "allergens": [
+      "soy",
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F323",
+    "name": "Strawberry Milk",
+    "description": "Refreshing blended drink made with fresh strawberries, milk, and ice, popular in Korean cafés.",
+    "cuisine": "korean",
+    "ingredients": [
+      "strawberry",
+      "milk",
+      "ice",
+      "sugar"
+    ],
+    "spice_level": 0,
+    "meal_type": "beverage",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 280,
+      "protein": 6,
+      "fat": 8,
+      "carbs": 44
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F324",
+    "name": "Mango Smoothie",
+    "description": "Tropical fruit smoothie made with ripe mango and yogurt, served chilled.",
+    "cuisine": "korean",
+    "ingredients": [
+      "mango",
+      "yogurt",
+      "ice",
+      "sugar"
+    ],
+    "spice_level": 0,
+    "meal_type": "beverage",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 300,
+      "protein": 5,
+      "fat": 9,
+      "carbs": 48
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F325",
+    "name": "Red Bean Porridge (Patjuk)",
+    "description": "Traditional warm Korean porridge made from sweet red beans and glutinous rice, often enjoyed in winter.",
+    "cuisine": "korean",
+    "ingredients": [
+      "red bean",
+      "rice flour",
+      "sugar",
+      "salt"
+    ],
+    "spice_level": 0,
+    "meal_type": "soup-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 380,
+      "protein": 12,
+      "fat": 4,
+      "carbs": 72
+    },
+    "allergens": [],
+    "dietary_violations": []
+  },
+  {
+    "food_id": "F326",
+    "name": "Soy Sauce Egg Rice",
+    "description": "Simple Korean comfort meal made with steamed rice topped with a fried egg, soy sauce, and sesame oil.",
+    "cuisine": "korean",
+    "ingredients": [
+      "rice",
+      "egg",
+      "soy sauce",
+      "sesame oil"
+    ],
+    "spice_level": 0,
+    "meal_type": "rice-based",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 420,
+      "protein": 14,
+      "fat": 14,
+      "carbs": 58
+    },
+    "allergens": [
+      "soy",
+      "egg",
+      "sesame"
+    ],
+    "dietary_violations": [
+      "vegan"
+    ]
+  },
+  {
+    "food_id": "F327",
+    "name": "Knife-Cut Noodle Soup with Clam",
+    "description": "Warm Korean noodle soup made with hand-cut wheat noodles and clams in a light seafood broth.",
+    "cuisine": "korean",
+    "ingredients": [
+      "wheat noodles",
+      "clam",
+      "garlic",
+      "green onion",
+      "anchovy broth"
+    ],
+    "spice_level": 1,
+    "meal_type": "noodle-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 510,
+      "protein": 22,
+      "fat": 10,
+      "carbs": 80
+    },
+    "allergens": [
+      "gluten",
+      "shellfish"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "gluten-free",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F328",
+    "name": "Creamy Garlic Chicken",
+    "description": "Pan-seared chicken breast cooked in creamy garlic sauce, served with mashed potato and vegetables.",
+    "cuisine": "western",
+    "ingredients": [
+      "chicken",
+      "cream",
+      "garlic",
+      "butter",
+      "potato"
+    ],
+    "spice_level": 0,
+    "meal_type": "meat-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 680,
+      "protein": 45,
+      "fat": 35,
+      "carbs": 40
+    },
+    "allergens": [
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "vegetarian",
+      "pescatarian",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F329",
+    "name": "Braised Kimchi with Pork (Kimchi Jjim)",
+    "description": "Spicy Korean dish made by slow-braising aged kimchi with pork belly in a rich chili sauce until tender.",
+    "cuisine": "korean",
+    "ingredients": [
+      "kimchi",
+      "pork belly",
+      "gochugaru",
+      "garlic",
+      "onion"
+    ],
+    "spice_level": 4,
+    "meal_type": "meat-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 640,
+      "protein": 38,
+      "fat": 42,
+      "carbs": 22
+    },
+    "allergens": [
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "halal",
+      "kosher",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F330",
+    "name": "Beef Rendang",
+    "description": "Slow-cooked Indonesian-style beef stew made with coconut milk, lemongrass, galangal, and rich aromatic spices.",
+    "cuisine": "southeast asian",
+    "ingredients": [
+      "beef",
+      "coconut milk",
+      "lemongrass",
+      "chili",
+      "galangal"
+    ],
+    "spice_level": 4,
+    "meal_type": "meat-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 720,
+      "protein": 45,
+      "fat": 48,
+      "carbs": 18
+    },
+    "allergens": [],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F331",
+    "name": "Chicken Rendang",
+    "description": "Malaysian-style spicy chicken dish simmered in coconut milk and herbs until thick, rich, and aromatic.",
+    "cuisine": "southeast asian",
+    "ingredients": [
+      "chicken",
+      "coconut milk",
+      "lemongrass",
+      "chili",
+      "turmeric"
+    ],
+    "spice_level": 4,
+    "meal_type": "meat-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 680,
+      "protein": 42,
+      "fat": 40,
+      "carbs": 16
+    },
+    "allergens": [],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian"
+  
+    ]
+  },
+  {
+    "food_id": "F332",
+    "name": "Hawaii Pizza",
+    "description": "Classic pizza topped with ham, pineapple, mozzarella, and tomato sauce for a sweet and savory flavor.",
+    "cuisine": "western",
+    "ingredients": [
+      "pizza dough",
+      "ham",
+      "pineapple",
+      "mozzarella",
+      "tomato"
+    ],
+    "spice_level": 1,
+    "meal_type": "bread-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 800,
+      "protein": 36,
+      "fat": 32,
+      "carbs": 78
+    },
+    "allergens": [
+      "wheat",
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian",
+      "halal",
+      "kosher",
+      "gluten-free",
+      "lactose-free"]
+  },
+  {
+    "food_id": "F333",
+    "name": "Seafood Pizza",
+    "description": "Pizza topped with shrimp, squid, and mussels over a tomato and mozzarella base.",
+    "cuisine": "western",
+    "ingredients": [
+      "pizza dough",
+      "shrimp",
+      "squid",
+      "mussel",
+      "mozzarella",
+      "tomato"
+    ],
+    "spice_level": 1,
+    "meal_type": "bread-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 780,
+      "protein": 40,
+      "fat": 28,
+      "carbs": 76
+    },
+    "allergens": [
+      "wheat",
+      "shellfish",
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "kosher",
+      "gluten-free",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F334",
+    "name": "Bulgogi Pizza",
+    "description": "Korean fusion pizza topped with marinated bulgogi beef, onions, mozzarella, and sweet soy glaze.",
+    "cuisine": "western",
+    "ingredients": [
+      "pizza dough",
+      "beef",
+      "onion",
+      "mozzarella",
+      "soy sauce"
+    ],
+    "spice_level": 1,
+    "meal_type": "bread-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 830,
+      "protein": 38,
+      "fat": 32,
+      "carbs": 80
+    },
+    "allergens": [
+      "wheat",
+      "soy",
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian",
+      "gluten-free",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F335",
+    "name": "Sweet Potato Pizza",
+    "description": "Korean-style pizza topped with mashed sweet potato, corn, mozzarella, and mayonnaise.",
+    "cuisine": "western",
+    "ingredients": [
+      "pizza dough",
+      "sweet potato",
+      "corn",
+      "mayonnaise",
+      "mozzarella"
+    ],
+    "spice_level": 0,
+    "meal_type": "bread-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 770,
+      "protein": 30,
+      "fat": 28,
+      "carbs": 88
+    },
+    "allergens": [
+      "wheat",
+      "dairy",
+      "egg"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "gluten-free",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F336",
+    "name": "Rose Pasta",
+    "description": "Creamy Korean-style pasta combining tomato and cream sauces, often served with shrimp or bacon for a rich, savory flavor.",
+    "cuisine": "korean",
+    "ingredients": [
+      "pasta",
+      "tomato",
+      "cream",
+      "bacon",
+      "garlic"
+    ],
+    "spice_level": 1,
+    "meal_type": "noodle-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 720,
+      "protein": 32,
+      "fat": 28,
+      "carbs": 85
+    },
+    "allergens": [
+      "wheat",
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "vegetarian",
+      "gluten-free",
+      "lactose-free",
+      "halal",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F337",
+    "name": "Aglio e Olio",
+    "description": "Classic Italian pasta with garlic, olive oil, and chili flakes, simple yet rich in flavor.",
+    "cuisine": "western",
+    "ingredients": [
+      "pasta",
+      "garlic",
+      "olive oil",
+      "chili flakes",
+      "parsley"
+    ],
+    "spice_level": 1,
+    "meal_type": "noodle-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 640,
+      "protein": 18,
+      "fat": 24,
+      "carbs": 88
+    },
+    "allergens": [
+      "wheat"
+    ],
+    "dietary_violations": [
+      "gluten-free"
+    ]
+  },
+  {
+    "food_id": "F338",
+    "name": "Spicy Braised Monkfish (Agujjim)",
+    "description": "Traditional Korean spicy braised dish made with monkfish, bean sprouts, and vegetables cooked in a rich gochugaru-based sauce.",
+    "cuisine": "korean",
+    "ingredients": [
+      "monkfish",
+      "bean sprouts",
+      "gochugaru",
+      "garlic",
+      "onion",
+      "minari"
+    ],
+    "spice_level": 4,
+    "meal_type": "seafood-based",
+    "heaviness": "heavy",
+    "nutrition": {
+      "calories": 580,
+      "protein": 45,
+      "fat": 18,
+      "carbs": 40
+    },
+    "allergens": [
+      "fish",
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F339",
+    "name": "Spicy Codfish Soup (Daegu Tang)",
+    "description": "Light and spicy Korean soup made with codfish, radish, tofu, and vegetables simmered in a gochugaru-based broth.",
+    "cuisine": "korean",
+    "ingredients": [
+      "codfish",
+      "radish",
+      "tofu",
+      "gochugaru",
+      "garlic",
+      "green onion"
+    ],
+    "spice_level": 3,
+    "meal_type": "soup-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 420,
+      "protein": 40,
+      "fat": 10,
+      "carbs": 28
+    },
+    "allergens": [
+      "fish",
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F340",
+    "name": "Potato Pancake (Gamja Jeon)",
+    "description": "Crispy Korean-style pancake made from grated potatoes, lightly salted and pan-fried to golden perfection.",
+    "cuisine": "korean",
+    "ingredients": [
+      "potato",
+      "salt",
+      "oil"
+    ],
+    "spice_level": 0,
+    "meal_type": "snack",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 380,
+      "protein": 7,
+      "fat": 10,
+      "carbs": 65
+    },
+    "allergens": [],
+    "dietary_violations": []
+  },
+  {
+    "food_id": "F341",
+    "name": "Green Onion Pancake (Pajeon)",
+    "description": "Traditional Korean pancake made with long green onions in a savory flour batter, pan-fried until crispy.",
+    "cuisine": "korean",
+    "ingredients": [
+      "flour",
+      "green onion",
+      "egg",
+      "salt",
+      "oil"
+    ],
+    "spice_level": 0,
+    "meal_type": "snack",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 460,
+      "protein": 12,
+      "fat": 22,
+      "carbs": 50
+    },
+    "allergens": [
+      "wheat",
+      "egg"
+    ],
+    "dietary_violations": [
+      "gluten-free",
+      "vegan"
+    ]
+  },
+  {
+    "food_id": "F342",
+    "name": "Kimchi Pork Pancake (Kimchi Dwaeji Jeon)",
+    "description": "Savory Korean pancake made with spicy kimchi, minced pork, and flour batter, pan-fried for a crispy texture.",
+    "cuisine": "korean",
+    "ingredients": [
+      "kimchi",
+      "pork",
+      "flour",
+      "egg",
+      "green onion"
+    ],
+    "spice_level": 3,
+    "meal_type": "snack",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 520,
+      "protein": 25,
+      "fat": 28,
+      "carbs": 35
+    },
+    "allergens": [
+      "wheat",
+      "egg"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "gluten-free",
+      "halal",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F343",
+    "name": "Tofu Kimchi",
+    "description": "Classic Korean bar dish made of stir-fried kimchi and pork belly served with sliced tofu.",
+    "cuisine": "korean",
+    "ingredients": [
+      "tofu",
+      "kimchi",
+      "pork belly",
+      "gochugaru",
+      "garlic"
+    ],
+    "spice_level": 3,
+    "meal_type": "snack",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 520,
+      "protein": 25,
+      "fat": 32,
+      "carbs": 25
+    },
+    "allergens": [
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "vegetarian",
+      "halal",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F344",
+    "name": "Injeolmi Toast",
+    "description": "Sweet Korean dessert toast filled with chewy rice cake, soybean powder, and honey, popular in cafés and dessert bars.",
+    "cuisine": "korean",
+    "ingredients": [
+      "bread",
+      "rice cake",
+      "soybean powder",
+      "honey",
+      "butter"
+    ],
+    "spice_level": 0,
+    "meal_type": "dessert",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 480,
+      "protein": 9,
+      "fat": 18,
+      "carbs": 65
+    },
+    "allergens": [
+      "wheat",
+      "soy",
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "gluten-free",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F345",
+    "name": "Spicy Chicken Feet (Bul Dakbal)",
+    "description": "Extremely spicy Korean bar dish made from grilled or stir-fried chicken feet glazed in a gochujang-based sauce, served with sesame seeds and green onion.",
+    "cuisine": "korean",
+    "ingredients": [
+      "chicken feet",
+      "gochujang",
+      "gochugaru",
+      "garlic",
+      "green onion",
+      "sesame oil"
+    ],
+    "spice_level": 5,
+    "meal_type": "meat-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 480,
+      "protein": 45,
+      "fat": 25,
+      "carbs": 10
+    },
+    "allergens": [
+      "soy",
+      "sesame"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian",
+      "kosher"
+    ]
+  },
+  {
+    "food_id": "F346",
+    "name": "Vegetarian Burger",
+    "description": "Plant-based burger made with a veggie patty, lettuce, tomato, and cheese on a whole wheat bun.",
+    "cuisine": "western",
+    "ingredients": [
+      "veggie patty",
+      "lettuce",
+      "tomato",
+      "cheese",
+      "whole wheat bun"
+    ],
+    "spice_level": 0,
+    "meal_type": "bread-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 580,
+      "protein": 22,
+      "fat": 20,
+      "carbs": 70
+    },
+    "allergens": [
+      "wheat",
+      "dairy"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "gluten-free",
+      "lactose-free"
+    ]
+  },
+  {
+    "food_id": "F347",
+    "name": "Cold Tofu Salad with Sesame Dressing",
+    "description": "Chilled silken tofu served over fresh greens with cucumber, cherry tomatoes, and a nutty sesame soy dressing.",
+    "cuisine": "korean",
+    "ingredients": [
+      "silken tofu",
+      "lettuce",
+      "cucumber",
+      "cherry tomatoes",
+      "sesame dressing",
+      "soy sauce",
+      "sesame seeds"
+    ],
+    "spice_level": 0,
+    "meal_type": "salad-based",
+    "heaviness": "light",
+    "nutrition": {
+      "calories": 210,
+      "protein": 12,
+      "fat": 12,
+      "carbs": 14
+    },
+    "allergens": [
+      "soy",
+      "sesame"
+    ],
+    "dietary_violations": []
+  },
+  {
+    "food_id": "F348",
+    "name": "Beef Radish Soup",
+    "description": "A clean-tasting Korean soup made with sliced beef, radish, soy sauce seasoning, and simmered broth.",
+    "cuisine": "korean",
+    "ingredients": [
+      "beef",
+      "radish",
+      "soy sauce",
+      "garlic",
+      "green onion"
+    ],
+    "spice_level": 0,
+    "meal_type": "soup-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 230,
+      "protein": 22,
+      "fat": 12,
+      "carbs": 10
+    },
+    "allergens": [
+      "soy"
+    ],
+    "dietary_violations": [
+      "vegetarian",
+      "vegan",
+      "pescatarian"
+    ]
+  },
+  {
+    "food_id": "F349",
+    "name": "Tofu Steak",
+    "description": "Pan-seared tofu patties glazed with a savory soy-based sauce and served with vegetables.",
+    "cuisine": "korean",
+    "ingredients": [
+      "firm tofu",
+      "soy sauce",
+      "garlic",
+      "green onion",
+      "sesame oil",
+      "carrot"
+    ],
+    "spice_level": 0,
+    "meal_type": "salad-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 260,
+      "protein": 16,
+      "fat": 14,
+      "carbs": 18
+    },
+    "allergens": [
+      "soy",
+      "sesame"
+    ],
+    "dietary_violations": [
+      "gluten-free"
+    ]
+  },
+  {
+    "food_id": "F350",
+    "name": "Korean Rolled Omelette with Rice",
+    "description": "A fluffy rolled omelette filled with carrots, green onions, and lightly seasoned for a soft, savory taste.",
+    "cuisine": "korean",
+    "ingredients": [
+      "egg",
+      "carrot",
+      "green onion",
+      "salt",
+      "pepper",
+      "cooking oil"
+    ],
+    "spice_level": 0,
+    "meal_type": "rice-based",
+    "heaviness": "medium",
+    "nutrition": {
+      "calories": 410,
+      "protein": 20,
+      "fat": 15,
+      "carbs": 50
+    },
+    "allergens": [
+      "egg"
+    ],
+    "dietary_violations": [
+      "vegan",
+      "vegetarian"
     ]
   }
 ]

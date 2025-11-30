@@ -16,7 +16,7 @@ import com.example.veato.ui.onboarding.OnboardingViewModel
 import com.example.veato.ui.onboarding.OnboardingViewModelFactory
 import com.example.veato.ui.onboarding.screens.*
 import com.example.veato.ui.theme.VeatoTheme
-import com.example.veato.MyTeamsActivity
+import com.example.veato.MyPreferencesActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -74,7 +74,7 @@ class OnboardingActivity : ComponentActivity() {
                 .await()
 
             // Navigate to main app after successful save
-            startActivity(Intent(this, MyTeamsActivity::class.java))
+            startActivity(Intent(this, MyPreferencesActivity::class.java))
             finish()
         } catch (e: Exception) {
             // Show error and stay on current screen

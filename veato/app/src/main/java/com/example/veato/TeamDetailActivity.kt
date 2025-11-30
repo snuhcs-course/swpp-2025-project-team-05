@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -31,6 +32,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.veato.ui.theme.VeatoTheme
+import com.example.veato.ui.components.VeatoBottomNavigationBar
+import com.example.veato.ui.components.NavigationScreen
+
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -39,6 +43,7 @@ import kotlinx.coroutines.tasks.await
 data class MemberDetail(
     val userId: String,
     val fullName: String,
+    val userName: String,
     val email: String,
     val isLeader: Boolean,
     val position: String? = null,
@@ -130,7 +135,7 @@ class TeamDetailActivity : ComponentActivity() {
                 )
             },
             bottomBar = {
-                BottomNavigationBar(currentScreen = "MyTeams")
+                VeatoBottomNavigationBar(currentScreen = NavigationScreen.TEAMS)
             }
         ) { paddingValues ->
             when {
@@ -217,18 +222,24 @@ class TeamDetailActivity : ComponentActivity() {
         var emailToAdd by remember { mutableStateOf("") }
         var showEditMemberDialog by remember { mutableStateOf<MemberDetail?>(null) }
         var showRemoveMemberDialog by remember { mutableStateOf<MemberDetail?>(null) }
+        var refreshTrigger by remember { mutableStateOf(0) }
 
         // Load members with their details
-        LaunchedEffect(team.id) {
+        LaunchedEffect(team.id, refreshTrigger) {
             isLoadingMembers = true
             try {
+                // Reload team data to get latest member list
+                val latestTeamDoc = db.collection("teams").document(team.id).get().await()
+                val latestMembers = latestTeamDoc.get("members") as? List<*> ?: emptyList<Any>()
+
                 val memberInfoList = mutableListOf<MemberDetail>()
 
-                for (memberId in team.members) {
+                for (memberId in latestMembers.filterIsInstance<String>()) {
                     try {
                         // Fetch user document
                         val userDoc = db.collection("users").document(memberId).get().await()
                         val fullName = userDoc.getString("fullName") ?: userDoc.getString("username") ?: "Unknown"
+                        val userName = userDoc.getString("username") ?: ""
                         val email = userDoc.getString("email") ?: ""
 
                         // Fetch member_info from subcollection
@@ -246,6 +257,7 @@ class TeamDetailActivity : ComponentActivity() {
                             MemberDetail(
                                 userId = memberId,
                                 fullName = fullName,
+                                userName = userName,
                                 email = email,
                                 isLeader = memberId == team.leaderId,
                                 position = position,
@@ -305,7 +317,7 @@ class TeamDetailActivity : ComponentActivity() {
                     icon = Icons.Default.PlayArrow,
                     label = "Start New Poll",
                     onClick = onStartPoll,
-                    containerColor = Color(0xFF4CAF50)
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -329,30 +341,26 @@ class TeamDetailActivity : ComponentActivity() {
                 onEmailChange = { emailToAdd = it },
                 isLeader = isLeader,
                 currentUserId = currentUserId,
-                onAddMember = { email ->
+                onAddMember = { username ->
                     // Add member logic
-                    if (email.isBlank()) {
-                        Toast.makeText(context, "Please enter an email", Toast.LENGTH_SHORT).show()
+                    if (username.isBlank()) {
+                        Toast.makeText(context, "Please enter a username", Toast.LENGTH_SHORT).show()
                         return@TeamMembersSection
                     }
 
-                    if (!email.contains("@")) {
-                        Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
-                        return@TeamMembersSection
-                    }
-
-                    if (memberDetails.any { it.email == email.trim() }) {
+                    // Check if user already in team by userName (case-insensitive)
+                    if (memberDetails.any { it.userName.equals(username.trim(), ignoreCase = true) }) {
                         Toast.makeText(context, "User already in team", Toast.LENGTH_SHORT).show()
                         return@TeamMembersSection
                     }
 
-                    // Query Firestore to find user by email
+                    // Query Firestore to find user by username
                     db.collection("users")
-                        .whereEqualTo("email", email.trim())
+                        .whereEqualTo("username", username.trim().lowercase())
                         .get()
                         .addOnSuccessListener { querySnapshot ->
                             if (querySnapshot.isEmpty) {
-                                Toast.makeText(context, "User not found with that email", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "User not found with that username", Toast.LENGTH_SHORT).show()
                             } else {
                                 val userDoc = querySnapshot.documents[0]
                                 val userId = userDoc.id
@@ -363,7 +371,7 @@ class TeamDetailActivity : ComponentActivity() {
                                     .addOnSuccessListener {
                                         Toast.makeText(context, "Member added successfully", Toast.LENGTH_SHORT).show()
                                         emailToAdd = ""
-                                        // Trigger reload by updating the team
+                                        refreshTrigger++  // Trigger reload
                                     }
                                     .addOnFailureListener {
                                         Toast.makeText(context, "Failed to add member", Toast.LENGTH_SHORT).show()
@@ -399,7 +407,7 @@ class TeamDetailActivity : ComponentActivity() {
                         .addOnSuccessListener {
                             Toast.makeText(context, "Member details updated", Toast.LENGTH_SHORT).show()
                             showEditMemberDialog = null
-                            // Trigger reload
+                            refreshTrigger++  // Trigger reload
                         }
                         .addOnFailureListener {
                             Toast.makeText(context, "Failed to update member", Toast.LENGTH_SHORT).show()
@@ -420,7 +428,7 @@ class TeamDetailActivity : ComponentActivity() {
                         .addOnSuccessListener {
                             Toast.makeText(context, "Member removed", Toast.LENGTH_SHORT).show()
                             showRemoveMemberDialog = null
-                            // Trigger reload
+                            refreshTrigger++  // Trigger reload
                         }
                         .addOnFailureListener {
                             Toast.makeText(context, "Failed to remove member", Toast.LENGTH_SHORT).show()
@@ -470,7 +478,7 @@ class TeamDetailActivity : ComponentActivity() {
                     modifier = Modifier
                         .size(10.dp)
                         .background(
-                            color = if (hasActivePoll) Color(0xFF4CAF50) else Color(0xFFF44336),
+                            color = if (hasActivePoll) MaterialTheme.colorScheme.primary else Color(0xFFF44336),
                             shape = CircleShape
                         )
                 )
@@ -489,7 +497,7 @@ class TeamDetailActivity : ComponentActivity() {
         icon: ImageVector,
         label: String,
         onClick: () -> Unit,
-        containerColor: Color = Color(0xFF4CAF50)
+        containerColor: Color = MaterialTheme.colorScheme.primary
     ) {
         Button(
             onClick = onClick,
@@ -545,9 +553,10 @@ class TeamDetailActivity : ComponentActivity() {
                 OutlinedTextField(
                     value = emailToAdd,
                     onValueChange = onEmailChange,
-                    label = { Text("Enter member email") },
+                    label = { Text("Enter username") },
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    prefix = { Text("@") }
                 )
                 IconButton(
                     onClick = { onAddMember(emailToAdd) },
@@ -627,7 +636,7 @@ class TeamDetailActivity : ComponentActivity() {
                         )
                         if (member.isLeader) {
                             Surface(
-                                color = Color(0xFF4CAF50),
+                                color = MaterialTheme.colorScheme.primary,
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text(
@@ -831,81 +840,6 @@ class TeamDetailActivity : ComponentActivity() {
         }
     }
 
-    @Composable
-    private fun BottomNavigationBar(currentScreen: String) {
-        val context = LocalContext.current
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(Color(0xFFE8F5E9))
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // My Preferences
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, MyPreferencesActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Preferences",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "Preferences") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-
-            // My Teams
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, MyTeamsActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Teams",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "MyTeams") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-
-            // My Profile
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .clickable {
-                        val intent = Intent(context, ProfileActivity::class.java)
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "My Profile",
-                    fontSize = 14.sp,
-                    fontWeight = if (currentScreen == "Profile") FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-        }
-    }
-
     private fun leaveTeam(team: Team) {
         val uid = auth.currentUser?.uid ?: return
         db.collection("teams").document(team.id)
@@ -918,152 +852,4 @@ class TeamDetailActivity : ComponentActivity() {
                 Toast.makeText(this, "Failed to leave team", Toast.LENGTH_SHORT).show()
             }
     }
-
-    // ---------------------------------------------------------------------
-    // TEST HELPERS (Used only by Robolectric tests)
-    // ---------------------------------------------------------------------
-    @Suppress("unused")
-    fun testJoinPoll(team: Team) {
-        val pollId = team.currentlyOpenPoll
-        if (pollId == null) {
-            Toast.makeText(this, "No active poll", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val intent = Intent(this, VoteSessionActivity::class.java)
-        intent.putExtra("pollId", pollId)
-        startActivity(intent)
-    }
-
-    @Suppress("unused")
-    fun testLeaveTeam(team: Team) {
-        leaveTeam(team)
-    }
-
-    @Suppress("unused")
-    fun testAddMember(team: Team, email: String) {
-        val uid = auth.currentUser?.uid ?: return
-
-        if (email.isBlank()) {
-            Toast.makeText(this, "Please enter an email", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (!email.contains("@")) {
-            Toast.makeText(this, "Please enter a valid email", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Step 1: Query Firestore for user email
-        FirebaseFirestore.getInstance()
-            .collection("users")
-            .whereEqualTo("email", email.trim())
-            .get()
-            .addOnSuccessListener { snapshot ->
-                if (snapshot.isEmpty) {
-                    Toast.makeText(this, "User not found with that email", Toast.LENGTH_SHORT).show()
-                    return@addOnSuccessListener
-                }
-
-                val userId = snapshot.documents[0].id
-
-                // Step 2: Add user to team
-                FirebaseFirestore.getInstance()
-                    .collection("teams")
-                    .document(team.id)
-                    .update("members", com.google.firebase.firestore.FieldValue.arrayUnion(userId))
-                    .addOnSuccessListener {
-                        Toast.makeText(this, "Member added successfully", Toast.LENGTH_SHORT).show()
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(this, "Failed to add member", Toast.LENGTH_SHORT).show()
-                    }
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Error searching for user", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    @Suppress("unused")
-    fun testEditMember(teamId: String, memberId: String, position: String, ageGroup: String) {
-        FirebaseFirestore.getInstance()
-            .collection("teams")
-            .document(teamId)
-            .collection("members_info")
-            .document(memberId)
-            .set(mapOf("position" to position, "ageGroup" to ageGroup))
-            .addOnSuccessListener {
-                Toast.makeText(this, "Member details updated", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Failed to update member", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    @Suppress("unused")
-    fun testRemoveMember(teamId: String, memberId: String) {
-        FirebaseFirestore.getInstance()
-            .collection("teams")
-            .document(teamId)
-            .update("members", com.google.firebase.firestore.FieldValue.arrayRemove(memberId))
-            .addOnSuccessListener {
-                Toast.makeText(this, "Member removed", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Failed to remove member", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    @Suppress("unused")
-    fun testFirestoreLoad(teamId: String) {
-        db.collection("teams").document(teamId)
-            .get()
-            .addOnSuccessListener { }
-            .addOnFailureListener {
-                Toast.makeText(this, "Error loading team", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    @Suppress("unused")
-    fun testLoadMemberDetailsForTest(team: Team, onLoaded: (List<MemberDetail>) -> Unit) {
-        val currentUserId = auth.currentUser?.uid
-        val memberInfoList = mutableListOf<MemberDetail>()
-
-        val db = FirebaseFirestore.getInstance()
-
-        team.members.forEach { memberId ->
-            try {
-                val userDoc = db.collection("users").document(memberId).get().result
-                val fullName = userDoc?.getString("fullName") ?: "Unknown"
-                val email = userDoc?.getString("email") ?: ""
-
-                val memberInfoDoc = db.collection("teams")
-                    .document(team.id)
-                    .collection("members_info")
-                    .document(memberId)
-                    .get()
-                    .result
-
-                val position = memberInfoDoc?.getString("position")
-                val ageGroup = memberInfoDoc?.getString("ageGroup")
-
-                memberInfoList.add(
-                    MemberDetail(
-                        userId = memberId,
-                        fullName = fullName,
-                        email = email,
-                        isLeader = memberId == team.leaderId,
-                        position = position,
-                        ageGroup = ageGroup,
-                        isCurrentUser = memberId == currentUserId
-                    )
-                )
-            } catch (e: Exception) {
-                // skip member
-            }
-        }
-
-        onLoaded(memberInfoList)
-    }
-
 }

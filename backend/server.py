@@ -65,24 +65,73 @@ DIETARY_RESTRICTION_MAP = {
     "VEGAN": "vegan",
     "VEGETARIAN": "vegetarian",
     "HALAL": "halal",
-    "KOSHER": "kosher",
     "PESCATARIAN": "pescatarian",
     "GLUTEN_FREE": "gluten-free",
     "LACTOSE_FREE": "lactose-free"
+    # KOSHER removed per new taxonomy
 }
 
 ALLERGEN_MAP = {
     "EGGS": "eggs",
     "DAIRY": "dairy",
-    "MILK": "dairy",  # Legacy support
     "FISH": "fish",
     "SHELLFISH": "shellfish",
-    "PEANUTS": "nuts",  # Food DB doesn't distinguish peanuts from tree nuts
-    "TREE_NUTS": "nuts",
+    "PEANUTS": "peanuts",  # Now separate from tree nuts
+    "TREE_NUTS": "tree_nuts",
     "SOY": "soy",
     "WHEAT": "wheat",
     "SESAME": "sesame"
 }
+
+# Cuisine mapping: Android enum → database value
+CUISINE_MAP = {
+    "KOREAN": "korean",
+    "JAPANESE": "japanese",
+    "CHINESE": "chinese",
+    "WESTERN": "western",
+    "EUROPEAN": "european",
+    "ASIAN": "asian"
+}
+
+# Legacy cuisine migration mapping
+LEGACY_CUISINE_MAP = {
+    "italian": "european",
+    "french": "european",
+    "mexican": "western",
+    "american": "western",
+    "british": "western",
+    "thai": "asian",
+    "vietnamese": "asian",
+    "indonesian": "asian",
+    "malaysian": "asian",
+    "philippine": "asian",
+    "indian": "asian",
+    "southeast_asian": "asian"
+}
+
+def migrate_legacy_cuisine(cuisine_value):
+    """
+    Migrate legacy cuisine values to new taxonomy.
+
+    Args:
+        cuisine_value: String cuisine value (lowercase)
+
+    Returns:
+        Migrated cuisine value or original if already in new taxonomy
+    """
+    cuisine_lower = cuisine_value.lower()
+
+    # If it's a legacy value, map it
+    if cuisine_lower in LEGACY_CUISINE_MAP:
+        return LEGACY_CUISINE_MAP[cuisine_lower]
+
+    # If it's already in the new taxonomy, return as-is
+    if cuisine_lower in ["korean", "japanese", "chinese", "western", "european", "asian"]:
+        return cuisine_lower
+
+    # Unknown cuisine - log warning and return original
+    print(f"⚠️  Unknown cuisine value: {cuisine_value}")
+    return cuisine_lower
 
 # Global variable to hold loaded food database
 FOOD_DATABASE = []
@@ -135,7 +184,9 @@ def build_group_constraints(members_constraints: List[Dict]) -> Dict:
         # Hard constraints - normalize to lowercase database format
         for restriction in user_constraints.get('dietaryRestrictions', []):
             normalized = DIETARY_RESTRICTION_MAP.get(restriction, restriction.lower())
-            group_dietary_disallows.add(normalized)
+            # Skip kosher if it somehow exists in legacy data
+            if normalized != "kosher":
+                group_dietary_disallows.add(normalized)
 
         for allergy in user_constraints.get('allergies', []):
             normalized = ALLERGEN_MAP.get(allergy, allergy.lower())
@@ -147,7 +198,9 @@ def build_group_constraints(members_constraints: List[Dict]) -> Dict:
 
         # Soft preferences
         for cuisine in user_constraints.get('favoriteCuisines', []):
-            all_favorite_cuisines.append(cuisine.lower())
+            # Apply legacy cuisine migration
+            migrated = migrate_legacy_cuisine(cuisine.lower())
+            all_favorite_cuisines.append(migrated)
 
         spice = user_constraints.get('spiceTolerance', 'MEDIUM')
         all_spice_tolerances.append(spice)
@@ -568,12 +621,12 @@ Return ONLY valid JSON with this exact format:
 
         client = openai.OpenAI(api_key=api_key)
         response = client.chat.completions.create(
-            model="gpt-5.1",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You rank meals by soft preferences. Return only valid JSON."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=300,
+            max_tokens=300,
             temperature=0.7
         )
 
@@ -1025,8 +1078,20 @@ def get_poll(poll_id):
         # For two-phase polls, only close on timeout if we're past a grace period
         # to allow members to complete Phase 2 voting after Phase 1 ends
         should_auto_close = False
+        should_transition_to_phase2 = False
+
         if seconds_left <= 0 and poll_data["status"] == "active" and current_phase != "closed":
-            if is_two_phase and current_phase == "phase2":
+            if is_two_phase and current_phase == "phase1":
+                # Phase 1 timeout: transition to Phase 2 if anyone voted
+                phase1_votes = poll_data.get("phase1Votes", {})
+                if len(phase1_votes) > 0:
+                    # At least one person voted - transition to Phase 2
+                    should_transition_to_phase2 = True
+                    print(f"Phase 1 timeout with {len(phase1_votes)} votes - transitioning to Phase 2", flush=True)
+                else:
+                    # Nobody voted - close the poll
+                    should_auto_close = True
+            elif is_two_phase and current_phase == "phase2":
                 # In Phase 2: only close if all members locked in or significant timeout
                 # This prevents premature closure during Phase 1 → Phase 2 transition
                 locked_in_users = poll_data.get("lockedInUsers", [])
@@ -1040,7 +1105,14 @@ def get_poll(poll_id):
                 # Not in Phase 2 or not two-phase: normal auto-close
                 should_auto_close = True
 
-        if should_auto_close:
+        if should_transition_to_phase2:
+            # Transition from Phase 1 to Phase 2
+            transition_phase1_to_phase2(poll_id)
+            # Reload poll data after transition
+            poll_doc = poll_ref.get()
+            poll_data = poll_doc.to_dict()
+            current_phase = "phase2"
+        elif should_auto_close:
             poll_data = close_poll_internal(poll_id)
             current_phase = "closed"
 
@@ -1050,10 +1122,17 @@ def get_poll(poll_id):
             result_ranking = poll_data.get("resultRanking", [])
 
             # Build results with vote counts
-            phase2_votes = poll_data.get("phase2Votes", {})
-            vote_counts = {}
-            for candidate in phase2_votes.values():
-                vote_counts[candidate] = vote_counts.get(candidate, 0) + 1
+            # For single-person polls that closed in Phase 1, use approval counts
+            # For multi-person polls, use Phase 2 votes
+            if "phase1ApprovalCounts" in poll_data:
+                # Single-person poll: use Phase 1 approval counts
+                vote_counts = poll_data.get("phase1ApprovalCounts", {})
+            else:
+                # Multi-person poll: use Phase 2 votes
+                phase2_votes = poll_data.get("phase2Votes", {})
+                vote_counts = {}
+                for candidate in phase2_votes.values():
+                    vote_counts[candidate] = vote_counts.get(candidate, 0) + 1
 
             results = []
             for candidate_name in result_ranking:
@@ -1105,7 +1184,19 @@ def get_poll(poll_id):
             # Phase 2: Single selection from Top 3
             phase2_candidates = poll_data.get("phase2Candidates", [])
             phase2_votes = poll_data.get("phase2Votes", {})
+            phase1_votes = poll_data.get("phase1Votes", {})
             locked_in_users = poll_data.get("lockedInUsers", [])
+
+            # Calculate Phase 1 approval counts for each Phase 2 candidate
+            phase1_approval_counts = {}
+            for candidate in phase2_candidates:
+                phase1_approval_counts[candidate] = 0
+
+            for vote_data in phase1_votes.values():
+                approved = vote_data.get("approved", [])
+                for candidate in approved:
+                    if candidate in phase1_approval_counts:
+                        phase1_approval_counts[candidate] += 1
 
             user_selection = phase2_votes.get(user_id)
 
@@ -1119,7 +1210,13 @@ def get_poll(poll_id):
                 "startedTime": started_dt.isoformat() + "Z",
                 "duration": duration_minutes,
                 "remainingSeconds": int(remaining_seconds),
-                "candidates": [{"name": candidate} for candidate in phase2_candidates],
+                "candidates": [
+                    {
+                        "name": candidate,
+                        "phase1ApprovalCount": phase1_approval_counts.get(candidate, 0)
+                    }
+                    for candidate in phase2_candidates
+                ],
                 "yourSelectedCandidate": user_selection,
                 "hasCurrentUserLockedIn": user_id in locked_in_users,
                 "lockedInUserCount": len(locked_in_users),
@@ -1241,12 +1338,14 @@ def cast_phase1_vote(poll_id):
     Request body:
     {
         "approvedCandidates": ["Bibimbap", "Vegan Burger"],
-        "rejectedCandidate": "Tonkotsu Ramen"  // optional, one-time only per user
+        "rejectedCandidate": "Tonkotsu Ramen",  // optional, one-time only per user
+        "lockIn": true  // optional, default true. Set false to reject without locking in
     }
     """
     data = request.get_json(force=True)
     approved_candidates = data.get("approvedCandidates", [])
     rejected_candidate = data.get("rejectedCandidate")
+    lock_in = data.get("lockIn", True)  # Default to true for backwards compatibility
 
     # Get current user ID from request
     user_id = request.headers.get("X-User-Id") or "demo_user"
@@ -1272,7 +1371,7 @@ def cast_phase1_vote(poll_id):
 
         # Use transaction for atomic vote + replacement
         @firestore.transactional
-        def update_vote_in_transaction(transaction, poll_ref, user_id, approved_candidates, rejected_candidate, members):
+        def update_vote_in_transaction(transaction, poll_ref, user_id, approved_candidates, rejected_candidate, members, lock_in):
             # Read current poll state
             poll_snapshot = poll_ref.get(transaction=transaction)
             if not poll_snapshot.exists:
@@ -1336,8 +1435,8 @@ def cast_phase1_vote(poll_id):
                     replacement_candidate = available_candidates[0]["name"]
                     visible_candidates.append(replacement_candidate)
 
-            # Add user to locked-in list (avoid duplicates with set logic)
-            if user_id not in locked_in_users:
+            # Add user to locked-in list only if locking in (avoid duplicates with set logic)
+            if lock_in and user_id not in locked_in_users:
                 locked_in_users.append(user_id)
 
             # Update poll document atomically
@@ -1361,13 +1460,19 @@ def cast_phase1_vote(poll_id):
         # Execute transaction
         transaction = db.transaction()
         result = update_vote_in_transaction(
-            transaction, poll_ref, user_id, approved_candidates, rejected_candidate, members
+            transaction, poll_ref, user_id, approved_candidates, rejected_candidate, members, lock_in
         )
 
-        # Check if all members have locked in → transition to Phase 2
+        # Check if all members have locked in
         if result["locked_in_count"] >= result["total_members"]:
-            print(f"All {result['total_members']} members locked in Phase 1 - transitioning to Phase 2", flush=True)
-            transition_phase1_to_phase2(poll_id)
+            # For single-person polls, skip Phase 2 and go directly to results
+            if result["total_members"] == 1:
+                print(f"Single-person poll - closing directly with Phase 1 results", flush=True)
+                close_poll_with_phase1_results(poll_id)
+            else:
+                # Multi-person poll: transition to Phase 2
+                print(f"All {result['total_members']} members locked in Phase 1 - transitioning to Phase 2", flush=True)
+                transition_phase1_to_phase2(poll_id)
 
         return jsonify({
             "ok": True,
@@ -1493,6 +1598,78 @@ def cast_phase2_vote(poll_id):
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+
+def close_poll_with_phase1_results(poll_id: str) -> None:
+    """
+    Close poll directly using Phase 1 approval votes.
+    Used for single-person polls where Phase 2 is unnecessary.
+    """
+    poll_ref = db.collection("polls").document(poll_id)
+    poll_doc = poll_ref.get()
+    poll_data = poll_doc.to_dict()
+
+    # Calculate approval scores (approvals - rejections)
+    phase1_votes = poll_data.get("phase1Votes", {})
+    all_candidates_data = poll_data.get("allCandidates", [])
+
+    # Build score map
+    scores = {}
+    for candidate_data in all_candidates_data:
+        candidate_name = candidate_data["name"]
+        scores[candidate_name] = {
+            "approvals": 0,
+            "rejections": 0,
+            "ranking": candidate_data["ranking"]
+        }
+
+    # Count approvals and rejections
+    for vote_data in phase1_votes.values():
+        approved = vote_data.get("approved", [])
+        rejected = vote_data.get("rejected")
+
+        for candidate in approved:
+            if candidate in scores:
+                scores[candidate]["approvals"] += 1
+
+        if rejected and rejected in scores:
+            scores[rejected]["rejections"] += 1
+
+    # Calculate net scores (approvals - rejections)
+    for candidate in scores:
+        scores[candidate]["net_score"] = scores[candidate]["approvals"] - scores[candidate]["rejections"]
+
+    # Sort by net_score (desc), then by LLM ranking (asc for tie-breaking)
+    sorted_candidates = sorted(
+        scores.items(),
+        key=lambda x: (-x[1]["net_score"], x[1]["ranking"])
+    )
+
+    # Get all candidates sorted
+    result_ranking = [candidate for candidate, data in sorted_candidates]
+
+    # Build approval counts for results display
+    approval_counts = {}
+    for candidate, data in sorted_candidates:
+        approval_counts[candidate] = data["approvals"]
+
+    # Update poll to closed
+    poll_ref.update({
+        "status": "closed",
+        "phase": "closed",
+        "resultRanking": result_ranking,
+        "phase1ApprovalCounts": approval_counts  # Store approval counts for results display
+    })
+
+    # Update team
+    team_id = poll_data["teamId"]
+    team_ref = db.collection("teams").document(team_id)
+    team_ref.update({
+        "currentlyOpenPoll": None,
+        "lastMealPoll": result_ranking[0] if result_ranking else None
+    })
+
+    print(f"Poll {poll_id} closed directly with Phase 1 results: {result_ranking}", flush=True)
 
 
 def transition_phase1_to_phase2(poll_id: str) -> None:

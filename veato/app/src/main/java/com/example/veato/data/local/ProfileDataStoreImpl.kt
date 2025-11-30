@@ -18,6 +18,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  * DataStore implementation of ProfileLocalDataSource
  */
 class ProfileDataStoreImpl(private val context: Context) : ProfileLocalDataSource {
+
     companion object {
         private fun profileKey(userId: String) = stringPreferencesKey("profile_$userId")
     }

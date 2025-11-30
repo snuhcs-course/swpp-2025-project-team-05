@@ -1,5 +1,7 @@
 package com.example.veato.ui.poll
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,13 +50,54 @@ fun Phase1VoteScreen(
     var showRejectDialog by remember { mutableStateOf(false) }
     var candidateToReject by remember { mutableIntStateOf(-1) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    // Snackbar for rejection feedback
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Track candidate list changes for animation
+    val candidateNames = remember(poll.candidates) { poll.candidates.map { it.name } }
+    var previousCandidates by remember { mutableStateOf(candidateNames) }
+
+    // Detect when candidate list changes (menu was replaced)
+    LaunchedEffect(candidateNames) {
+        if (previousCandidates.isNotEmpty() && candidateNames != previousCandidates) {
+            // Menu was changed - show snackbar
+            snackbarHostState.showSnackbar(
+                message = "Menu rejected! New menu loaded",
+                duration = SnackbarDuration.Short
+            )
+        }
+        previousCandidates = candidateNames
+    }
+
+    // Show error snackbar when veto fails
+    LaunchedEffect(state.vetoError) {
+        state.vetoError?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Long
+            )
+        }
+    }
+
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = Color(0xFFDC2626),
+                    contentColor = Color.White
+                )
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         // Header Row
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -65,13 +109,13 @@ fun Phase1VoteScreen(
                 Text(poll.pollTitle, style = MaterialTheme.typography.bodySmall)
                 Text(
                     "Phase 1: Voting",
-                    style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF3DD1A0)),
+                    style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.primary),
                     fontWeight = FontWeight.SemiBold
                 )
             }
             Box(
                 modifier = Modifier
-                    .background(Color(0xFF3DD1A0), RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text(formattedTime, color = Color.White, fontWeight = FontWeight.Bold)
@@ -123,9 +167,10 @@ fun Phase1VoteScreen(
                         name = candidate.name,
                         index = index,
                         isApproved = index in state.selectedIndices,
-                        isRejected = state.rejectedCandidateIndex == index,
-                        canReject = !state.rejectionUsed || state.rejectedCandidateIndex == index,
+                        isRejected = state.rejectedCandidateName == candidate.name,  // Check by NAME not index
+                        canReject = !state.rejectionUsed || state.rejectedCandidateName == candidate.name,
                         isLocked = state.voted || poll.hasCurrentUserLockedIn,
+                        isVetoing = state.isVetoing,
                         onToggleApproval = onToggleApproval,
                         onReject = {
                             candidateToReject = index
@@ -143,6 +188,7 @@ fun Phase1VoteScreen(
                     onLockIn = onLockInVote
                 )
             }
+        }
         }
     }
 
@@ -184,6 +230,7 @@ fun Phase1CandidateRow(
     isRejected: Boolean,
     canReject: Boolean,
     isLocked: Boolean,
+    isVetoing: Boolean,
     onToggleApproval: (Int) -> Unit,
     onReject: () -> Unit
 ) {
@@ -202,7 +249,7 @@ fun Phase1CandidateRow(
                 onCheckedChange = { if (!isLocked && !isRejected) onToggleApproval(index) },
                 enabled = !isLocked && !isRejected,
                 colors = CheckboxDefaults.colors(
-                    checkedColor = Color(0xFF3DD1A0),
+                    checkedColor = MaterialTheme.colorScheme.primary,
                     uncheckedColor = Color.Gray
                 )
             )
@@ -216,21 +263,29 @@ fun Phase1CandidateRow(
             )
         }
 
-        // Reject button (X icon)
+        // Reject button (X icon or loading indicator)
         IconButton(
             onClick = onReject,
-            enabled = !isLocked && canReject && !isRejected,
+            enabled = !isLocked && canReject && !isRejected && !isVetoing,
             modifier = Modifier.size(40.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Reject",
-                tint = when {
-                    isRejected -> Color(0xFFDC2626)
-                    !canReject -> Color.LightGray
-                    else -> Color(0xFFEF4444)
-                }
-            )
+            if (isVetoing) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Reject",
+                    tint = when {
+                        isRejected -> Color(0xFFDC2626)
+                        !canReject -> Color.LightGray
+                        else -> Color(0xFFEF4444)
+                    }
+                )
+            }
         }
     }
 }
@@ -250,7 +305,7 @@ fun Phase1LockInButton(
                 .height(48.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedCount > 0) Color(0xFF3DD1A0) else Color.LightGray
+                containerColor = if (selectedCount > 0) MaterialTheme.colorScheme.primary else Color.LightGray
             )
         ) {
             Text("$selectedCount selected  •  Lock In Vote")

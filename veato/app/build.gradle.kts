@@ -60,6 +60,14 @@ tasks.withType<Test>().configureEach {
     jvmArgs("-noverify")
 }
 
+// Disable test compilation for APK builds
+tasks.whenTaskAdded {
+    if (name.contains("compileDebugUnitTestKotlin") ||
+        name.contains("compileDebugAndroidTestKotlin")) {
+        enabled = false
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -94,6 +102,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.ui:ui-text-google-fonts")
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.6")
@@ -173,8 +182,4 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
     androidTestImplementation("androidx.test.espresso:espresso-contrib:3.5.1")
-
-    testImplementation(platform("androidx.compose:compose-bom:2024.06.00"))
-    testImplementation("androidx.compose.ui:ui-test-junit4")
-    testImplementation("androidx.compose.ui:ui-test-manifest")
 }

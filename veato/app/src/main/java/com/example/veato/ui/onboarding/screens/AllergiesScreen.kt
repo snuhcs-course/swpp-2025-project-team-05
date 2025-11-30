@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.veato.data.model.Allergen
+import com.example.veato.data.model.getIconResource
 import com.example.veato.ui.components.*
 import com.example.veato.ui.theme.Dimensions
 
@@ -61,10 +62,11 @@ fun AllergiesScreen(
                 title = "Common Allergens"
             ) {
                 MultiSelectChipGroup(
-                    items = Allergen.entries.filter { it != Allergen.CUSTOM },
+                    items = Allergen.entries,
                     selectedItems = selectedAllergies,
                     onSelectionChange = onUpdate,
                     itemLabel = { it.displayName },
+                    itemIcon = { it.getIconResource() },
                     itemsPerRow = 2
                 )
             }

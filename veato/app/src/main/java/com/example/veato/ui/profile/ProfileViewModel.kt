@@ -33,7 +33,7 @@ class ProfileViewModel(
     }
 
     private suspend fun loadProfileSuspend() {
-        _state.update { it.copy(isBusy = true, saveError = null) }
+        _state.update { it.copy(isBusy = true, saveError = null, saveSuccess = null) }
 
         try {
             val profile = repository.getProfile(userId)
@@ -70,7 +70,8 @@ class ProfileViewModel(
                 it.copy(
                     isEditing = false,
                     selectedImageUri = null,
-                    saveError = null
+                    saveError = null,
+                    saveSuccess = null
                 )
             }
         }
@@ -168,7 +169,7 @@ class ProfileViewModel(
                 return@launch
             }
 
-            _state.update { it.copy(isBusy = true, saveError = null) }
+            _state.update { it.copy(isBusy = true, saveError = null, saveSuccess = null) }
 
             try {
                 // Upload image if selected
@@ -201,7 +202,7 @@ class ProfileViewModel(
                     // Reload profile and wait for it to complete
                     loadProfileSuspend()
                     // Only update editing state after profile is loaded
-                    _state.update { it.copy(isEditing = false, selectedImageUri = null) }
+                    _state.update { it.copy(isEditing = false, selectedImageUri = null, saveSuccess = "Profile saved") }
                 } else {
                     _state.update {
                         it.copy(isBusy = false, saveError = result.exceptionOrNull()?.message)
@@ -217,11 +218,12 @@ class ProfileViewModel(
 
     fun updateProfileData(updatedProfile: com.example.veato.data.model.UserProfile) {
         viewModelScope.launch {
-            _state.update { it.copy(isBusy = true, saveError = null) }
+            _state.update { it.copy(isBusy = true, saveError = null, saveSuccess = null) }
             try {
                 val result = repository.updateProfile(updatedProfile)
                 if (result.isSuccess) {
                     loadProfileSuspend()
+                    _state.update { it.copy(saveSuccess = "Preferences saved") }
                 } else {
                     _state.update {
                         it.copy(isBusy = false, saveError = result.exceptionOrNull()?.message)

@@ -5,6 +5,8 @@ import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -52,6 +54,7 @@ fun PollSessionScreenPreview() {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PollSessionScreen(
     pollId: String
@@ -68,7 +71,23 @@ fun PollSessionScreen(
     )
     val state by viewModel.state.collectAsState()
 
-    if (state.isBusy) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Vote Session") },
+                navigationIcon = {
+                    IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier.padding(paddingValues)) {
+            if (state.isBusy) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -82,7 +101,9 @@ fun PollSessionScreen(
                 Phase1VoteScreen(
                     state = state,
                     onToggleApproval = { index ->
-                        if (!state.voted && !poll.hasCurrentUserLockedIn && state.rejectedCandidateIndex != index) {
+                        // Don't allow selecting a rejected candidate
+                        val candidateName = poll.candidates.getOrNull(index)?.name
+                        if (!state.voted && !poll.hasCurrentUserLockedIn && state.rejectedCandidateName != candidateName) {
                             viewModel.modifySelectedIndices(index)
                         }
                     },
@@ -133,8 +154,9 @@ fun PollSessionScreen(
                 }
             }
         }
+        }
+        }
     }
-
 }
 
 
