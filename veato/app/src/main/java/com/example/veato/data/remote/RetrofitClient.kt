@@ -38,9 +38,9 @@ object RetrofitClient {
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(authHeaderInterceptor)
-        .connectTimeout(60, TimeUnit.SECONDS)  // Increased for Render cold starts
-        .readTimeout(90, TimeUnit.SECONDS)     // Increased for LLM processing
-        .writeTimeout(60, TimeUnit.SECONDS)    // Increased for larger payloads
+        .connectTimeout(120, TimeUnit.SECONDS)  // Increased for Render cold starts
+        .readTimeout(180, TimeUnit.SECONDS)     // Increased for LLM processing (3 minutes)
+        .writeTimeout(120, TimeUnit.SECONDS)    // Increased for larger payloads
         .build()
     
     private val retrofit = Retrofit.Builder()

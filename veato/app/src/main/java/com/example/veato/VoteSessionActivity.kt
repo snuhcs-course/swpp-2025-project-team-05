@@ -113,7 +113,10 @@ fun PollSessionScreen(
                     onLockInVote = {
                         viewModel.submitPhase1Vote()
                     },
-                    onTimeOver = { /* no-op: backend auto-closes; ViewModel observes status */ }
+                    onTimeOver = { /* no-op: backend auto-closes; ViewModel observes status */ },
+                    onClearVetoAnimation = {
+                        viewModel.clearVetoAnimation()
+                    }
                 )
             }
             PollPhase.PHASE2 -> {

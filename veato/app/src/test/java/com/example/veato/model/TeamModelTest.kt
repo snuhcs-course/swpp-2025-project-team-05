@@ -26,6 +26,7 @@ class TeamModelTest {
             name = "Lunch Lovers",
             leaderId = "userA",
             members = listOf("userA", "userB"),
+            occasionType = "Lunch",
             createdAt = mockTimestamp,
             lastMealPoll = "poll001"
         )
@@ -34,6 +35,7 @@ class TeamModelTest {
         assertEquals("Lunch Lovers", team.name)
         assertEquals("userA", team.leaderId)
         assertEquals(listOf("userA", "userB"), team.members)
+        assertEquals("Lunch", team.occasionType)
         assertEquals(mockTimestamp, team.createdAt)
         assertEquals("poll001", team.lastMealPoll)
     }
@@ -41,8 +43,24 @@ class TeamModelTest {
     @Test
     fun `test equality of identical teams`() {
         val timestamp = Timestamp.now()
-        val team1 = Team("t1", "TeamX", "leader1", listOf("a", "b"), timestamp, "pollA")
-        val team2 = Team("t1", "TeamX", "leader1", listOf("a", "b"), timestamp, "pollA")
+        val team1 = Team(
+            id = "t1",
+            name = "TeamX",
+            leaderId = "leader1",
+            members = listOf("a", "b"),
+            occasionType = "Dinner",
+            createdAt = timestamp,
+            lastMealPoll = "pollA"
+        )
+        val team2 = Team(
+            id = "t1",
+            name = "TeamX",
+            leaderId = "leader1",
+            members = listOf("a", "b"),
+            occasionType = "Dinner",
+            createdAt = timestamp,
+            lastMealPoll = "pollA"
+        )
 
         assertEquals(team1, team2)
         assertEquals(team1.hashCode(), team2.hashCode())

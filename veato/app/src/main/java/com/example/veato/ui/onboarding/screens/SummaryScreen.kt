@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ fun SummaryScreen(
     profile: UserProfile,
     onSave: () -> Unit,
     onEdit: (Int) -> Unit,
+    onPrevious: () -> Unit,
     currentStep: Int,
     totalSteps: Int,
     isSaving: Boolean,
@@ -27,27 +29,27 @@ fun SummaryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(Dimensions.paddingLarge)
+            .padding(horizontal = Dimensions.paddingLarge)
     ) {
-        OnboardingProgressIndicator(
-            currentStep = currentStep,
-            totalSteps = totalSteps
-        )
-
-        Spacer(modifier = Modifier.height(Dimensions.paddingLarge))
-
-        SectionHeader(
-            title = "Review & Finish",
-            subtitle = "Review your preferences before completing setup"
-        )
-
-        Spacer(modifier = Modifier.height(Dimensions.paddingLarge))
-
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
+                .padding(top = Dimensions.paddingLarge)
         ) {
+            OnboardingProgressIndicator(
+                currentStep = currentStep,
+                totalSteps = totalSteps
+            )
+
+            Spacer(modifier = Modifier.height(Dimensions.paddingLarge))
+
+            SectionHeader(
+                title = "Review & Finish",
+                subtitle = "Review your preferences before completing setup"
+            )
+
+            Spacer(modifier = Modifier.height(Dimensions.paddingLarge))
             // Hard Constraints Section
             if (profile.hardConstraints.hasConstraints()) {
                 SummaryCard(
@@ -110,22 +112,47 @@ fun SummaryScreen(
 
         Spacer(modifier = Modifier.height(Dimensions.paddingMedium))
 
-        Button(
-            onClick = onSave,
-            enabled = !isSaving,
-            modifier = Modifier.fillMaxWidth()
+        // Navigation buttons with Back and Complete Setup
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = Dimensions.paddingMedium),
+            horizontalArrangement = Arrangement.spacedBy(Dimensions.paddingSmall)
         ) {
-            if (isSaving) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+            OutlinedButton(
+                onClick = onPrevious,
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(Dimensions.paddingSmall))
-                Text("Saving...")
-            } else {
-                Icon(Icons.Default.CheckCircle, contentDescription = null)
-                Spacer(modifier = Modifier.width(Dimensions.paddingSmall))
-                Text("Complete Setup")
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Back")
+            }
+
+            Button(
+                onClick = onSave,
+                enabled = !isSaving,
+                modifier = Modifier
+                    .weight(2f)
+                    .heightIn(min = 48.dp)
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(Dimensions.paddingSmall))
+                    Text("Saving...")
+                } else {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null)
+                    Spacer(modifier = Modifier.width(Dimensions.paddingSmall))
+                    Text("Complete Setup")
+                }
             }
         }
     }

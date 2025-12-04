@@ -53,6 +53,7 @@ import com.example.veato.ui.profile.ProfileViewModelFactory
 import com.example.veato.ui.theme.VeatoTheme
 import com.example.veato.ui.components.VeatoBottomNavigationBar
 import com.example.veato.ui.components.NavigationScreen
+import com.example.veato.ui.components.EXTRA_FROM_TAB_INDEX
 
 import com.google.firebase.auth.FirebaseAuth
 
@@ -60,6 +61,10 @@ import com.google.firebase.auth.FirebaseAuth
 class ProfileActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Apply transition animation based on tab direction
+        applyTabTransition()
+
         setContent {
             VeatoTheme {
                 Surface(
@@ -68,6 +73,21 @@ class ProfileActivity : ComponentActivity() {
                 ) {
                     ProfileScreen()
                 }
+            }
+        }
+    }
+
+    private fun applyTabTransition() {
+        val fromIndex = intent.getIntExtra(EXTRA_FROM_TAB_INDEX, -1)
+        val toIndex = NavigationScreen.PROFILE.index
+
+        if (fromIndex != -1) {
+            if (toIndex > fromIndex) {
+                // Moving right: slide content from right to left
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+            } else if (toIndex < fromIndex) {
+                // Moving left: slide content from left to right
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
             }
         }
     }
@@ -164,7 +184,25 @@ fun ProfileScreen() {
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No profile found.")
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        Text(
+                            "Unable to load profile",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Check your internet connection and try again",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { viewModel.loadProfile() }) {
+                            Text("Retry")
+                        }
+                    }
                 }
             }
             else -> {

@@ -181,9 +181,7 @@ class UserProfileTest {
             ),
             softPreferences = SoftPreferences(
                 favoriteCuisines = listOf(CuisineType.KOREAN, CuisineType.JAPANESE),
-                spiceTolerance = SpiceLevel.MEDIUM,
-                mealTypePreferences = listOf(MealType.RICE_BASED),
-                portionPreference = PortionSize.LARGE
+                spiceTolerance = SpiceLevel.MEDIUM
             ),
             isOnboardingComplete = true
         )

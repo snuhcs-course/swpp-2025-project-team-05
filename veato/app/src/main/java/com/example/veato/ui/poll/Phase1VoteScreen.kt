@@ -25,7 +25,8 @@ fun Phase1VoteScreen(
     onToggleApproval: (Int) -> Unit,
     onRejectCandidate: (Int) -> Unit,
     onLockInVote: () -> Unit,
-    onTimeOver: () -> Unit
+    onTimeOver: () -> Unit,
+    onClearVetoAnimation: () -> Unit
 ) {
     val poll = state.poll ?: return
 
@@ -138,6 +139,18 @@ fun Phase1VoteScreen(
             }
         }
 
+        // Veto Banner
+        if (state.rejectionUsed &&
+            state.rejectedCandidateName != null &&
+            state.newlyAddedCandidateName != null &&
+            state.vetoAnimationTimestamp > 0) {
+            VetoBanner(
+                rejectedCandidateName = state.rejectedCandidateName,
+                newCandidateName = state.newlyAddedCandidateName,
+                onDismiss = onClearVetoAnimation
+            )
+        }
+
         // Main voting card
         Card(
             modifier = Modifier
@@ -171,6 +184,7 @@ fun Phase1VoteScreen(
                         canReject = !state.rejectionUsed || state.rejectedCandidateName == candidate.name,
                         isLocked = state.voted || poll.hasCurrentUserLockedIn,
                         isVetoing = state.isVetoing,
+                        isNewlyAdded = candidate.name == state.newlyAddedCandidateName,
                         onToggleApproval = onToggleApproval,
                         onReject = {
                             candidateToReject = index
@@ -223,6 +237,77 @@ fun Phase1VoteScreen(
 }
 
 @Composable
+fun VetoBanner(
+    rejectedCandidateName: String,
+    newCandidateName: String?,
+    onDismiss: () -> Unit
+) {
+    var visible by remember { mutableStateOf(true) }
+
+    // Auto-dismiss after 5 seconds
+    LaunchedEffect(Unit) {
+        delay(5000)
+        visible = false
+        delay(300)  // Wait for exit animation
+        onDismiss()
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically() + fadeOut()
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFFEF2F2)  // Light red
+            ),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(2.dp, Color(0xFFEF4444))  // Red border
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Menu Replaced!",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFDC2626)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "\"$rejectedCandidateName\" removed",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF991B1B),
+                        fontWeight = FontWeight.Medium
+                    )
+                    if (newCandidateName != null) {
+                        Text(
+                            text = "Replaced with \"$newCandidateName\"",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF15803D),  // Green
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                IconButton(onClick = { visible = false }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Dismiss",
+                        tint = Color(0xFF991B1B)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun Phase1CandidateRow(
     name: String,
     index: Int,
@@ -231,60 +316,110 @@ fun Phase1CandidateRow(
     canReject: Boolean,
     isLocked: Boolean,
     isVetoing: Boolean,
+    isNewlyAdded: Boolean = false,
     onToggleApproval: (Int) -> Unit,
     onReject: () -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    // Pulsing animation for newly added candidates
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseAlpha"
+    )
+
+    // Background color based on state
+    val backgroundColor = when {
+        isNewlyAdded -> Color(0xFFD1FAE5).copy(alpha = pulseAlpha)  // Pulsing green
+        isRejected -> Color(0xFFFEE2E2)  // Light red
+        else -> Color.Transparent
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        shape = RoundedCornerShape(8.dp),
+        border = if (isNewlyAdded) BorderStroke(2.dp, Color(0xFF10B981)) else null
     ) {
-        // Approval checkbox + name
         Row(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Checkbox(
-                checked = isApproved,
-                onCheckedChange = { if (!isLocked && !isRejected) onToggleApproval(index) },
-                enabled = !isLocked && !isRejected,
-                colors = CheckboxDefaults.colors(
-                    checkedColor = MaterialTheme.colorScheme.primary,
-                    uncheckedColor = Color.Gray
+            // Approval checkbox + name
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = isApproved,
+                    onCheckedChange = { if (!isLocked && !isRejected) onToggleApproval(index) },
+                    enabled = !isLocked && !isRejected,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.primary,
+                        uncheckedColor = Color.Gray
+                    )
                 )
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = name,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = if (isApproved) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (isRejected) Color.Gray else Color.Black
-                )
-            )
-        }
+                Spacer(modifier = Modifier.width(8.dp))
 
-        // Reject button (X icon or loading indicator)
-        IconButton(
-            onClick = onReject,
-            enabled = !isLocked && canReject && !isRejected && !isVetoing,
-            modifier = Modifier.size(40.dp)
-        ) {
-            if (isVetoing) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 2.dp
+                // Badge for new candidates
+                if (isNewlyAdded) {
+                    Text(
+                        text = "NEW",
+                        modifier = Modifier
+                            .background(Color(0xFF10B981), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = if (isApproved) FontWeight.SemiBold else FontWeight.Normal,
+                        color = when {
+                            isRejected -> Color.Gray
+                            isNewlyAdded -> Color(0xFF065F46)  // Dark green
+                            else -> Color.Black
+                        }
+                    )
                 )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Reject",
-                    tint = when {
-                        isRejected -> Color(0xFFDC2626)
-                        !canReject -> Color.LightGray
-                        else -> Color(0xFFEF4444)
-                    }
-                )
+            }
+
+            // Reject button (X icon or loading indicator)
+            IconButton(
+                onClick = onReject,
+                enabled = !isLocked && canReject && !isRejected && !isVetoing,
+                modifier = Modifier.size(40.dp)
+            ) {
+                if (isVetoing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Reject",
+                        tint = when {
+                            isRejected -> Color(0xFFDC2626)
+                            !canReject -> Color.LightGray
+                            else -> Color(0xFFEF4444)
+                        }
+                    )
+                }
             }
         }
     }

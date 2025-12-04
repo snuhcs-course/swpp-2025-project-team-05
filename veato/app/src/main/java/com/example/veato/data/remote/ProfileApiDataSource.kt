@@ -12,6 +12,7 @@ import com.example.veato.data.model.UserProfile
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 
 
 
@@ -28,7 +29,10 @@ class ProfileApiDataSource(
 
     override suspend fun download(userId: String): UserProfile? {
         return try {
-            val snapshot = collection.document(userId).get().await()
+            // Add timeout to prevent hanging on network issues
+            val snapshot = withTimeout(5000L) { // 5 second timeout
+                collection.document(userId).get().await()
+            }
             if (snapshot.exists()) {
                 val data = snapshot.data ?: return null
 
@@ -100,11 +104,17 @@ class ProfileApiDataSource(
                 "spiceTolerance" to profile.softPreferences.spiceTolerance.name
             )
 
-            collection.document(profile.userId)
-                .set(profileData, com.google.firebase.firestore.SetOptions.merge())
-                .await()
+            // Add timeout to prevent hanging on network issues
+            withTimeout(5000L) { // 5 second timeout
+                collection.document(profile.userId)
+                    .set(profileData, com.google.firebase.firestore.SetOptions.merge())
+                    .await()
+            }
+
+            Log.d("ProfileApiDataSource", "Profile uploaded successfully")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w("ProfileApiDataSource", "Failed to upload profile (offline or network error)", e)
+            // Don't throw - allow offline usage
         }
     }
 

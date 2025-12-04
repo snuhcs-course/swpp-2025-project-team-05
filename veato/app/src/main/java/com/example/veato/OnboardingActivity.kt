@@ -179,6 +179,7 @@ fun OnboardingApp(onComplete: (com.example.veato.data.model.UserProfile) -> Unit
                 profile = profile,
                 onSave = { viewModel.saveProfile() },
                 onEdit = { step -> /* Navigate to step */ },
+                onPrevious = { viewModel.previousScreen() },
                 currentStep = state.currentStepNumber,
                 totalSteps = state.totalSteps,
                 isSaving = state.isSaving,

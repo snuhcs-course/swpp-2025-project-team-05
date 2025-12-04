@@ -111,13 +111,11 @@ class OnboardingFlowIntegrationTest {
     @Test
     fun updateSoftPreferences_updatesState() = runTest {
         viewModel.updateSpiceTolerance(SpiceLevel.HIGH)
-        viewModel.updateMealTypePreferences(listOf(MealType.NOODLE_BASED))
-        viewModel.updatePortionPreference(PortionSize.LARGE)
+        viewModel.updateFavoriteCuisines(listOf(CuisineType.EUROPEAN))
 
         val updated = viewModel.state.value.profileDraft.softPreferences
         assertThat(updated.spiceTolerance).isEqualTo(SpiceLevel.HIGH)
-        assertThat(updated.mealTypePreferences).containsExactly(MealType.NOODLE_BASED)
-        assertThat(updated.portionPreference).isEqualTo(PortionSize.LARGE)
+        assertThat(updated.favoriteCuisines).containsExactly(CuisineType.EUROPEAN)
     }
 
     @Test

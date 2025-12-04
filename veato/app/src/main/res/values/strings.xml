@@ -5,4 +5,8 @@
     <string name="enter_team_name">Enter team name</string>
     <string name="create_team">Create Team</string>
 
+    <!-- Success messages -->
+    <string name="preferences_updated">Preferences updated</string>
+    <string name="profile_updated">Profile updated</string>
+
 </resources>

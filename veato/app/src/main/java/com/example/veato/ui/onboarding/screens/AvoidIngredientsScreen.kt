@@ -1,6 +1,8 @@
 package com.example.veato.ui.onboarding.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -26,10 +28,14 @@ fun AvoidIngredientsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(Dimensions.paddingLarge),
-        verticalArrangement = Arrangement.SpaceBetween
+            .padding(horizontal = Dimensions.paddingLarge)
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(top = Dimensions.paddingLarge)
+        ) {
             OnboardingProgressIndicator(
                 currentStep = currentStep,
                 totalSteps = totalSteps
@@ -61,7 +67,11 @@ fun AvoidIngredientsScreen(
                     if (newIngredient.isNotBlank()) {
                         IconButton(
                             onClick = {
-                                onUpdate(avoidList + newIngredient.trim())
+                                val trimmed = newIngredient.trim()
+                                // Only add if not already present (case-insensitive)
+                                if (avoidList.none { it.equals(trimmed, ignoreCase = true) }) {
+                                    onUpdate(avoidList + trimmed)
+                                }
                                 newIngredient = ""
                             }
                         ) {
@@ -88,12 +98,17 @@ fun AvoidIngredientsScreen(
                                 rowItems.forEach { ingredient ->
                                     InputChip(
                                         selected = true,
-                                        onClick = { },
+                                        onClick = {
+                                            // Remove this ingredient (case-insensitive)
+                                            onUpdate(avoidList.filter {
+                                                !it.equals(ingredient, ignoreCase = true)
+                                            })
+                                        },
                                         label = { Text(ingredient) },
                                         trailingIcon = {
                                             Icon(
                                                 Icons.Default.Close,
-                                                contentDescription = "Remove",
+                                                contentDescription = "Remove $ingredient",
                                                 modifier = Modifier.size(18.dp)
                                             )
                                         },
@@ -114,12 +129,15 @@ fun AvoidIngredientsScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(Dimensions.paddingMedium))
+
         NavigationButtons(
             onPrevious = onPrevious,
             onNext = onNext,
             showPrevious = true,
             showSkip = avoidList.isEmpty(),
-            onSkip = { onNext() }
+            onSkip = { onNext() },
+            modifier = Modifier.padding(bottom = Dimensions.paddingMedium)
         )
     }
 }

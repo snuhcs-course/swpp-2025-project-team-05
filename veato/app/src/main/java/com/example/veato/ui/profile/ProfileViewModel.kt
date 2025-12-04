@@ -11,8 +11,10 @@ import com.example.veato.data.repository.UserProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 class ProfileViewModel(
     private val repository: UserProfileRepository,
@@ -36,14 +38,36 @@ class ProfileViewModel(
         _state.update { it.copy(isBusy = true, saveError = null, saveSuccess = null) }
 
         try {
-            val profile = repository.getProfile(userId)
-            _state.update {
-                it.copy(
-                    userProfile = profile,
-                    isBusy = false,
-                    editedFullName = profile?.fullName ?: "",
-                    editedUserName = profile?.userName ?: ""
-                )
+            // Try to load from remote with timeout
+            val profile = try {
+                withTimeout(5000L) { // 5 second timeout
+                    repository.getProfile(userId)
+                }
+            } catch (e: Exception) {
+                null // If timeout or error, fall back to local
+            }
+
+            if (profile != null) {
+                _state.update {
+                    it.copy(
+                        userProfile = profile,
+                        isBusy = false,
+                        editedFullName = profile.fullName,
+                        editedUserName = profile.userName
+                    )
+                }
+            } else {
+                // If remote fetch fails, try local data
+                val localProfile = repository.getProfileFlow(userId).first()
+                _state.update {
+                    it.copy(
+                        userProfile = localProfile,
+                        isBusy = false,
+                        editedFullName = localProfile?.fullName ?: "",
+                        editedUserName = localProfile?.userName ?: "",
+                        saveError = if (localProfile == null) "Failed to load profile" else null
+                    )
+                }
             }
         } catch (e: Exception) {
             _state.update { it.copy(isBusy = false, saveError = e.localizedMessage) }
@@ -202,7 +226,7 @@ class ProfileViewModel(
                     // Reload profile and wait for it to complete
                     loadProfileSuspend()
                     // Only update editing state after profile is loaded
-                    _state.update { it.copy(isEditing = false, selectedImageUri = null, saveSuccess = "Profile saved") }
+                    _state.update { it.copy(isEditing = false, selectedImageUri = null, saveSuccess = "Profile updated") }
                 } else {
                     _state.update {
                         it.copy(isBusy = false, saveError = result.exceptionOrNull()?.message)
@@ -222,8 +246,15 @@ class ProfileViewModel(
             try {
                 val result = repository.updateProfile(updatedProfile)
                 if (result.isSuccess) {
-                    loadProfileSuspend()
-                    _state.update { it.copy(saveSuccess = "Preferences saved") }
+                    // Update local state immediately instead of reloading from server
+                    _state.update {
+                        it.copy(
+                            userProfile = updatedProfile,
+                            isBusy = false,
+                            isEditing = false,
+                            saveSuccess = "Preferences updated"
+                        )
+                    }
                 } else {
                     _state.update {
                         it.copy(isBusy = false, saveError = result.exceptionOrNull()?.message)

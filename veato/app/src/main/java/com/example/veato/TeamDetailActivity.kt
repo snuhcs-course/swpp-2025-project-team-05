@@ -2,7 +2,6 @@ package com.example.veato
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -38,6 +37,7 @@ import com.example.veato.ui.components.NavigationScreen
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 data class MemberDetail(
@@ -86,6 +86,8 @@ class TeamDetailActivity : ComponentActivity() {
         var showLeaveDialog by remember { mutableStateOf(false) }
         val currentUserId = auth.currentUser?.uid
         val isLeader = team?.leaderId == currentUserId
+        val snackbarHostState = remember { SnackbarHostState() }
+        val scope = rememberCoroutineScope()
 
         // Load team data
         LaunchedEffect(teamId) {
@@ -98,7 +100,9 @@ class TeamDetailActivity : ComponentActivity() {
                     isLoading = false
                 }
                 .addOnFailureListener {
-                    Toast.makeText(context, "Error loading team", Toast.LENGTH_SHORT).show()
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Error loading team")
+                    }
                     isLoading = false
                 }
         }
@@ -136,6 +140,9 @@ class TeamDetailActivity : ComponentActivity() {
             },
             bottomBar = {
                 VeatoBottomNavigationBar(currentScreen = NavigationScreen.TEAMS)
+            },
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
             }
         ) { paddingValues ->
             when {
@@ -159,6 +166,8 @@ class TeamDetailActivity : ComponentActivity() {
                     TeamDetailContent(
                         team = team!!,
                         paddingValues = paddingValues,
+                        snackbarHostState = snackbarHostState,
+                        scope = scope,
                         onStartPoll = {
                             val intent = Intent(context, VoteSettingActivity::class.java)
                             intent.putExtra("teamId", team!!.id)
@@ -172,7 +181,9 @@ class TeamDetailActivity : ComponentActivity() {
                                 intent.putExtra("pollId", pollId)
                                 context.startActivity(intent)
                             } else {
-                                Toast.makeText(context, "No active poll", Toast.LENGTH_SHORT).show()
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("No active poll")
+                                }
                             }
                         }
                     )
@@ -190,7 +201,7 @@ class TeamDetailActivity : ComponentActivity() {
                     TextButton(
                         onClick = {
                             showLeaveDialog = false
-                            leaveTeam(team!!)
+                            leaveTeam(team!!, snackbarHostState, scope)
                         }
                     ) {
                         Text("Leave team", color = MaterialTheme.colorScheme.error)
@@ -209,6 +220,8 @@ class TeamDetailActivity : ComponentActivity() {
     private fun TeamDetailContent(
         team: Team,
         paddingValues: PaddingValues,
+        snackbarHostState: SnackbarHostState,
+        scope: kotlinx.coroutines.CoroutineScope,
         onStartPoll: () -> Unit,
         onJoinPoll: () -> Unit
     ) {
@@ -223,6 +236,7 @@ class TeamDetailActivity : ComponentActivity() {
         var showEditMemberDialog by remember { mutableStateOf<MemberDetail?>(null) }
         var showRemoveMemberDialog by remember { mutableStateOf<MemberDetail?>(null) }
         var refreshTrigger by remember { mutableStateOf(0) }
+        var isAddingMember by remember { mutableStateOf(false) }
 
         // Load members with their details
         LaunchedEffect(team.id, refreshTrigger) {
@@ -279,7 +293,7 @@ class TeamDetailActivity : ComponentActivity() {
 
                 isLoadingMembers = false
             } catch (e: Exception) {
-                Toast.makeText(context, "Failed to load members", Toast.LENGTH_SHORT).show()
+                snackbarHostState.showSnackbar("Failed to load members")
                 isLoadingMembers = false
             }
         }
@@ -341,18 +355,30 @@ class TeamDetailActivity : ComponentActivity() {
                 onEmailChange = { emailToAdd = it },
                 isLeader = isLeader,
                 currentUserId = currentUserId,
+                isAddingMember = isAddingMember,
                 onAddMember = { username ->
+                    // Prevent duplicate add operations
+                    if (isAddingMember) {
+                        return@TeamMembersSection
+                    }
+
                     // Add member logic
                     if (username.isBlank()) {
-                        Toast.makeText(context, "Please enter a username", Toast.LENGTH_SHORT).show()
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Please enter a username")
+                        }
                         return@TeamMembersSection
                     }
 
                     // Check if user already in team by userName (case-insensitive)
                     if (memberDetails.any { it.userName.equals(username.trim(), ignoreCase = true) }) {
-                        Toast.makeText(context, "User already in team", Toast.LENGTH_SHORT).show()
+                        scope.launch {
+                            snackbarHostState.showSnackbar("User already in team")
+                        }
                         return@TeamMembersSection
                     }
+
+                    isAddingMember = true
 
                     // Query Firestore to find user by username
                     db.collection("users")
@@ -360,7 +386,10 @@ class TeamDetailActivity : ComponentActivity() {
                         .get()
                         .addOnSuccessListener { querySnapshot ->
                             if (querySnapshot.isEmpty) {
-                                Toast.makeText(context, "User not found with that username", Toast.LENGTH_SHORT).show()
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Username not found. Check the spelling or ask them to sign up.")
+                                }
+                                isAddingMember = false
                             } else {
                                 val userDoc = querySnapshot.documents[0]
                                 val userId = userDoc.id
@@ -369,17 +398,26 @@ class TeamDetailActivity : ComponentActivity() {
                                 db.collection("teams").document(team.id)
                                     .update("members", FieldValue.arrayUnion(userId))
                                     .addOnSuccessListener {
-                                        Toast.makeText(context, "Member added successfully", Toast.LENGTH_SHORT).show()
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Member added successfully")
+                                        }
                                         emailToAdd = ""
                                         refreshTrigger++  // Trigger reload
+                                        isAddingMember = false
                                     }
                                     .addOnFailureListener {
-                                        Toast.makeText(context, "Failed to add member", Toast.LENGTH_SHORT).show()
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Failed to add member")
+                                        }
+                                        isAddingMember = false
                                     }
                             }
                         }
                         .addOnFailureListener {
-                            Toast.makeText(context, "Error searching for user", Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Error searching for user")
+                            }
+                            isAddingMember = false
                         }
                 },
                 onEditMember = { member ->
@@ -405,12 +443,16 @@ class TeamDetailActivity : ComponentActivity() {
                         .document(member.userId)
                         .set(mapOf("position" to position, "ageGroup" to ageGroup))
                         .addOnSuccessListener {
-                            Toast.makeText(context, "Member details updated", Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Member details updated")
+                            }
                             showEditMemberDialog = null
                             refreshTrigger++  // Trigger reload
                         }
                         .addOnFailureListener {
-                            Toast.makeText(context, "Failed to update member", Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Failed to update member")
+                            }
                         }
                 }
             )
@@ -426,12 +468,16 @@ class TeamDetailActivity : ComponentActivity() {
                     db.collection("teams").document(team.id)
                         .update("members", FieldValue.arrayRemove(member.userId))
                         .addOnSuccessListener {
-                            Toast.makeText(context, "Member removed", Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Member removed")
+                            }
                             showRemoveMemberDialog = null
                             refreshTrigger++  // Trigger reload
                         }
                         .addOnFailureListener {
-                            Toast.makeText(context, "Failed to remove member", Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Failed to remove member")
+                            }
                         }
                 }
             )
@@ -530,6 +576,7 @@ class TeamDetailActivity : ComponentActivity() {
         onEmailChange: (String) -> Unit,
         isLeader: Boolean,
         currentUserId: String?,
+        isAddingMember: Boolean,
         onAddMember: (String) -> Unit,
         onEditMember: (MemberDetail) -> Unit,
         onRemoveMember: (MemberDetail) -> Unit
@@ -560,9 +607,17 @@ class TeamDetailActivity : ComponentActivity() {
                 )
                 IconButton(
                     onClick = { onAddMember(emailToAdd) },
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(56.dp),
+                    enabled = !isAddingMember
                 ) {
-                    Icon(Icons.Default.Add, "Add member", modifier = Modifier.size(24.dp))
+                    if (isAddingMember) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(Icons.Default.Add, "Add member", modifier = Modifier.size(24.dp))
+                    }
                 }
             }
 
@@ -840,16 +895,18 @@ class TeamDetailActivity : ComponentActivity() {
         }
     }
 
-    private fun leaveTeam(team: Team) {
+    private fun leaveTeam(team: Team, snackbarHostState: SnackbarHostState, scope: kotlinx.coroutines.CoroutineScope) {
         val uid = auth.currentUser?.uid ?: return
         db.collection("teams").document(team.id)
             .update("members", FieldValue.arrayRemove(uid))
             .addOnSuccessListener {
-                Toast.makeText(this, "Left ${team.name}", Toast.LENGTH_SHORT).show()
+                // Don't show snackbar since we're finishing the activity immediately
                 finish()
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Failed to leave team", Toast.LENGTH_SHORT).show()
+                scope.launch {
+                    snackbarHostState.showSnackbar("Failed to leave team")
+                }
             }
     }
 }

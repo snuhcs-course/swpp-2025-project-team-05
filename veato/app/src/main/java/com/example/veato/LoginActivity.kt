@@ -72,7 +72,12 @@ class LoginActivity : AppCompatActivity() {
                 val account = task.getResult(ApiException::class.java)
                 firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
-                Toast.makeText(this, "Google sign-in failed: ${e.statusCode}", Toast.LENGTH_SHORT).show()
+                // Error code 12501 = SIGN_IN_CANCELLED (user pressed back or dismissed the sheet)
+                // Don't show toast for user-initiated cancellation
+                if (e.statusCode != 12501) {
+                    Toast.makeText(this, "Google sign-in failed: ${e.statusCode}", Toast.LENGTH_SHORT).show()
+                }
+                // Silently return to login screen when user cancels
             }
         }
     }

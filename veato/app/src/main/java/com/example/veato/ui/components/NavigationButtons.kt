@@ -7,6 +7,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.veato.ui.theme.Dimensions
 
 @Composable
@@ -23,8 +24,11 @@ fun NavigationButtons(
     previousLabel: String = "Back"
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Dimensions.paddingMedium)
+        modifier = modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .windowInsetsPadding(WindowInsets.ime),
+        horizontalArrangement = Arrangement.spacedBy(Dimensions.paddingSmall)
     ) {
         // Previous button
         if (showPrevious) {
@@ -32,9 +36,9 @@ fun NavigationButtons(
                 onClick = onPrevious,
                 modifier = Modifier
                     .weight(1f)
-                    .height(Dimensions.buttonHeightMedium),
+                    .heightIn(min = 48.dp),
                 contentPadding = PaddingValues(
-                    horizontal = Dimensions.paddingMedium,
+                    horizontal = Dimensions.paddingSmall,
                     vertical = Dimensions.paddingSmall
                 )
             ) {
@@ -43,8 +47,11 @@ fun NavigationButtons(
                     contentDescription = null,
                     modifier = Modifier.size(Dimensions.iconSizeSmall)
                 )
-                Spacer(modifier = Modifier.width(Dimensions.paddingSmall))
-                Text(previousLabel)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = previousLabel,
+                    maxLines = 1
+                )
             }
         }
 
@@ -52,9 +59,14 @@ fun NavigationButtons(
         if (showSkip && onSkip != null) {
             TextButton(
                 onClick = onSkip,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp)
             ) {
-                Text("Skip")
+                Text(
+                    text = "Skip",
+                    maxLines = 1
+                )
             }
         }
 
@@ -65,14 +77,17 @@ fun NavigationButtons(
                 enabled = nextEnabled,
                 modifier = Modifier
                     .weight(1f)
-                    .height(Dimensions.buttonHeightMedium),
+                    .heightIn(min = 48.dp),
                 contentPadding = PaddingValues(
-                    horizontal = Dimensions.paddingMedium,
+                    horizontal = Dimensions.paddingSmall,
                     vertical = Dimensions.paddingSmall
                 )
             ) {
-                Text(nextLabel)
-                Spacer(modifier = Modifier.width(Dimensions.paddingSmall))
+                Text(
+                    text = nextLabel,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,

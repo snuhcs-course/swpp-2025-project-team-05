@@ -29,11 +29,13 @@ import com.example.veato.ProfileActivity
 import com.example.veato.R
 import com.example.veato.ui.theme.VeatoNavBar
 
-enum class NavigationScreen {
-    TEAMS,
-    PREFERENCES,
-    PROFILE
+enum class NavigationScreen(val index: Int) {
+    TEAMS(0),
+    PREFERENCES(1),
+    PROFILE(2)
 }
+
+const val EXTRA_FROM_TAB_INDEX = "from_tab_index"
 
 /**
  * Shared bottom navigation bar with icon + label tabs
@@ -65,6 +67,7 @@ fun VeatoBottomNavigationBar(currentScreen: NavigationScreen) {
             onClick = {
                 if (currentScreen != NavigationScreen.TEAMS) {
                     val intent = Intent(context, MyTeamsActivity::class.java)
+                    intent.putExtra(EXTRA_FROM_TAB_INDEX, currentScreen.index)
                     context.startActivity(intent)
                 }
             }
@@ -80,6 +83,7 @@ fun VeatoBottomNavigationBar(currentScreen: NavigationScreen) {
             onClick = {
                 if (currentScreen != NavigationScreen.PREFERENCES) {
                     val intent = Intent(context, MyPreferencesActivity::class.java)
+                    intent.putExtra(EXTRA_FROM_TAB_INDEX, currentScreen.index)
                     context.startActivity(intent)
                 }
             }
@@ -95,6 +99,7 @@ fun VeatoBottomNavigationBar(currentScreen: NavigationScreen) {
             onClick = {
                 if (currentScreen != NavigationScreen.PROFILE) {
                     val intent = Intent(context, ProfileActivity::class.java)
+                    intent.putExtra(EXTRA_FROM_TAB_INDEX, currentScreen.index)
                     context.startActivity(intent)
                 }
             }

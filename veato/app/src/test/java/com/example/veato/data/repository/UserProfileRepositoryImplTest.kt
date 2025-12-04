@@ -52,9 +52,7 @@ class UserProfileRepositoryImplTest {
             ),
             softPreferences = SoftPreferences(
                 favoriteCuisines = listOf(CuisineType.KOREAN),
-                spiceTolerance = SpiceLevel.MEDIUM, // existing enum
-                mealTypePreferences = listOf(MealType.RICE_BASED),
-                portionPreference = PortionSize.MEDIUM
+                spiceTolerance = SpiceLevel.MEDIUM
             ),
             isOnboardingComplete = true
         )
