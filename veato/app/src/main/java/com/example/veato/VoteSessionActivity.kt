@@ -15,9 +15,10 @@ import com.example.veato.ui.theme.VeatoTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.veato.data.repository.PollRepositoryImpl
+import com.example.veato.data.di.DefaultRepositoryFactory
+import com.example.veato.data.facade.VoteFlowFacade
 import com.example.veato.ui.main.MainActivity
-import com.example.veato.data.model.PollPhase
+import com.example.veato.ui.poll.model.PollPhaseUi
 import com.example.veato.ui.poll.Phase1VoteScreen
 import com.example.veato.ui.poll.Phase2VoteScreen
 import com.example.veato.ui.poll.PollResultScreen
@@ -61,10 +62,16 @@ fun PollSessionScreen(
 ) {
     val context = LocalContext.current
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "demo_user"
+    
+    // Use Factory Method pattern to create repository and facade
+    val repositoryFactory = remember { DefaultRepositoryFactory() }
+    val facade = remember { 
+        VoteFlowFacade(repositoryFactory.createPollRepository())
+    }
 
     val viewModel: PollViewModel = viewModel(
         factory = PollViewModelFactory(
-            repository = PollRepositoryImpl(),
+            facade = facade,
             userId = userId,
             pollId = pollId
         )
@@ -97,7 +104,7 @@ fun PollSessionScreen(
     } else {
         val poll = state.poll
         when (poll?.phase) {
-            PollPhase.PHASE1 -> {
+            PollPhaseUi.PHASE1 -> {
                 Phase1VoteScreen(
                     state = state,
                     onToggleApproval = { index ->
@@ -119,7 +126,7 @@ fun PollSessionScreen(
                     }
                 )
             }
-            PollPhase.PHASE2 -> {
+            PollPhaseUi.PHASE2 -> {
                 Phase2VoteScreen(
                     state = state,
                     onSelectCandidate = { index ->
@@ -135,7 +142,7 @@ fun PollSessionScreen(
                     onTimeOver = { /* no-op: backend auto-closes; ViewModel observes status */ }
                 )
             }
-            PollPhase.CLOSED -> {
+            PollPhaseUi.CLOSED -> {
                 PollResultScreen(
                     state = state,
                     onBackToMain = {

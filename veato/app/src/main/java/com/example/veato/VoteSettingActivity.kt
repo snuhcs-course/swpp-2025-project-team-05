@@ -21,7 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.veato.data.repository.PollRepositoryImpl
+import com.example.veato.data.di.DefaultRepositoryFactory
+import com.example.veato.data.facade.VoteFlowFacade
 import com.example.veato.ui.poll.PollViewModel
 import com.example.veato.ui.poll.PollViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
@@ -80,8 +81,11 @@ fun VoteSettingScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val db = remember { FirebaseFirestore.getInstance() }
-    // Avoid recreating repository on every recomposition (causes typing lag)
-    val repository = remember { PollRepositoryImpl() }
+    // Use Factory Method pattern to create repository and facade
+    val repositoryFactory = remember { DefaultRepositoryFactory() }
+    val facade = remember { 
+        VoteFlowFacade(repositoryFactory.createPollRepository())
+    }
 
     // Load team members with names
     LaunchedEffect(teamId) {
@@ -249,7 +253,7 @@ fun VoteSettingScreen(
                         isLoading = true
                         scope.launch {
                             try {
-                                val response = repository.startVotingSession(
+                                val response = facade.startPoll(
                                     teamId = teamId,
                                     pollTitle = sessionTitle,
                                     durationMinutes = duration,

@@ -62,12 +62,11 @@ class MyPreferencesActivity : ComponentActivity() {
         val context = LocalContext.current
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "demo_user"
 
+        // Use Factory Method pattern to create repository
+        val repositoryFactory = remember { DefaultRepositoryFactory() }
         val viewModel: ProfileViewModel = viewModel(
             factory = ProfileViewModelFactory(
-                repository = UserProfileRepositoryImpl(
-                    ProfileDataStoreImpl(context),
-                    ProfileApiDataSource()
-                ),
+                repository = repositoryFactory.createUserProfileRepository(context),
                 userId = userId
             )
         )

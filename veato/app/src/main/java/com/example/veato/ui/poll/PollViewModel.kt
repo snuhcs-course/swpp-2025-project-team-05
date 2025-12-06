@@ -2,9 +2,11 @@ package com.example.veato.ui.poll
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.veato.data.repository.PollRepository
-import com.example.veato.data.repository.PollRepositoryImpl
-import com.example.veato.ui.profile.ProfileState
+import com.example.veato.data.facade.VoteFlowFacade
+import com.example.veato.ui.poll.model.PollPhaseUi
+import com.example.veato.ui.poll.strategy.Phase1VotingStrategy
+import com.example.veato.ui.poll.strategy.Phase2VotingStrategy
+import com.example.veato.ui.poll.strategy.VotingPhaseStrategy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,14 +14,20 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
+/**
+ * ViewModel for voting session
+ * Uses Facade pattern (VoteFlowFacade) and Strategy pattern (VotingPhaseStrategy)
+ */
 class PollViewModel(
-    private val repository: PollRepository,
+    private val facade: VoteFlowFacade,
     private val userId: String,
     private val pollId: String,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PollScreenState())
     val state: StateFlow<PollScreenState> = _state.asStateFlow()
+    
+    private var currentStrategy: VotingPhaseStrategy? = null
 
     init {
         observePoll()
@@ -29,15 +37,15 @@ class PollViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isBusy = true) }
             try {
-                val poll = repository.getPoll(pollId)
+                val pollUi = facade.getPoll(pollId)
                 val currentPhase = _state.value.poll?.phase
-                val newPhase = poll.phase
+                val newPhase = pollUi.phase
 
-                // If phase changed, reset voting state to allow voting in new phase
+                // If phase changed, reset voting state and update strategy
                 if (currentPhase != null && currentPhase != newPhase) {
+                    updateStrategyForPhase(newPhase)
                     _state.update {
-                        it.copy(
-                            poll = poll,
+                        currentStrategy?.onPollLoaded(pollUi, it)?.copy(
                             isBusy = false,
                             voted = false,
                             selectedIndices = emptySet(),
@@ -45,14 +53,29 @@ class PollViewModel(
                             rejectedCandidateName = null,
                             newlyAddedCandidateName = null,
                             vetoAnimationTimestamp = 0L
-                        )
+                        ) ?: it.copy(poll = pollUi, isBusy = false)
                     }
                 } else {
-                    _state.update { it.copy(poll = poll, isBusy = false) }
+                    // Update strategy if not set
+                    if (currentStrategy == null) {
+                        updateStrategyForPhase(newPhase)
+                    }
+                    _state.update {
+                        currentStrategy?.onPollLoaded(pollUi, it)?.copy(isBusy = false)
+                            ?: it.copy(poll = pollUi, isBusy = false)
+                    }
                 }
             } catch (e: Exception) {
                 _state.update { it.copy(isBusy = false) }
             }
+        }
+    }
+    
+    private fun updateStrategyForPhase(phase: PollPhaseUi) {
+        currentStrategy = when (phase) {
+            PollPhaseUi.PHASE1 -> Phase1VotingStrategy()
+            PollPhaseUi.PHASE2 -> Phase2VotingStrategy()
+            PollPhaseUi.CLOSED -> Phase1VotingStrategy() // Default strategy for closed polls
         }
     }
 
@@ -62,15 +85,15 @@ class PollViewModel(
             loadOnce()
             while (true) {
                 try {
-                    val poll = repository.getPoll(pollId)
+                    val pollUi = facade.getPoll(pollId)
                     val currentPhase = _state.value.poll?.phase
-                    val newPhase = poll.phase
+                    val newPhase = pollUi.phase
 
                     // If phase changed, reset voting state to allow voting in new phase
                     if (currentPhase != null && currentPhase != newPhase) {
+                        updateStrategyForPhase(newPhase)
                         _state.update {
-                            it.copy(
-                                poll = poll,
+                            currentStrategy?.onPollLoaded(pollUi, it)?.copy(
                                 isBusy = false,
                                 voted = false,
                                 selectedIndices = emptySet(),
@@ -78,17 +101,22 @@ class PollViewModel(
                                 rejectedCandidateName = null,
                                 newlyAddedCandidateName = null,
                                 vetoAnimationTimestamp = 0L
-                            )
+                            ) ?: it.copy(poll = pollUi, isBusy = false)
                         }
                     } else {
+                        // Update strategy if not set
+                        if (currentStrategy == null) {
+                            updateStrategyForPhase(newPhase)
+                        }
+                        
                         // Detect if candidate list changed (someone else vetoed)
                         val currentCandidates = _state.value.poll?.candidates?.map { it.name } ?: emptyList()
-                        val newCandidates = poll.candidates.map { it.name }
+                        val newCandidates = pollUi.candidates.map { it.name }
 
                         // If candidates changed and we're in Phase 1, show animation for all users
                         if (currentCandidates.isNotEmpty() &&
                             newCandidates != currentCandidates &&
-                            poll.phase == com.example.veato.data.model.PollPhase.PHASE1) {
+                            pollUi.phase == PollPhaseUi.PHASE1) {
 
                             // Find which candidate was added (replacement)
                             val addedCandidate = newCandidates.firstOrNull { it !in currentCandidates }
@@ -103,13 +131,13 @@ class PollViewModel(
                                 candidateName == removedCandidate
                             }
                             val wasVotedCandidateRemoved = removedCandidateIndex != null &&
-                                                            (currentState.voted || poll.hasCurrentUserLockedIn)
+                                                            (currentState.voted || pollUi.hasCurrentUserLockedIn)
 
                             // If user's voted candidate was removed, revoke their vote on backend
                             if (wasVotedCandidateRemoved) {
                                 viewModelScope.launch {
                                     try {
-                                        repository.revokeBallot(pollId, userId)
+                                        facade.revokeBallot(pollId, userId)
                                         // State will be updated in the next poll cycle
                                     } catch (e: Exception) {
                                         // Log but don't block - polling will retry
@@ -127,14 +155,13 @@ class PollViewModel(
                                 val selectedNames = currentState.selectedIndices.mapNotNull { index ->
                                     currentState.poll?.candidates?.getOrNull(index)?.name
                                 }
-                                poll.candidates.mapIndexedNotNull { index, candidate ->
+                                pollUi.candidates.mapIndexedNotNull { index, candidate ->
                                     if (candidate.name in selectedNames) index else null
                                 }.toSet()
                             }
 
                             _state.update {
-                                it.copy(
-                                    poll = poll,
+                                currentStrategy?.onPollLoaded(pollUi, it)?.copy(
                                     isBusy = false,
                                     newlyAddedCandidateName = addedCandidate,
                                     rejectedCandidateName = removedCandidate,
@@ -144,14 +171,26 @@ class PollViewModel(
                                     voted = if (wasVotedCandidateRemoved) false else it.voted,
                                     // Update selections based on candidate list changes
                                     selectedIndices = updatedSelections
+                                ) ?: it.copy(
+                                    poll = pollUi,
+                                    isBusy = false,
+                                    newlyAddedCandidateName = addedCandidate,
+                                    rejectedCandidateName = removedCandidate,
+                                    rejectionUsed = removedCandidate != null,
+                                    vetoAnimationTimestamp = System.currentTimeMillis(),
+                                    voted = if (wasVotedCandidateRemoved) false else it.voted,
+                                    selectedIndices = updatedSelections
                                 )
                             }
                         } else {
-                            _state.update { it.copy(poll = poll, isBusy = false) }
+                            _state.update {
+                                currentStrategy?.onPollLoaded(pollUi, it)?.copy(isBusy = false)
+                                    ?: it.copy(poll = pollUi, isBusy = false)
+                            }
                         }
                     }
 
-                    if (poll.isOpen) {
+                    if (pollUi.isOpen) {
                         delay(1000)  // Reduced from 2000ms to 1000ms for faster sync
                     } else {
                         break
@@ -167,15 +206,14 @@ class PollViewModel(
         _state.update { it.copy(voted = voted) }
     }
 
-    // if index not in selectedIndices, add.
-    // if index already in selectedIndices, remove.
+    // Use Strategy pattern for candidate selection
     fun modifySelectedIndices(index: Int) {
-        val newSet = if (index in _state.value.selectedIndices)
-            _state.value.selectedIndices - index
-        else
-            _state.value.selectedIndices + index
-
-        _state.update { it.copy(selectedIndices = newSet) }
+        val currentState = _state.value
+        val poll = currentState.poll ?: return
+        val strategy = currentStrategy ?: return
+        
+        val newState = strategy.onCandidateClicked(currentState, index, poll)
+        _state.update { newState }
     }
 
     fun clearSelectedIndices() {
@@ -185,21 +223,21 @@ class PollViewModel(
     fun sendBallot() {
         viewModelScope.launch {
             setVoted(true)
-            repository.sendBallot(pollId, userId, _state.value.selectedIndices.toList())
-            // refresh poll after voting
+            // Legacy method - kept for compatibility but should use phase-specific methods
             loadOnce()
         }
     }
+    
     fun revokeBallot() {
         viewModelScope.launch {
-            repository.revokeBallot(pollId, userId)
+            facade.revokeBallot(pollId, userId)
             clearSelectedIndices()
             setVoted(false)
             loadOnce()
         }
     }
 
-    // Phase-specific methods
+    // Phase-specific methods using Strategy pattern
 
     fun setRejectedCandidate(index: Int?) {
         if (index == null) {
@@ -221,14 +259,14 @@ class PollViewModel(
         val currentCandidates = _state.value.poll?.candidates?.map { it.name } ?: return
         val wasSelectedCandidateVetoed = index in _state.value.selectedIndices
 
-        // Immediately reject candidate and get replacement
+        // Immediately reject candidate and get replacement using Facade
         viewModelScope.launch {
             // Set loading state
             _state.update { it.copy(isVetoing = true, vetoError = null) }
 
             try {
-                // Call API to reject and get updated poll with replacement
-                val updatedPoll = repository.rejectCandidateImmediately(pollId, index)
+                // Call Facade to reject and get updated poll with replacement
+                val updatedPoll = facade.rejectCandidateImmediately(pollId, index)
 
                 // Detect replacement candidate by comparing lists
                 val updatedCandidates = updatedPoll.candidates.map { it.name }
@@ -281,20 +319,19 @@ class PollViewModel(
         }
     }
 
+    // Use Strategy pattern for Phase 1 vote submission
     fun submitPhase1Vote() {
         viewModelScope.launch {
             try {
-                val approvedIndices = _state.value.selectedIndices.toList()
+                val currentState = _state.value
+                val poll = currentState.poll ?: return@launch
+                val strategy = currentStrategy as? Phase1VotingStrategy ?: return@launch
 
-                // Convert rejected candidate name back to current index
-                val rejectedIndex = _state.value.rejectedCandidateName?.let { name ->
-                    _state.value.poll?.candidates?.indexOfFirst { it.name == name }?.takeIf { it >= 0 }
-                }
-
-                repository.submitPhase1Vote(pollId, approvedIndices, rejectedIndex)
+                // Use strategy to submit vote via facade
+                val updatedPoll = strategy.submitVote(facade, poll, currentState)
 
                 // Mark as voted/locked in
-                _state.update { it.copy(voted = true) }
+                _state.update { it.copy(voted = true, poll = updatedPoll) }
 
                 // Refresh poll state
                 loadOnce()
@@ -304,17 +341,19 @@ class PollViewModel(
         }
     }
 
+    // Use Strategy pattern for Phase 2 vote submission
     fun submitPhase2Vote() {
         viewModelScope.launch {
             try {
-                // In Phase 2, selectedIndices should only have one element
-                val selectedIndex = _state.value.selectedIndices.firstOrNull()
-                    ?: throw Exception("No candidate selected")
+                val currentState = _state.value
+                val poll = currentState.poll ?: return@launch
+                val strategy = currentStrategy as? Phase2VotingStrategy ?: return@launch
 
-                repository.submitPhase2Vote(pollId, selectedIndex)
+                // Use strategy to submit vote via facade
+                val updatedPoll = strategy.submitVote(facade, poll, currentState)
 
                 // Mark as voted/locked in
-                _state.update { it.copy(voted = true) }
+                _state.update { it.copy(voted = true, poll = updatedPoll) }
 
                 // Refresh poll state
                 loadOnce()
@@ -323,7 +362,4 @@ class PollViewModel(
             }
         }
     }
-
-    // remove demo close; backend auto-closes when time is up
-
 }

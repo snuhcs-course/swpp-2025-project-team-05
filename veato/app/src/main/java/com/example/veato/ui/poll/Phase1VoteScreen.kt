@@ -31,9 +31,9 @@ fun Phase1VoteScreen(
     val poll = state.poll ?: return
 
     // Timer countdown
-    var timeLeft by remember { mutableIntStateOf(poll.duration) }
-    LaunchedEffect(poll.duration) {
-        timeLeft = poll.duration
+    var timeLeft by remember { mutableIntStateOf(poll.remainingTimeSeconds.toInt()) }
+    LaunchedEffect(poll.remainingTimeSeconds) {
+        timeLeft = poll.remainingTimeSeconds.toInt()
     }
     LaunchedEffect(timeLeft) {
         if (timeLeft > 0 && poll.isOpen) {

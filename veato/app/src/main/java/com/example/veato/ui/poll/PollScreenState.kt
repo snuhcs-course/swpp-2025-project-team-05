@@ -1,9 +1,9 @@
 package com.example.veato.ui.poll
 
-import com.example.veato.data.model.Poll
+import com.example.veato.ui.poll.model.PollUiModel
 
 data class PollScreenState(
-    val poll: Poll? = null,
+    val poll: PollUiModel? = null,
     val isBusy: Boolean = true,
     val voted: Boolean = false,
     val selectedIndices: Set<Int> = emptySet(),

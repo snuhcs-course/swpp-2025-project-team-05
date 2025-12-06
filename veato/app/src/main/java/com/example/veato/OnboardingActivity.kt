@@ -10,8 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.veato.data.local.ProfileDataStoreImpl
-import com.example.veato.data.repository.UserProfileRepositoryImpl
+import com.example.veato.data.di.DefaultRepositoryFactory
 import com.example.veato.ui.onboarding.OnboardingViewModel
 import com.example.veato.ui.onboarding.OnboardingViewModelFactory
 import com.example.veato.ui.onboarding.screens.*
@@ -22,7 +21,6 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
-import com.example.veato.data.remote.ProfileApiDataSource
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -90,13 +88,11 @@ fun OnboardingApp(onComplete: (com.example.veato.data.model.UserProfile) -> Unit
     val context = LocalContext.current
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "demo_user"
 
-    // Initialize repository and ViewModel properly in Compose
+    // Use Factory Method pattern to create repository
+    val repositoryFactory = remember { DefaultRepositoryFactory() }
     val viewModel: OnboardingViewModel = viewModel(
         factory = OnboardingViewModelFactory(
-            repository = UserProfileRepositoryImpl(
-                ProfileDataStoreImpl(context),
-                ProfileApiDataSource()
-            ),
+            repository = repositoryFactory.createUserProfileRepository(context),
             userId = userId
         )
     )
