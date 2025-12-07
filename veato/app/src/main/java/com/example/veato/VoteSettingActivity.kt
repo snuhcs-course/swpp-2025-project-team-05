@@ -14,9 +14,6 @@ import android.widget.Toast
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -73,7 +70,6 @@ fun VoteSettingScreen(
     onStartVoting: (String, Int) -> Unit
 ) {
     var sessionTitle by remember { mutableStateOf("") }
-    var durationText by remember { mutableStateOf("3") }
     var occasionNote by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var teamMembers by remember { mutableStateOf<List<MemberInfo>>(emptyList()) }
@@ -118,21 +114,21 @@ fun VoteSettingScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Top Title
+        // Header
         Text(
-            text = "New Poll Settings",
-            style = MaterialTheme.typography.titleMedium.copy(color = Color.Gray)
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Team Title
-        Text(
-            text = "$teamName - New Poll Settings",
+            text = "Start a New Poll",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF4B5563)
             )
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Team subtitle
+        Text(
+            text = teamName,
+            style = MaterialTheme.typography.titleMedium.copy(color = Color.Gray)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -158,19 +154,6 @@ fun VoteSettingScreen(
                     placeholder = { Text("e.g. 10/25 team dinner", color = Color.LightGray) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading
-                )
-
-                // Duration
-                Text(
-                    text = "Poll Duration",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFF374151))
-                )
-
-                SimpleDropdown(
-                    options = listOf("1", "3", "5"),
-                    selected = durationText,
-                    onSelect = { durationText = it },
                     enabled = !isLoading
                 )
 
@@ -216,15 +199,15 @@ fun VoteSettingScreen(
                     }
                 }
 
-                // Poll Occasion Section
+                // Poll Details Section
                 Text(
-                    text = "Poll Occasion (optional)",
+                    text = "Poll Details (optional)",
                     style = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFF374151))
                 )
                 OutlinedTextField(
                     value = occasionNote,
                     onValueChange = { occasionNote = it },
-                    placeholder = { Text("e.g. We have kids with us tonight, prefer milder options", color = Color.LightGray) },
+                    placeholder = { Text("e.g., high-protein and lower fat; less spicy for a baby; fast foods", color = Color.LightGray) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
                     maxLines = 4,
@@ -239,8 +222,6 @@ fun VoteSettingScreen(
         // Start voting session Button
         Button(
             onClick = {
-                val duration = durationText.toIntOrNull() ?: 3
-
                 // Validation
                 when {
                     sessionTitle.isBlank() -> {
@@ -256,7 +237,7 @@ fun VoteSettingScreen(
                                 val response = facade.startPoll(
                                     teamId = teamId,
                                     pollTitle = sessionTitle,
-                                    durationMinutes = duration,
+                                    durationMinutes = 3,  // Fixed duration (ignored by backend)
                                     includedMemberIds = selectedMembers.toList(),
                                     occasionNote = occasionNote.trim()
                                 )
@@ -289,52 +270,6 @@ fun VoteSettingScreen(
                 )
             } else {
                 Text("Start New Poll")
-            }
-        }
-    }
-}
-
-
-@Composable
-fun SimpleDropdown(
-    options: List<String>,
-    selected: String,
-    onSelect: (String) -> Unit,
-    enabled: Boolean = true
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        OutlinedButton(
-            onClick = { if (enabled) expanded = true },
-            modifier = Modifier.width(160.dp),
-            enabled = enabled
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("$selected minutes")
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = if (expanded)
-                        Icons.Default.KeyboardArrowUp
-                    else
-                        Icons.Default.KeyboardArrowDown,
-                    contentDescription = null
-                )
-            }
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text("$option minutes") },
-                    onClick = {
-                        onSelect(option)
-                        expanded = false
-                    }
-                )
             }
         }
     }

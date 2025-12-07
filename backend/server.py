@@ -3,6 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, auth, firestore
 import json
 import os
+import time
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 import random
@@ -878,20 +879,25 @@ def check_email():
 def start_poll():
     """
     Create and start a new poll for a team.
-    
+
+    FIXED DURATIONS (client values ignored):
+    - Phase 1: 3 minutes (180 seconds)
+    - Phase 2: 1 minute (60 seconds)
+    - Total: 4 minutes
+
     Request body:
     {
         "teamId": "swpp5",
         "pollTitle": "10/25 team dinner",
-        "durationMinutes": 3
+        "occasionNote": "high-protein and lower fat" (optional)
     }
-    
+
     Returns:
     {
         "pollId": "abc123",
         "pollTitle": "10/25 team dinner",
         "teamName": "swpp 5",
-        "duration": 3,
+        "duration": 4,
         "startedTime": "2025-10-26T11:00:00Z",
         "candidates": ["Bibimbap", "Vegan Burger", ...]
     }
@@ -900,9 +906,14 @@ def start_poll():
     team_id = data.get("teamId")
     poll_title = data.get("pollTitle")
     occasion_note = data.get("occasionNote")  # Additional field from Android app
-    duration_minutes = data.get("durationMinutes")
 
-    if not team_id or not poll_title or not duration_minutes:
+    # Enforce fixed durations: Phase 1 = 3 minutes, Phase 2 = 1 minute (total 4 minutes)
+    # Ignore any client-provided duration
+    phase1_seconds = 180  # 3 minutes
+    phase2_seconds = 60   # 1 minute
+    total_duration_minutes = 4  # For legacy compatibility
+
+    if not team_id or not poll_title:
         return jsonify({"error": "Missing required fields"}), 400
 
     # Use occasionNote if provided, otherwise fall back to pollTitle
@@ -989,7 +1000,10 @@ def start_poll():
         poll_data = {
             "pollTitle": poll_title,
             "startedTime": started_time,
-            "duration": duration_minutes,
+            "duration": total_duration_minutes,  # Total duration for legacy compatibility
+            "phase1Seconds": phase1_seconds,  # Phase 1: 3 minutes
+            "phase2Seconds": phase2_seconds,  # Phase 2: 1 minute
+            "phase1StartTime": started_time,  # Track when Phase 1 started
             "teamId": team_id,
             "teamName": team_data.get("teamName", ""),
             # Two-phase voting fields
@@ -1019,7 +1033,7 @@ def start_poll():
             "pollId": poll_id,
             "pollTitle": poll_title,
             "teamName": team_data.get("teamName", ""),
-            "duration": duration_minutes,
+            "duration": total_duration_minutes,
             "startedTime": started_time.isoformat() + "Z",
             "candidates": visible_candidates  # Just the first 5 for initial display
         }), 200
@@ -1056,65 +1070,136 @@ def get_poll(poll_id):
         team_data = team_doc.to_dict() if team_doc.exists else {}
         members = team_data.get("members", [])
 
-        # Calculate remaining time
-        started_time = poll_data["startedTime"]
-        duration_minutes = poll_data["duration"]
+        # Check if this is a two-phase poll
+        is_two_phase = "phase" in poll_data
+        current_phase = poll_data.get("phase", "active")
 
-        # Convert Firestore Timestamp to UTC datetime
+        # DEBUG: Log poll info
+        print(f"[DEBUG] Poll {poll_id}: is_two_phase={is_two_phase}, current_phase={current_phase}", flush=True)
+        print(f"[DEBUG] Poll data keys: {list(poll_data.keys())}", flush=True)
+
+        # Calculate remaining time - use SEPARATE variables for each phase to avoid confusion
+        remaining_seconds = 0  # Will be set based on current phase
+
+        # Get base timestamps
+        started_time = poll_data["startedTime"]
         if hasattr(started_time, 'timestamp'):
             started_dt = datetime.utcfromtimestamp(started_time.timestamp())
         else:
             started_dt = started_time
 
-        elapsed_seconds = (datetime.utcnow() - started_dt).total_seconds()
-        seconds_left = (duration_minutes * 60) - elapsed_seconds
-        remaining_seconds = max(0, seconds_left)
+        # Calculate timer based on CURRENT phase
+        if is_two_phase and current_phase == "phase1":
+            # ===== PHASE 1 TIMER =====
+            phase1_start = poll_data.get("phase1StartTime", started_time)
+            if hasattr(phase1_start, 'timestamp'):
+                phase1_start_dt = datetime.utcfromtimestamp(phase1_start.timestamp())
+            else:
+                phase1_start_dt = phase1_start
 
-        # Check if this is a two-phase poll
-        is_two_phase = "phase" in poll_data
-        current_phase = poll_data.get("phase", "active")
+            phase1_elapsed = (datetime.utcnow() - phase1_start_dt).total_seconds()
+            phase1_duration = poll_data.get("phase1Seconds", 180)
+            phase1_remaining = phase1_duration - phase1_elapsed
 
-        # Auto-close if expired (but not during active two-phase voting)
-        # For two-phase polls, only close on timeout if we're past a grace period
-        # to allow members to complete Phase 2 voting after Phase 1 ends
+            remaining_seconds = max(0, phase1_remaining)
+            print(f"[DEBUG] PHASE 1: elapsed={phase1_elapsed:.1f}s, duration={phase1_duration}s, remaining={remaining_seconds:.1f}s", flush=True)
+
+        elif is_two_phase and current_phase == "phase2":
+            # ===== PHASE 2 TIMER =====
+            # CRITICAL: Phase 2 ALWAYS gets exactly 60 seconds (1:00 minute)
+            # starting from when phase2StartTime was set
+
+            phase2_start = poll_data.get("phase2StartTime")
+            phase2_duration = poll_data.get("phase2Seconds", 60)  # Default 60 seconds = 1 minute
+
+            print(f"[DEBUG] PHASE 2 CHECK: phase2StartTime={phase2_start}, phase2Seconds={phase2_duration}", flush=True)
+
+            if phase2_start:
+                if hasattr(phase2_start, 'timestamp'):
+                    phase2_start_dt = datetime.utcfromtimestamp(phase2_start.timestamp())
+                else:
+                    phase2_start_dt = phase2_start
+            else:
+                # CRITICAL: If phase2StartTime not set, set it NOW and update database
+                print(f"[DEBUG] CRITICAL WARNING: phase2StartTime not set! Setting to NOW.", flush=True)
+                phase2_start_dt = datetime.utcnow()
+                # Update database with both phase2StartTime AND phase2Seconds if missing
+                update_data = {"phase2StartTime": phase2_start_dt}
+                if "phase2Seconds" not in poll_data:
+                    update_data["phase2Seconds"] = 60
+                poll_ref.update(update_data)
+                phase2_duration = 60
+
+            phase2_elapsed = (datetime.utcnow() - phase2_start_dt).total_seconds()
+            phase2_remaining = phase2_duration - phase2_elapsed
+
+            remaining_seconds = max(0, phase2_remaining)
+            print(f"[DEBUG] PHASE 2: start_dt={phase2_start_dt}, elapsed={phase2_elapsed:.1f}s, duration={phase2_duration}s, remaining={remaining_seconds:.1f}s", flush=True)
+
+        else:
+            # Legacy single-phase or closed poll
+            duration_minutes = poll_data.get("duration", 3)
+            elapsed_seconds = (datetime.utcnow() - started_dt).total_seconds()
+            seconds_left = (duration_minutes * 60) - elapsed_seconds
+            remaining_seconds = max(0, seconds_left)
+
+        # Auto-transition/close based on strict timer enforcement
         should_auto_close = False
         should_transition_to_phase2 = False
 
-        if seconds_left <= 0 and poll_data["status"] == "active" and current_phase != "closed":
+        if remaining_seconds <= 0 and poll_data["status"] == "active" and current_phase != "closed":
             if is_two_phase and current_phase == "phase1":
-                # Phase 1 timeout: transition to Phase 2 if anyone voted
-                phase1_votes = poll_data.get("phase1Votes", {})
-                if len(phase1_votes) > 0:
-                    # At least one person voted - transition to Phase 2
-                    should_transition_to_phase2 = True
-                    print(f"Phase 1 timeout with {len(phase1_votes)} votes - transitioning to Phase 2", flush=True)
-                else:
-                    # Nobody voted - close the poll
-                    should_auto_close = True
+                # Phase 1 timeout: ALWAYS transition to Phase 2 after 3 minutes
+                # Regardless of whether anyone voted or everyone voted
+                should_transition_to_phase2 = True
+                print(f"[DEBUG] Phase 1 timer expired (3:00) - transitioning to Phase 2", flush=True)
             elif is_two_phase and current_phase == "phase2":
-                # In Phase 2: only close if all members locked in or significant timeout
-                # This prevents premature closure during Phase 1 → Phase 2 transition
-                locked_in_users = poll_data.get("lockedInUsers", [])
-                if len(locked_in_users) >= len(members):
-                    # All members voted in Phase 2, safe to close
-                    should_auto_close = True
-                elif seconds_left < -30:
-                    # 30 second grace period expired, force close
-                    should_auto_close = True
+                # Phase 2 timeout: ALWAYS close after 1 minute
+                # Regardless of whether anyone voted or everyone voted
+                should_auto_close = True
+                print(f"[DEBUG] Phase 2 timer expired (1:00) - closing poll", flush=True)
             else:
-                # Not in Phase 2 or not two-phase: normal auto-close
+                # Not two-phase: normal auto-close
                 should_auto_close = True
 
         if should_transition_to_phase2:
             # Transition from Phase 1 to Phase 2
+            print(f"[DEBUG] Calling transition_phase1_to_phase2...", flush=True)
             transition_phase1_to_phase2(poll_id)
+
             # Reload poll data after transition
             poll_doc = poll_ref.get()
             poll_data = poll_doc.to_dict()
             current_phase = "phase2"
+
+            # CRITICAL: Recalculate timer for Phase 2 using FRESH phase2StartTime
+            # Phase 2 should start at full 1:00 minute
+            phase2_start_after_transition = poll_data.get("phase2StartTime")
+            print(f"[DEBUG] After transition: phase2StartTime={phase2_start_after_transition}", flush=True)
+
+            if phase2_start_after_transition:
+                if hasattr(phase2_start_after_transition, 'timestamp'):
+                    phase2_start_dt_fresh = datetime.utcfromtimestamp(phase2_start_after_transition.timestamp())
+                else:
+                    phase2_start_dt_fresh = phase2_start_after_transition
+            else:
+                # Fallback: use current time (shouldn't happen if transition works correctly)
+                print(f"[DEBUG] ERROR: phase2StartTime still not set after transition!", flush=True)
+                phase2_start_dt_fresh = datetime.utcnow()
+                poll_ref.update({"phase2StartTime": phase2_start_dt_fresh})
+
+            # Calculate Phase 2 remaining time from scratch
+            phase2_elapsed_after_transition = (datetime.utcnow() - phase2_start_dt_fresh).total_seconds()
+            phase2_duration_after_transition = poll_data.get("phase2Seconds", 60)
+            phase2_remaining_fresh = phase2_duration_after_transition - phase2_elapsed_after_transition
+
+            remaining_seconds = max(0, phase2_remaining_fresh)
+            print(f"[DEBUG] Phase 2 FRESH CALC: elapsed={phase2_elapsed_after_transition:.1f}s, duration={phase2_duration_after_transition}s, remaining={remaining_seconds:.1f}s", flush=True)
+
         elif should_auto_close:
             poll_data = close_poll_internal(poll_id)
             current_phase = "closed"
+            remaining_seconds = 0
 
         # Prepare response based on phase
         if current_phase == "closed" or poll_data["status"] == "closed":
@@ -1756,15 +1841,29 @@ def transition_phase1_to_phase2(poll_id: str) -> None:
     # Get Top 3
     top_3 = [candidate for candidate, data in sorted_candidates[:3]]
 
-    # Update poll to Phase 2
+    # Update poll to Phase 2 with explicit timestamp
+    phase2_start_timestamp = datetime.utcnow()
+    print(f"[DEBUG] Setting phase2StartTime to: {phase2_start_timestamp}", flush=True)
+
+    # Ensure phase2Seconds is set (for old polls that might not have it)
+    phase2_seconds = poll_data.get("phase2Seconds", 60)
+
     poll_ref.update({
         "phase": "phase2",
         "phase2Candidates": top_3,
+        "phase2StartTime": phase2_start_timestamp,  # CRITICAL: Fresh timer for Phase 2 (1:00 starts NOW)
+        "phase2Seconds": phase2_seconds,  # Ensure this field exists (60 seconds = 1 minute)
         "lockedInUsers": [],  # Reset for Phase 2
         "candidates": top_3  # Update legacy field
     })
 
-    print(f"Poll {poll_id} transitioned to Phase 2. Top 3: {top_3}", flush=True)
+    print(f"[DEBUG] Poll {poll_id} transitioned to Phase 2. Top 3: {top_3}", flush=True)
+    print(f"[DEBUG] phase2StartTime set to: {phase2_start_timestamp}", flush=True)
+
+    # Verify the update worked
+    time.sleep(0.05)  # Small delay for database consistency
+    verify_poll = poll_ref.get().to_dict()
+    print(f"[DEBUG] Verification: phase={verify_poll.get('phase')}, phase2StartTime={verify_poll.get('phase2StartTime')}", flush=True)
 
 
 def close_poll_internal(poll_id: str) -> Dict[str, Any]:
