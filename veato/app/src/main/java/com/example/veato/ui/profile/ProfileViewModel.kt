@@ -89,7 +89,7 @@ class ProfileViewModel(
                 )
             }
         } else {
-            // When canceling edit, just close edit mode
+            // When canceling edit, reload profile to revert UI to saved state
             _state.update {
                 it.copy(
                     isEditing = false,
@@ -98,6 +98,8 @@ class ProfileViewModel(
                     saveSuccess = null
                 )
             }
+            // Reload profile from backend to discard in-memory edits
+            loadProfile()
         }
     }
 
