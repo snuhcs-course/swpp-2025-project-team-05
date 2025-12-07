@@ -1083,6 +1083,8 @@ def get_poll(poll_id):
 
         # Get base timestamps
         started_time = poll_data["startedTime"]
+        duration_minutes = poll_data.get("duration", 3)  # For legacy polls
+
         if hasattr(started_time, 'timestamp'):
             started_dt = datetime.utcfromtimestamp(started_time.timestamp())
         else:
@@ -1138,7 +1140,6 @@ def get_poll(poll_id):
 
         else:
             # Legacy single-phase or closed poll
-            duration_minutes = poll_data.get("duration", 3)
             elapsed_seconds = (datetime.utcnow() - started_dt).total_seconds()
             seconds_left = (duration_minutes * 60) - elapsed_seconds
             remaining_seconds = max(0, seconds_left)
