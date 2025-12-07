@@ -37,7 +37,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun VoteScreen(
     state: PollScreenState,
-    onSelect: (Int) -> Unit,
+    onSelect: (String) -> Unit,
     onVote: () -> Unit,
     onCancel: () -> Unit,
     onTimeOver: () -> Unit
@@ -45,9 +45,9 @@ fun VoteScreen(
     val poll = state.poll ?: return
 
     // Use backend remaining time when available; fall back to 60s if not provided
-    var timeLeft by remember { mutableIntStateOf(state.poll?.duration ?: 60) }
-    LaunchedEffect(state.poll?.duration) {
-        timeLeft = state.poll?.duration ?: 60
+    var timeLeft by remember { mutableIntStateOf(state.poll?.remainingTimeSeconds?.toInt() ?: 60) }
+    LaunchedEffect(state.poll?.remainingTimeSeconds) {
+        timeLeft = state.poll?.remainingTimeSeconds?.toInt() ?: 60
     }
     LaunchedEffect(timeLeft) {
         if (timeLeft > 0 && (state.poll?.isOpen == true)) {
@@ -77,7 +77,7 @@ fun VoteScreen(
         ) {
             Column {
                 Text(poll.teamName, fontWeight = FontWeight.Bold)
-                Text(poll.pollTitle, style = MaterialTheme.typography.bodySmall)
+                Text(poll.title, style = MaterialTheme.typography.bodySmall)
             }
             Box(
                 modifier = Modifier
@@ -112,13 +112,12 @@ fun VoteScreen(
                 )
 
 
-                poll.candidates.forEachIndexed { index, candidate ->
+                poll.candidates.forEach { candidate ->
                     CandidateButton(
                         name = candidate.name,
-                        index = index,
-                        isSelected = index in state.selectedIndices,
-                        isDisabled = state.voted && index !in state.selectedIndices,
-                        onClick = onSelect
+                        isSelected = candidate.name in state.selectedCandidateNames,
+                        isDisabled = state.voted && candidate.name !in state.selectedCandidateNames,
+                        onClick = { onSelect(candidate.name) }
                     )
                 }
 
@@ -126,7 +125,7 @@ fun VoteScreen(
 
                 VoteButton(
                     voted = state.voted,
-                    selectedCount = state.selectedIndices.size,
+                    selectedCount = state.selectedCandidateNames.size,
                     onVote = onVote,
                     onCancel = onCancel
                 )
@@ -141,13 +140,12 @@ fun VoteScreen(
 @Composable
 fun CandidateButton(
     name: String,
-    index: Int,
     isSelected: Boolean,
     isDisabled: Boolean,
-    onClick: (Int) -> Unit
+    onClick: () -> Unit
 ) {
     OutlinedButton(
-        onClick = { onClick(index) },
+        onClick = onClick,
         enabled = !isDisabled,
         modifier = Modifier
             .fillMaxWidth()

@@ -26,7 +26,7 @@ interface RepositoryFactory {
 class DefaultRepositoryFactory : RepositoryFactory {
     
     override fun createUserProfileRepository(context: Context): UserProfileRepository {
-        val localDataSource = ProfileLocalDataSource(ProfileDataStoreImpl(context))
+        val localDataSource: ProfileLocalDataSource = ProfileDataStoreImpl(context)
         val remoteDataSource = ProfileApiDataSource() // Uses Firebase Firestore directly
         return UserProfileRepositoryImpl(localDataSource, remoteDataSource)
     }

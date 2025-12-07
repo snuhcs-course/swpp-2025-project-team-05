@@ -14,7 +14,7 @@ interface PollRepository {
         includedMemberIds: List<String>,
         occasionNote: String = ""
     ): StartSessionResponse
-    suspend fun submitPhase1Vote(pollId: String, approvedIndices: List<Int>, rejectedIndex: Int?)
-    suspend fun rejectCandidateImmediately(pollId: String, rejectedIndex: Int): Poll  // Reject without locking in
-    suspend fun submitPhase2Vote(pollId: String, selectedIndex: Int)
+    suspend fun submitPhase1Vote(pollId: String, approvedCandidateNames: List<String>, rejectedCandidateName: String?)
+    suspend fun rejectCandidateImmediately(pollId: String, rejectedCandidateName: String): Poll  // Reject without locking in
+    suspend fun submitPhase2Vote(pollId: String, selectedCandidateName: String)
 }

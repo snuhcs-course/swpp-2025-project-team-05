@@ -18,5 +18,7 @@ data class Poll (
     val lockedInUserCount: Int = 0,
     val hasCurrentUserLockedIn: Boolean = false,
     val candidates: List<Candidate> = listOf(),
-    val results: List<Candidate> = listOf()
+    val results: List<Candidate> = listOf(),
+    val needsReview: Boolean = false,                     // User's vote was invalidated
+    val invalidatedCandidates: List<String> = emptyList() // Candidates that were removed
 )

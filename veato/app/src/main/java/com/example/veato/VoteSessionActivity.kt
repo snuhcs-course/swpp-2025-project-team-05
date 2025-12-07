@@ -107,33 +107,33 @@ fun PollSessionScreen(
             PollPhaseUi.PHASE1 -> {
                 Phase1VoteScreen(
                     state = state,
-                    onToggleApproval = { index ->
-                        // Don't allow selecting a rejected candidate
-                        val candidateName = poll.candidates.getOrNull(index)?.name
-                        if (!state.voted && !poll.hasCurrentUserLockedIn && state.rejectedCandidateName != candidateName) {
-                            viewModel.modifySelectedIndices(index)
+                    onToggleApproval = { candidateName ->
+                        if (!state.voted && !poll.hasCurrentUserLockedIn) {
+                            viewModel.modifySelectedCandidates(candidateName)
                         }
                     },
-                    onRejectCandidate = { index ->
-                        viewModel.setRejectedCandidate(index)
+                    onRejectCandidate = { candidateName ->
+                        viewModel.setRejectedCandidate(candidateName)
                     },
                     onLockInVote = {
+                        android.util.Log.d("VoteSessionActivity", "Lock In button clicked - Phase 1")
                         viewModel.submitPhase1Vote()
                     },
                     onTimeOver = { /* no-op: backend auto-closes; ViewModel observes status */ },
                     onClearVetoAnimation = {
                         viewModel.clearVetoAnimation()
+                    },
+                    onAcknowledgeReview = {
+                        viewModel.acknowledgeReview()
                     }
                 )
             }
             PollPhaseUi.PHASE2 -> {
                 Phase2VoteScreen(
                     state = state,
-                    onSelectCandidate = { index ->
+                    onSelectCandidate = { candidateName ->
                         if (!state.voted && !poll.hasCurrentUserLockedIn) {
-                            // Clear previous selection and set new one (radio button behavior)
-                            viewModel.clearSelectedIndices()
-                            viewModel.modifySelectedIndices(index)
+                            viewModel.modifySelectedCandidates(candidateName)
                         }
                     },
                     onLockInVote = {

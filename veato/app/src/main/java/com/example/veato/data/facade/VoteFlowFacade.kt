@@ -48,10 +48,10 @@ class VoteFlowFacade(
      */
     suspend fun castPhase1Vote(
         pollId: String,
-        approvedIndices: List<Int>,
-        rejectedIndex: Int?
+        approvedCandidateNames: List<String>,
+        rejectedCandidateName: String?
     ): PollUiModel {
-        pollRepository.submitPhase1Vote(pollId, approvedIndices, rejectedIndex)
+        pollRepository.submitPhase1Vote(pollId, approvedCandidateNames, rejectedCandidateName)
         return getPoll(pollId)
     }
     
@@ -61,9 +61,9 @@ class VoteFlowFacade(
      */
     suspend fun rejectCandidateImmediately(
         pollId: String,
-        rejectedIndex: Int
+        rejectedCandidateName: String
     ): PollUiModel {
-        val poll = pollRepository.rejectCandidateImmediately(pollId, rejectedIndex)
+        val poll = pollRepository.rejectCandidateImmediately(pollId, rejectedCandidateName)
         return PollMapper.toUi(poll)
     }
     
@@ -73,9 +73,9 @@ class VoteFlowFacade(
      */
     suspend fun castPhase2Vote(
         pollId: String,
-        selectedIndex: Int
+        selectedCandidateName: String
     ): PollUiModel {
-        pollRepository.submitPhase2Vote(pollId, selectedIndex)
+        pollRepository.submitPhase2Vote(pollId, selectedCandidateName)
         return getPoll(pollId)
     }
     

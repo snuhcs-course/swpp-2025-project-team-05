@@ -1157,10 +1157,15 @@ def get_poll(poll_id):
             visible_candidates = poll_data.get("visibleCandidates", [])
             phase1_votes = poll_data.get("phase1Votes", {})
             locked_in_users = poll_data.get("lockedInUsers", [])
+            vote_invalidations = poll_data.get("voteInvalidations", {})
 
             user_vote = phase1_votes.get(user_id, {})
             approved = user_vote.get("approved", [])
             rejected = user_vote.get("rejected")
+
+            # Check if current user has invalidated votes
+            invalidated_candidates = vote_invalidations.get(user_id, [])
+            needs_review = len(invalidated_candidates) > 0
 
             return jsonify({
                 "pollId": poll_id,
@@ -1177,7 +1182,9 @@ def get_poll(poll_id):
                 "yourRejectedCandidate": rejected,
                 "hasCurrentUserLockedIn": user_id in locked_in_users,
                 "lockedInUserCount": len(locked_in_users),
-                "totalMemberCount": len(members)
+                "totalMemberCount": len(members),
+                "needsReview": needs_review,
+                "invalidatedCandidates": invalidated_candidates
             }), 200
 
         elif is_two_phase and current_phase == "phase2":
@@ -1388,6 +1395,7 @@ def cast_phase1_vote(poll_id):
             phase1_votes = poll_data.get("phase1Votes", {})
             locked_in_users = poll_data.get("lockedInUsers", [])
             removed_candidates = poll_data.get("removedCandidates", [])  # Track globally removed
+            vote_invalidations = poll_data.get("voteInvalidations", {})  # Track invalidated votes per user
 
             # Validate approved candidates exist in visible list
             for candidate in approved_candidates:
@@ -1435,16 +1443,44 @@ def cast_phase1_vote(poll_id):
                     replacement_candidate = available_candidates[0]["name"]
                     visible_candidates.append(replacement_candidate)
 
+                # Auto-invalidation: Remove vetoed candidate from all users' approved lists
+                # and unlock affected users who had locked in
+                affected_users = []
+                for other_user_id, vote_data in phase1_votes.items():
+                    approved_list = vote_data.get("approved", [])
+                    if rejected_candidate in approved_list:
+                        # Remove the vetoed candidate from this user's approved list
+                        approved_list.remove(rejected_candidate)
+                        vote_data["approved"] = approved_list
+
+                        # Track this invalidation
+                        if other_user_id not in vote_invalidations:
+                            vote_invalidations[other_user_id] = []
+                        if rejected_candidate not in vote_invalidations[other_user_id]:
+                            vote_invalidations[other_user_id].append(rejected_candidate)
+
+                        # Remove user from locked-in list if they were locked in
+                        if other_user_id in locked_in_users:
+                            locked_in_users.remove(other_user_id)
+                            affected_users.append(other_user_id)
+
+                if affected_users:
+                    print(f"Auto-invalidated {len(affected_users)} users due to veto of '{rejected_candidate}': {affected_users}", flush=True)
+
             # Add user to locked-in list only if locking in (avoid duplicates with set logic)
             if lock_in and user_id not in locked_in_users:
                 locked_in_users.append(user_id)
+                # Clear invalidation state when user re-locks in
+                if user_id in vote_invalidations:
+                    del vote_invalidations[user_id]
 
             # Update poll document atomically
             update_data = {
                 "phase1Votes": phase1_votes,
                 "lockedInUsers": locked_in_users,
                 "visibleCandidates": visible_candidates,
-                "removedCandidates": removed_candidates
+                "removedCandidates": removed_candidates,
+                "voteInvalidations": vote_invalidations
             }
 
             transaction.update(poll_ref, update_data)

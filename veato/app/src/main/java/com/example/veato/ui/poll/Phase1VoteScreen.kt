@@ -22,11 +22,12 @@ import kotlinx.coroutines.delay
 @Composable
 fun Phase1VoteScreen(
     state: PollScreenState,
-    onToggleApproval: (Int) -> Unit,
-    onRejectCandidate: (Int) -> Unit,
+    onToggleApproval: (String) -> Unit,
+    onRejectCandidate: (String) -> Unit,
     onLockInVote: () -> Unit,
     onTimeOver: () -> Unit,
-    onClearVetoAnimation: () -> Unit
+    onClearVetoAnimation: () -> Unit,
+    onAcknowledgeReview: () -> Unit
 ) {
     val poll = state.poll ?: return
 
@@ -49,7 +50,7 @@ fun Phase1VoteScreen(
 
     // Rejection confirmation dialog state
     var showRejectDialog by remember { mutableStateOf(false) }
-    var candidateToReject by remember { mutableIntStateOf(-1) }
+    var candidateToReject by remember { mutableStateOf<String?>(null) }
 
     // Snackbar for rejection feedback
     val snackbarHostState = remember { SnackbarHostState() }
@@ -107,7 +108,7 @@ fun Phase1VoteScreen(
         ) {
             Column {
                 Text(poll.teamName, fontWeight = FontWeight.Bold)
-                Text(poll.pollTitle, style = MaterialTheme.typography.bodySmall)
+                Text(poll.title, style = MaterialTheme.typography.bodySmall)
                 Text(
                     "Phase 1: Voting",
                     style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.primary),
@@ -151,6 +152,14 @@ fun Phase1VoteScreen(
             )
         }
 
+        // Needs Review Banner
+        if (state.needsReview) {
+            NeedsReviewBanner(
+                invalidatedCandidates = state.invalidatedCandidateNames,
+                onReview = onAcknowledgeReview
+            )
+        }
+
         // Main voting card
         Card(
             modifier = Modifier
@@ -175,19 +184,18 @@ fun Phase1VoteScreen(
                 )
 
                 // Candidate list
-                poll.candidates.forEachIndexed { index, candidate ->
+                poll.candidates.forEach { candidate ->
                     Phase1CandidateRow(
                         name = candidate.name,
-                        index = index,
-                        isApproved = index in state.selectedIndices,
-                        isRejected = state.rejectedCandidateName == candidate.name,  // Check by NAME not index
+                        isApproved = candidate.name in state.selectedCandidateNames,
+                        isRejected = state.rejectedCandidateName == candidate.name,
                         canReject = !state.rejectionUsed || state.rejectedCandidateName == candidate.name,
                         isLocked = state.voted || poll.hasCurrentUserLockedIn,
                         isVetoing = state.isVetoing,
                         isNewlyAdded = candidate.name == state.newlyAddedCandidateName,
-                        onToggleApproval = onToggleApproval,
+                        onToggleApproval = { onToggleApproval(candidate.name) },
                         onReject = {
-                            candidateToReject = index
+                            candidateToReject = candidate.name
                             showRejectDialog = true
                         }
                     )
@@ -198,7 +206,8 @@ fun Phase1VoteScreen(
                 // Lock In button
                 Phase1LockInButton(
                     hasVoted = state.voted || poll.hasCurrentUserLockedIn,
-                    selectedCount = state.selectedIndices.size,
+                    needsReview = state.needsReview,
+                    selectedCount = state.selectedCandidateNames.size,
                     onLockIn = onLockInVote
                 )
             }
@@ -207,7 +216,7 @@ fun Phase1VoteScreen(
     }
 
     // Rejection confirmation dialog
-    if (showRejectDialog && candidateToReject >= 0) {
+    if (showRejectDialog && candidateToReject != null) {
         AlertDialog(
             onDismissRequest = { showRejectDialog = false },
             title = {
@@ -219,7 +228,7 @@ fun Phase1VoteScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        onRejectCandidate(candidateToReject)
+                        candidateToReject?.let { onRejectCandidate(it) }
                         showRejectDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626))
@@ -308,16 +317,85 @@ fun VetoBanner(
 }
 
 @Composable
+fun NeedsReviewBanner(
+    invalidatedCandidates: List<String>,
+    onReview: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFEF2F2)  // Light red
+        ),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(2.dp, Color(0xFFEF4444))  // Red border
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "⚠️ Vote Invalidated",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFDC2626)
+            )
+
+            if (invalidatedCandidates.isNotEmpty()) {
+                Text(
+                    text = "The following menu(s) were vetoed and replaced:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF991B1B)
+                )
+                invalidatedCandidates.forEach { candidateName ->
+                    Text(
+                        text = "• \"$candidateName\"",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF991B1B),
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            } else {
+                Text(
+                    text = "One or more menus you selected were vetoed and replaced.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF991B1B)
+                )
+            }
+
+            Text(
+                text = "Please review and update your selections.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF991B1B),
+                fontWeight = FontWeight.Medium
+            )
+
+            Button(
+                onClick = onReview,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF0369A1)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Dismiss & Review")
+            }
+        }
+    }
+}
+
+@Composable
 fun Phase1CandidateRow(
     name: String,
-    index: Int,
     isApproved: Boolean,
     isRejected: Boolean,
     canReject: Boolean,
     isLocked: Boolean,
     isVetoing: Boolean,
     isNewlyAdded: Boolean = false,
-    onToggleApproval: (Int) -> Unit,
+    onToggleApproval: () -> Unit,
     onReject: () -> Unit
 ) {
     // Pulsing animation for newly added candidates
@@ -361,7 +439,7 @@ fun Phase1CandidateRow(
             ) {
                 Checkbox(
                     checked = isApproved,
-                    onCheckedChange = { if (!isLocked && !isRejected) onToggleApproval(index) },
+                    onCheckedChange = { if (!isLocked && !isRejected) onToggleApproval() },
                     enabled = !isLocked && !isRejected,
                     colors = CheckboxDefaults.colors(
                         checkedColor = MaterialTheme.colorScheme.primary,
@@ -428,22 +506,35 @@ fun Phase1CandidateRow(
 @Composable
 fun Phase1LockInButton(
     hasVoted: Boolean,
+    needsReview: Boolean,
     selectedCount: Int,
     onLockIn: () -> Unit
 ) {
     if (!hasVoted) {
+        val canLockIn = selectedCount > 0 && !needsReview
+        val buttonColor = when {
+            needsReview -> Color(0xFFDC2626)  // Red when needs review
+            canLockIn -> MaterialTheme.colorScheme.primary
+            else -> Color.LightGray
+        }
+        val buttonText = when {
+            needsReview -> "Review selections before locking"
+            else -> "$selectedCount selected  •  Lock In Vote"
+        }
+
         Button(
             onClick = onLockIn,
-            enabled = selectedCount > 0,
+            enabled = canLockIn,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedCount > 0) MaterialTheme.colorScheme.primary else Color.LightGray
+                containerColor = buttonColor,
+                disabledContainerColor = buttonColor.copy(alpha = 0.6f)
             )
         ) {
-            Text("$selectedCount selected  •  Lock In Vote")
+            Text(buttonText)
         }
     } else {
         Card(

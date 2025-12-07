@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
+import com.example.veato.data.di.DefaultRepositoryFactory
 import com.example.veato.data.local.ProfileDataStoreImpl
 import com.example.veato.data.model.Allergen
 import com.example.veato.data.model.DietaryType

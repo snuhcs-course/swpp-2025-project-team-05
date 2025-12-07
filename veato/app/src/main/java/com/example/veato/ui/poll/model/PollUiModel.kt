@@ -15,7 +15,9 @@ data class PollUiModel(
     val isOpen: Boolean,
     val lockedInUserCount: Int,
     val hasCurrentUserLockedIn: Boolean,
-    val remainingTimeSeconds: Long
+    val remainingTimeSeconds: Long,
+    val needsReview: Boolean = false,                     // User's vote was invalidated
+    val invalidatedCandidates: List<String> = emptyList() // Candidates that were removed
 )
 
 /**

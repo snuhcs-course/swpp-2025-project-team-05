@@ -20,7 +20,7 @@ interface VotingPhaseStrategy {
      */
     fun onCandidateClicked(
         currentState: PollScreenState,
-        candidateIndex: Int,
+        candidateName: String,
         poll: PollUiModel
     ): PollScreenState
     
@@ -53,23 +53,22 @@ class Phase1VotingStrategy : VotingPhaseStrategy {
     
     override fun onCandidateClicked(
         currentState: PollScreenState,
-        candidateIndex: Int,
+        candidateName: String,
         poll: PollUiModel
     ): PollScreenState {
         // Don't allow selecting a rejected candidate
-        val candidateName = poll.candidates.getOrNull(candidateIndex)?.name
         if (currentState.rejectedCandidateName == candidateName) {
             return currentState
         }
-        
-        // Toggle selection (multi-select behavior)
-        val newSet = if (candidateIndex in currentState.selectedIndices) {
-            currentState.selectedIndices - candidateIndex
+
+        // Toggle selection (multi-select behavior using names)
+        val newSet = if (candidateName in currentState.selectedCandidateNames) {
+            currentState.selectedCandidateNames - candidateName
         } else {
-            currentState.selectedIndices + candidateIndex
+            currentState.selectedCandidateNames + candidateName
         }
-        
-        return currentState.copy(selectedIndices = newSet)
+
+        return currentState.copy(selectedCandidateNames = newSet)
     }
     
     override suspend fun submitVote(
@@ -77,22 +76,19 @@ class Phase1VotingStrategy : VotingPhaseStrategy {
         poll: PollUiModel,
         state: PollScreenState
     ): PollUiModel {
-        // Convert rejected candidate name to index
-        val rejectedIndex = state.rejectedCandidateName?.let { name ->
-            poll.candidates.indexOfFirst { it.name == name }.takeIf { it >= 0 }
-        }
-        
+        // No conversion needed - already using names!
         return facade.castPhase1Vote(
             pollId = poll.id,
-            approvedIndices = state.selectedIndices.toList(),
-            rejectedIndex = rejectedIndex
+            approvedCandidateNames = state.selectedCandidateNames.toList(),
+            rejectedCandidateName = state.rejectedCandidateName
         )
     }
     
     override fun canSubmitVote(state: PollScreenState, poll: PollUiModel): Boolean {
-        return !poll.hasCurrentUserLockedIn && 
-               !state.voted && 
-               state.selectedIndices.isNotEmpty()
+        return !poll.hasCurrentUserLockedIn &&
+               !state.voted &&
+               state.selectedCandidateNames.isNotEmpty() &&
+               !state.needsReview  // Can't submit if needs review
     }
 }
 
@@ -110,12 +106,12 @@ class Phase2VotingStrategy : VotingPhaseStrategy {
     
     override fun onCandidateClicked(
         currentState: PollScreenState,
-        candidateIndex: Int,
+        candidateName: String,
         poll: PollUiModel
     ): PollScreenState {
         // Single-select behavior: clear previous and set new one
         return currentState.copy(
-            selectedIndices = setOf(candidateIndex)
+            selectedCandidateNames = setOf(candidateName)
         )
     }
     
@@ -124,19 +120,19 @@ class Phase2VotingStrategy : VotingPhaseStrategy {
         poll: PollUiModel,
         state: PollScreenState
     ): PollUiModel {
-        val selectedIndex = state.selectedIndices.firstOrNull()
+        val selectedCandidate = state.selectedCandidateNames.firstOrNull()
             ?: throw IllegalStateException("No candidate selected for Phase 2")
-        
+
         return facade.castPhase2Vote(
             pollId = poll.id,
-            selectedIndex = selectedIndex
+            selectedCandidateName = selectedCandidate
         )
     }
     
     override fun canSubmitVote(state: PollScreenState, poll: PollUiModel): Boolean {
-        return !poll.hasCurrentUserLockedIn && 
-               !state.voted && 
-               state.selectedIndices.size == 1
+        return !poll.hasCurrentUserLockedIn &&
+               !state.voted &&
+               state.selectedCandidateNames.size == 1
     }
 }
 

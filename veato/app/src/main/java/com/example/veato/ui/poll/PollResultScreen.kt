@@ -51,7 +51,7 @@ fun PollResultScreen(
         ) {
             Column {
                 Text(poll.teamName, fontWeight = FontWeight.Bold)
-                Text(poll.pollTitle, style = MaterialTheme.typography.bodySmall)
+                Text(poll.title, style = MaterialTheme.typography.bodySmall)
             }
             Box(
                 modifier = Modifier

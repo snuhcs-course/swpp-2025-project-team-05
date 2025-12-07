@@ -16,7 +16,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun Phase2VoteScreen(
     state: PollScreenState,
-    onSelectCandidate: (Int) -> Unit,
+    onSelectCandidate: (String) -> Unit,
     onLockInVote: () -> Unit,
     onTimeOver: () -> Unit
 ) {
@@ -39,7 +39,7 @@ fun Phase2VoteScreen(
     val seconds = timeLeft % 60
     val formattedTime = String.format("%d:%02d", minutes, seconds)
 
-    val selectedIndex = state.selectedIndices.firstOrNull()
+    val selectedCandidateName = state.selectedCandidateNames.firstOrNull()
 
     Column(
         modifier = Modifier
@@ -56,7 +56,7 @@ fun Phase2VoteScreen(
         ) {
             Column {
                 Text(poll.teamName, fontWeight = FontWeight.Bold)
-                Text(poll.pollTitle, style = MaterialTheme.typography.bodySmall)
+                Text(poll.title, style = MaterialTheme.typography.bodySmall)
                 Text(
                     "Phase 2: Final Vote",
                     style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFFEF4444)),
@@ -118,14 +118,13 @@ fun Phase2VoteScreen(
                 )
 
                 // Candidate list (Top 3)
-                poll.candidates.take(3).forEachIndexed { index, candidate ->
+                poll.candidates.take(3).forEach { candidate ->
                     Phase2CandidateRow(
                         name = candidate.name,
                         phase1Votes = candidate.phase1ApprovalCount,
-                        index = index,
-                        isSelected = selectedIndex == index,
+                        isSelected = selectedCandidateName == candidate.name,
                         isLocked = state.voted || poll.hasCurrentUserLockedIn,
-                        onSelect = onSelectCandidate
+                        onSelect = { onSelectCandidate(candidate.name) }
                     )
                 }
 
@@ -134,7 +133,7 @@ fun Phase2VoteScreen(
                 // Lock In button
                 Phase2LockInButton(
                     hasVoted = state.voted || poll.hasCurrentUserLockedIn,
-                    hasSelected = selectedIndex != null,
+                    hasSelected = selectedCandidateName != null,
                     onLockIn = onLockInVote
                 )
             }
@@ -146,10 +145,9 @@ fun Phase2VoteScreen(
 fun Phase2CandidateRow(
     name: String,
     phase1Votes: Int,
-    index: Int,
     isSelected: Boolean,
     isLocked: Boolean,
-    onSelect: (Int) -> Unit
+    onSelect: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -160,7 +158,7 @@ fun Phase2CandidateRow(
         border = if (isSelected) {
             androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFEF4444))
         } else null,
-        onClick = { if (!isLocked) onSelect(index) }
+        onClick = { if (!isLocked) onSelect() }
     ) {
         Row(
             modifier = Modifier
@@ -175,7 +173,7 @@ fun Phase2CandidateRow(
             ) {
                 RadioButton(
                     selected = isSelected,
-                    onClick = { if (!isLocked) onSelect(index) },
+                    onClick = { if (!isLocked) onSelect() },
                     enabled = !isLocked,
                     colors = RadioButtonDefaults.colors(
                         selectedColor = Color(0xFFEF4444),

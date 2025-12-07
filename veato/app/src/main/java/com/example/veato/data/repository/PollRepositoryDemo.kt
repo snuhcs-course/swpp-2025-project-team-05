@@ -44,16 +44,16 @@ class PollRepositoryDemo : PollRepository{
         // not yet implemented
     }
 
-    override suspend fun submitPhase1Vote(pollId: String, approvedIndices: List<Int>, rejectedIndex: Int?) {
+    override suspend fun submitPhase1Vote(pollId: String, approvedCandidateNames: List<String>, rejectedCandidateName: String?) {
         // Demo implementation - no-op
     }
 
-    override suspend fun rejectCandidateImmediately(pollId: String, rejectedIndex: Int): Poll {
+    override suspend fun rejectCandidateImmediately(pollId: String, rejectedCandidateName: String): Poll {
         // Demo implementation - return current poll
         return getPoll(pollId)
     }
 
-    override suspend fun submitPhase2Vote(pollId: String, selectedIndex: Int) {
+    override suspend fun submitPhase2Vote(pollId: String, selectedCandidateName: String) {
         // Demo implementation - no-op
     }
 }

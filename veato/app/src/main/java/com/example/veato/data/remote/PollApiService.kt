@@ -67,7 +67,9 @@ data class PollResponse(
     val totalSelectedCountForYou: Int? = null,
     val results: List<CandidateResponse>? = null,  // Results for closed polls (includes name + voteCount)
     val resultRanking: List<RankingResponse>? = null,  // Legacy field
-    val winner: String? = null
+    val winner: String? = null,
+    val needsReview: Boolean? = null,                       // Vote was invalidated
+    val invalidatedCandidates: List<String>? = null         // Candidates removed from vote
 )
 
 /**

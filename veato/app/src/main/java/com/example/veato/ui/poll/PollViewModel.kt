@@ -48,7 +48,7 @@ class PollViewModel(
                         currentStrategy?.onPollLoaded(pollUi, it)?.copy(
                             isBusy = false,
                             voted = false,
-                            selectedIndices = emptySet(),
+                            selectedCandidateNames = emptySet(),
                             rejectionUsed = false,
                             rejectedCandidateName = null,
                             newlyAddedCandidateName = null,
@@ -96,11 +96,13 @@ class PollViewModel(
                             currentStrategy?.onPollLoaded(pollUi, it)?.copy(
                                 isBusy = false,
                                 voted = false,
-                                selectedIndices = emptySet(),
+                                selectedCandidateNames = emptySet(),
                                 rejectionUsed = false,
                                 rejectedCandidateName = null,
                                 newlyAddedCandidateName = null,
-                                vetoAnimationTimestamp = 0L
+                                vetoAnimationTimestamp = 0L,
+                                needsReview = false,
+                                invalidatedCandidateNames = emptyList()
                             ) ?: it.copy(poll = pollUi, isBusy = false)
                         }
                     } else {
@@ -124,62 +126,59 @@ class PollViewModel(
                             val removedCandidate = currentCandidates.firstOrNull { it !in newCandidates }
 
                             // IMPORTANT: Check if the removed candidate was in this user's locked selections
-                            // If so, we need to unlock them so they can revote
                             val currentState = _state.value
-                            val removedCandidateIndex = currentState.selectedIndices.find { index ->
-                                val candidateName = currentState.poll?.candidates?.getOrNull(index)?.name
-                                candidateName == removedCandidate
-                            }
-                            val wasVotedCandidateRemoved = removedCandidateIndex != null &&
+                            val wasVotedCandidateRemoved = removedCandidate != null &&
+                                                            removedCandidate in currentState.selectedCandidateNames &&
                                                             (currentState.voted || pollUi.hasCurrentUserLockedIn)
 
-                            // If user's voted candidate was removed, revoke their vote on backend
-                            if (wasVotedCandidateRemoved) {
-                                viewModelScope.launch {
-                                    try {
-                                        facade.revokeBallot(pollId, userId)
-                                        // State will be updated in the next poll cycle
-                                    } catch (e: Exception) {
-                                        // Log but don't block - polling will retry
-                                        android.util.Log.e("PollViewModel", "Failed to revoke ballot: ${e.message}")
-                                    }
-                                }
-                            }
+                            // Remove the vetoed candidate from selections (using names directly)
+                            val updatedSelections = currentState.selectedCandidateNames - removedCandidate.orEmpty()
 
-                            // Map old selections to new candidate list by name
-                            val updatedSelections = if (wasVotedCandidateRemoved) {
-                                // User voted for removed candidate - clear ALL selections so they revote properly
-                                emptySet()
+                            // Check if the removed candidate was the user's OWN rejected candidate
+                            val isUserOwnRejection = currentState.rejectedCandidateName == removedCandidate
+                            android.util.Log.d("PollViewModel", "Candidate removed: $removedCandidate, user's rejected: ${currentState.rejectedCandidateName}, isUserOwn: $isUserOwnRejection")
+
+                            // Clear user's rejectedCandidateName if it matches the removed candidate
+                            // (candidate no longer exists, so can't reject it)
+                            val updatedRejectedCandidate = if (isUserOwnRejection) {
+                                android.util.Log.d("PollViewModel", "Clearing user's rejectedCandidateName because it was removed")
+                                null
                             } else {
-                                // User didn't vote for removed candidate - preserve their selections by name
-                                val selectedNames = currentState.selectedIndices.mapNotNull { index ->
-                                    currentState.poll?.candidates?.getOrNull(index)?.name
-                                }
-                                pollUi.candidates.mapIndexedNotNull { index, candidate ->
-                                    if (candidate.name in selectedNames) index else null
-                                }.toSet()
+                                currentState.rejectedCandidateName
                             }
+                            val updatedRejectionUsed = updatedRejectedCandidate != null
+
+                            // Only show VetoBanner animation if this was the user's own rejection
+                            val shouldShowAnimation = isUserOwnRejection
+
+                            // Set needsReview if vote was invalidated or backend indicates it
+                            val needsReview = wasVotedCandidateRemoved || pollUi.needsReview
 
                             _state.update {
                                 currentStrategy?.onPollLoaded(pollUi, it)?.copy(
                                     isBusy = false,
-                                    newlyAddedCandidateName = addedCandidate,
-                                    rejectedCandidateName = removedCandidate,
-                                    rejectionUsed = removedCandidate != null,
-                                    vetoAnimationTimestamp = System.currentTimeMillis(),
+                                    newlyAddedCandidateName = if (shouldShowAnimation) addedCandidate else null,
+                                    rejectedCandidateName = updatedRejectedCandidate,
+                                    rejectionUsed = updatedRejectionUsed,
+                                    vetoAnimationTimestamp = if (shouldShowAnimation) System.currentTimeMillis() else 0L,
                                     // Unlock user if their voted candidate was removed
-                                    voted = if (wasVotedCandidateRemoved) false else it.voted,
-                                    // Update selections based on candidate list changes
-                                    selectedIndices = updatedSelections
+                                    voted = if (needsReview) false else it.voted,
+                                    // Update selections to remove vetoed candidate
+                                    selectedCandidateNames = updatedSelections,
+                                    // Set needs review flag
+                                    needsReview = needsReview,
+                                    invalidatedCandidateNames = if (needsReview) listOfNotNull(removedCandidate) else it.invalidatedCandidateNames
                                 ) ?: it.copy(
                                     poll = pollUi,
                                     isBusy = false,
-                                    newlyAddedCandidateName = addedCandidate,
-                                    rejectedCandidateName = removedCandidate,
-                                    rejectionUsed = removedCandidate != null,
-                                    vetoAnimationTimestamp = System.currentTimeMillis(),
-                                    voted = if (wasVotedCandidateRemoved) false else it.voted,
-                                    selectedIndices = updatedSelections
+                                    newlyAddedCandidateName = if (shouldShowAnimation) addedCandidate else null,
+                                    rejectedCandidateName = updatedRejectedCandidate,
+                                    rejectionUsed = updatedRejectionUsed,
+                                    vetoAnimationTimestamp = if (shouldShowAnimation) System.currentTimeMillis() else 0L,
+                                    voted = if (needsReview) false else it.voted,
+                                    selectedCandidateNames = updatedSelections,
+                                    needsReview = needsReview,
+                                    invalidatedCandidateNames = if (needsReview) listOfNotNull(removedCandidate) else it.invalidatedCandidateNames
                                 )
                             }
                         } else {
@@ -207,17 +206,17 @@ class PollViewModel(
     }
 
     // Use Strategy pattern for candidate selection
-    fun modifySelectedIndices(index: Int) {
+    fun modifySelectedCandidates(candidateName: String) {
         val currentState = _state.value
         val poll = currentState.poll ?: return
         val strategy = currentStrategy ?: return
-        
-        val newState = strategy.onCandidateClicked(currentState, index, poll)
+
+        val newState = strategy.onCandidateClicked(currentState, candidateName, poll)
         _state.update { newState }
     }
 
-    fun clearSelectedIndices() {
-        _state.update { it.copy(selectedIndices = emptySet()) }
+    fun clearSelectedCandidates() {
+        _state.update { it.copy(selectedCandidateNames = emptySet()) }
     }
 
     fun sendBallot() {
@@ -231,7 +230,7 @@ class PollViewModel(
     fun revokeBallot() {
         viewModelScope.launch {
             facade.revokeBallot(pollId, userId)
-            clearSelectedIndices()
+            clearSelectedCandidates()
             setVoted(false)
             loadOnce()
         }
@@ -239,8 +238,8 @@ class PollViewModel(
 
     // Phase-specific methods using Strategy pattern
 
-    fun setRejectedCandidate(index: Int?) {
-        if (index == null) {
+    fun setRejectedCandidate(candidateName: String?) {
+        if (candidateName == null) {
             // Clear rejection
             _state.update {
                 it.copy(
@@ -254,10 +253,8 @@ class PollViewModel(
             return
         }
 
-        // Get candidate name from current poll
-        val candidateName = _state.value.poll?.candidates?.getOrNull(index)?.name ?: return
         val currentCandidates = _state.value.poll?.candidates?.map { it.name } ?: return
-        val wasSelectedCandidateVetoed = index in _state.value.selectedIndices
+        val wasSelectedCandidateVetoed = candidateName in _state.value.selectedCandidateNames
 
         // Immediately reject candidate and get replacement using Facade
         viewModelScope.launch {
@@ -266,30 +263,30 @@ class PollViewModel(
 
             try {
                 // Call Facade to reject and get updated poll with replacement
-                val updatedPoll = facade.rejectCandidateImmediately(pollId, index)
+                val updatedPoll = facade.rejectCandidateImmediately(pollId, candidateName)
 
                 // Detect replacement candidate by comparing lists
                 val updatedCandidates = updatedPoll.candidates.map { it.name }
                 val newCandidateName = updatedCandidates.firstOrNull { it !in currentCandidates }
 
                 // If user had selected the vetoed candidate, remove it from selections
-                val updatedSelectedIndices = if (wasSelectedCandidateVetoed) {
-                    _state.value.selectedIndices - index
+                val updatedSelectedCandidates = if (wasSelectedCandidateVetoed) {
+                    _state.value.selectedCandidateNames - candidateName
                 } else {
-                    _state.value.selectedIndices
+                    _state.value.selectedCandidateNames
                 }
 
                 // Update state with new poll (includes replacement candidate)
                 _state.update {
                     it.copy(
                         poll = updatedPoll,
-                        rejectedCandidateName = candidateName,  // Store NAME not index
+                        rejectedCandidateName = candidateName,
                         rejectionUsed = true,
                         isVetoing = false,
                         vetoError = null,
                         newlyAddedCandidateName = newCandidateName,
                         vetoAnimationTimestamp = System.currentTimeMillis(),
-                        selectedIndices = updatedSelectedIndices
+                        selectedCandidateNames = updatedSelectedCandidates
                     )
                 }
             } catch (e: Exception) {
@@ -309,6 +306,16 @@ class PollViewModel(
         _state.update { it.copy(vetoError = null) }
     }
 
+    // Acknowledge needs review state (called when user dismisses needs review banner)
+    fun acknowledgeReview() {
+        _state.update {
+            it.copy(
+                needsReview = false,
+                invalidatedCandidateNames = emptyList()
+            )
+        }
+    }
+
     // Clear veto animation state (called when banner is dismissed)
     fun clearVetoAnimation() {
         _state.update {
@@ -321,14 +328,24 @@ class PollViewModel(
 
     // Use Strategy pattern for Phase 1 vote submission
     fun submitPhase1Vote() {
+        android.util.Log.d("PollViewModel", "submitPhase1Vote called")
         viewModelScope.launch {
             try {
                 val currentState = _state.value
-                val poll = currentState.poll ?: return@launch
-                val strategy = currentStrategy as? Phase1VotingStrategy ?: return@launch
+                android.util.Log.d("PollViewModel", "Current state: selectedCandidates=${currentState.selectedCandidateNames}, rejectedCandidate=${currentState.rejectedCandidateName}")
+                val poll = currentState.poll ?: run {
+                    android.util.Log.e("PollViewModel", "Poll is null, cannot submit vote")
+                    return@launch
+                }
+                val strategy = currentStrategy as? Phase1VotingStrategy ?: run {
+                    android.util.Log.e("PollViewModel", "Strategy is not Phase1VotingStrategy, cannot submit vote")
+                    return@launch
+                }
 
+                android.util.Log.d("PollViewModel", "Calling strategy.submitVote with pollId=${poll.id}")
                 // Use strategy to submit vote via facade
                 val updatedPoll = strategy.submitVote(facade, poll, currentState)
+                android.util.Log.d("PollViewModel", "Vote submitted successfully")
 
                 // Mark as voted/locked in
                 _state.update { it.copy(voted = true, poll = updatedPoll) }
@@ -337,6 +354,8 @@ class PollViewModel(
                 loadOnce()
             } catch (e: Exception) {
                 // Handle error (can add error state if needed)
+                android.util.Log.e("PollViewModel", "Error submitting Phase 1 vote: ${e.message}", e)
+                e.printStackTrace()
             }
         }
     }

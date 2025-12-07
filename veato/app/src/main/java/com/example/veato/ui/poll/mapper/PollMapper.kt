@@ -28,7 +28,9 @@ object PollMapper {
             isOpen = poll.isOpen,
             lockedInUserCount = poll.lockedInUserCount,
             hasCurrentUserLockedIn = poll.hasCurrentUserLockedIn,
-            remainingTimeSeconds = poll.duration.toLong()
+            remainingTimeSeconds = poll.duration.toLong(),
+            needsReview = poll.needsReview,
+            invalidatedCandidates = poll.invalidatedCandidates
         )
     }
     

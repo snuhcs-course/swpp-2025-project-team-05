@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.veato.data.di.DefaultRepositoryFactory
 import com.example.veato.data.local.ProfileDataStoreImpl
 import com.example.veato.data.model.CuisineType
 import com.example.veato.data.model.SpiceLevel
