@@ -176,9 +176,18 @@ class PollRepositoryImpl : PollRepository {
                 throw Exception("Poll is not in Phase 1")
             }
 
+            // Validate rejected candidate still exists in visible candidates
+            val visibleCandidateNames = poll.candidates.map { it.name }
+            val validRejectedCandidate = if (rejectedCandidateName != null && rejectedCandidateName in visibleCandidateNames) {
+                rejectedCandidateName
+            } else {
+                Log.d("PollRepository", "Rejected candidate '$rejectedCandidateName' no longer exists in poll, clearing it")
+                null
+            }
+
             // No conversion needed - already using names!
             // Call backend API (with lockIn = true by default)
-            val request = Phase1VoteRequest(approvedCandidateNames, rejectedCandidateName, lockIn = true)
+            val request = Phase1VoteRequest(approvedCandidateNames, validRejectedCandidate, lockIn = true)
             Log.d("PollRepository", "Calling API with request: $request")
             val response = apiService.castPhase1Vote(pollId, request)
             Log.d("PollRepository", "API response code: ${response.code()}, successful: ${response.isSuccessful}")

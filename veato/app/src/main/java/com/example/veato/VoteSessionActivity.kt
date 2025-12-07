@@ -17,7 +17,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.veato.data.di.DefaultRepositoryFactory
 import com.example.veato.data.facade.VoteFlowFacade
-import com.example.veato.ui.main.MainActivity
 import com.example.veato.ui.poll.model.PollPhaseUi
 import com.example.veato.ui.poll.Phase1VoteScreen
 import com.example.veato.ui.poll.Phase2VoteScreen
@@ -77,17 +76,21 @@ fun PollSessionScreen(
         )
     )
     val state by viewModel.state.collectAsState()
+    val isPollClosed = state.poll?.phase == PollPhaseUi.CLOSED
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Vote Session") },
                 navigationIcon = {
-                    IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                    // Hide back button when poll is closed (results screen)
+                    if (!isPollClosed) {
+                        IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
                     }
                 }
             )
@@ -146,10 +149,8 @@ fun PollSessionScreen(
                 PollResultScreen(
                     state = state,
                     onBackToMain = {
-                        // Navigate back to TeamDetailActivity
-                        val intent = Intent(context, TeamDetailActivity::class.java)
-                        intent.putExtra("teamId", poll.teamId)
-                        intent.putExtra("teamName", poll.teamName)
+                        // Navigate back to My Teams page
+                        val intent = Intent(context, MyTeamsActivity::class.java)
                         context.startActivity(intent)
                         (context as? VoteSessionActivity)?.finish()
                     }

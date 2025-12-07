@@ -123,7 +123,7 @@ fun Phase2VoteScreen(
                         name = candidate.name,
                         phase1Votes = candidate.phase1ApprovalCount,
                         isSelected = selectedCandidateName == candidate.name,
-                        isLocked = state.voted || poll.hasCurrentUserLockedIn,
+                        isLocked = state.voted,
                         onSelect = { onSelectCandidate(candidate.name) }
                     )
                 }
@@ -132,7 +132,7 @@ fun Phase2VoteScreen(
 
                 // Lock In button
                 Phase2LockInButton(
-                    hasVoted = state.voted || poll.hasCurrentUserLockedIn,
+                    hasVoted = state.voted,
                     hasSelected = selectedCandidateName != null,
                     onLockIn = onLockInVote
                 )

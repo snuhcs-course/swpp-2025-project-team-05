@@ -96,11 +96,22 @@ class Phase1VotingStrategy : VotingPhaseStrategy {
  * Strategy for Phase 2: Single-choice voting
  */
 class Phase2VotingStrategy : VotingPhaseStrategy {
-    
+
     override fun onPollLoaded(poll: PollUiModel, currentState: PollScreenState): PollScreenState {
+        // Phase 2 only allows single selection
+        // Preserve user's current selection (whether locked in or not)
+        // Only clear if they had multiple Phase 1 selections
+        val singleSelection = if (currentState.selectedCandidateNames.size <= 1) {
+            // 0 or 1 selection - keep it (user is selecting or has selected)
+            currentState.selectedCandidateNames
+        } else {
+            // Multiple selections from Phase 1 - clear them
+            emptySet()
+        }
+
         return currentState.copy(
             poll = poll,
-            voted = poll.hasCurrentUserLockedIn
+            selectedCandidateNames = singleSelection
         )
     }
     
@@ -130,8 +141,7 @@ class Phase2VotingStrategy : VotingPhaseStrategy {
     }
     
     override fun canSubmitVote(state: PollScreenState, poll: PollUiModel): Boolean {
-        return !poll.hasCurrentUserLockedIn &&
-               !state.voted &&
+        return !state.voted &&
                state.selectedCandidateNames.size == 1
     }
 }

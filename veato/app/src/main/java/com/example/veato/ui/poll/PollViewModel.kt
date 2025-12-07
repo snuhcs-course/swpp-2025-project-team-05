@@ -280,7 +280,7 @@ class PollViewModel(
                 _state.update {
                     it.copy(
                         poll = updatedPoll,
-                        rejectedCandidateName = candidateName,
+                        rejectedCandidateName = candidateName,  // Keep for VetoBanner display
                         rejectionUsed = true,
                         isVetoing = false,
                         vetoError = null,
@@ -344,13 +344,13 @@ class PollViewModel(
 
                 android.util.Log.d("PollViewModel", "Calling strategy.submitVote with pollId=${poll.id}")
                 // Use strategy to submit vote via facade
-                val updatedPoll = strategy.submitVote(facade, poll, currentState)
+                strategy.submitVote(facade, poll, currentState)
                 android.util.Log.d("PollViewModel", "Vote submitted successfully")
 
                 // Mark as voted/locked in
-                _state.update { it.copy(voted = true, poll = updatedPoll) }
+                _state.update { it.copy(voted = true) }
 
-                // Refresh poll state
+                // Refresh poll state - this will detect phase change if poll transitioned to Phase 2
                 loadOnce()
             } catch (e: Exception) {
                 // Handle error (can add error state if needed)
@@ -369,10 +369,10 @@ class PollViewModel(
                 val strategy = currentStrategy as? Phase2VotingStrategy ?: return@launch
 
                 // Use strategy to submit vote via facade
-                val updatedPoll = strategy.submitVote(facade, poll, currentState)
+                strategy.submitVote(facade, poll, currentState)
 
                 // Mark as voted/locked in
-                _state.update { it.copy(voted = true, poll = updatedPoll) }
+                _state.update { it.copy(voted = true) }
 
                 // Refresh poll state
                 loadOnce()

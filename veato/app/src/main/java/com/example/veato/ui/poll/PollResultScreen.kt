@@ -146,9 +146,9 @@ fun PollResultScreen(
                 .fillMaxWidth()
                 .height(48.dp),
             shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9BD1C4))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD97706))
         ) {
-            Text("Back to Team", color = Color.White)
+            Text("Back to Teams", color = Color.White)
         }
     }
 }
